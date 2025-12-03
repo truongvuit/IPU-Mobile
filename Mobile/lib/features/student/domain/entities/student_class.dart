@@ -5,81 +5,58 @@ class ClassStudent extends Equatable {
   final String code;
   final String? avatarUrl;
 
-  const ClassStudent({
-    required this.name,
-    required this.code,
-    this.avatarUrl,
-  });
+  const ClassStudent({required this.name, required this.code, this.avatarUrl});
 
   @override
   List<Object?> get props => [name, code, avatarUrl];
 }
 
 class StudentClass extends Equatable {
-  
   final String id;
-  
-  
+
   final String courseId;
-  
-  
+
   final String courseName;
-  
-  
+
   final String imageUrl;
-  
-  
+
   final String teacherName;
-  
-  
+
   final String room;
-  
-  
+
   final DateTime startTime;
-  
-  
+
   final DateTime endTime;
-  
-  
+
   final String status;
-  
-  
+
   final bool isOnline;
-  
-  
+
   final int currentStudents;
-  
-  
+
   final List<DateTime> schedule;
-  
-  
+
   final String? meetingUrl;
 
   
+  final String? teacherEmail;
+
   final String? teacherSpecialization;
 
-  
   final String? teacherCertificates;
 
-  
   final String? courseType;
 
-  
   final String? level;
 
-  
   final String? duration;
 
-  
   final int? maxStudents;
 
-  
   final List<ClassStudent> students;
 
-  
   final double attendanceRate;
 
-  
   final double progress;
 
   const StudentClass({
@@ -96,6 +73,7 @@ class StudentClass extends Equatable {
     required this.currentStudents,
     this.schedule = const [],
     this.meetingUrl,
+    this.teacherEmail,
     this.teacherSpecialization,
     this.teacherCertificates,
     this.courseType,
@@ -109,29 +87,30 @@ class StudentClass extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        courseId,
-        courseName,
-        imageUrl,
-        teacherName,
-        room,
-        startTime,
-        endTime,
-        status,
-        isOnline,
-        currentStudents,
-        schedule,
-        meetingUrl,
-        teacherSpecialization,
-        teacherCertificates,
-        courseType,
-        level,
-        duration,
-        maxStudents,
-        students,
-        attendanceRate,
-        progress,
-      ];
+    id,
+    courseId,
+    courseName,
+    imageUrl,
+    teacherName,
+    room,
+    startTime,
+    endTime,
+    status,
+    isOnline,
+    currentStudents,
+    schedule,
+    meetingUrl,
+    teacherEmail,
+    teacherSpecialization,
+    teacherCertificates,
+    courseType,
+    level,
+    duration,
+    maxStudents,
+    students,
+    attendanceRate,
+    progress,
+  ];
 
   StudentClass copyWith({
     String? id,
@@ -147,6 +126,7 @@ class StudentClass extends Equatable {
     int? currentStudents,
     List<DateTime>? schedule,
     String? meetingUrl,
+    String? teacherEmail,
     String? teacherSpecialization,
     String? teacherCertificates,
     String? courseType,
@@ -171,7 +151,9 @@ class StudentClass extends Equatable {
       currentStudents: currentStudents ?? this.currentStudents,
       schedule: schedule ?? this.schedule,
       meetingUrl: meetingUrl ?? this.meetingUrl,
-      teacherSpecialization: teacherSpecialization ?? this.teacherSpecialization,
+      teacherEmail: teacherEmail ?? this.teacherEmail,
+      teacherSpecialization:
+          teacherSpecialization ?? this.teacherSpecialization,
       teacherCertificates: teacherCertificates ?? this.teacherCertificates,
       courseType: courseType ?? this.courseType,
       level: level ?? this.level,

@@ -40,10 +40,13 @@ class _HomeAdminScreenState extends State<HomeAdminScreen> {
       const AdminStudentListScreen(),
       const AdminProfileScreen(isTab: true),
     ];
+
     
-    // Load data cho tab đầu tiên (dashboard) khi khởi động
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadDataForTab(0);
+      if (mounted) {
+        _loadDataForTab(0);
+      }
     });
   }
 
@@ -59,24 +62,21 @@ class _HomeAdminScreenState extends State<HomeAdminScreen> {
 
   void _loadDataForTab(int index) {
     final bloc = context.read<AdminBloc>();
-    final currentState = bloc.state;
     switch (index) {
       case 0:
-        // Dashboard - chỉ load nếu chưa có hoặc state không phải dashboard
-        if (currentState is! AdminDashboardLoaded) {
-          bloc.add(const LoadAdminDashboard());
-        }
+        
+        bloc.add(const LoadAdminDashboard());
         break;
       case 1:
-        // Class list - luôn reload để đảm bảo hiển thị đúng sau khi từ detail quay về
+        
         bloc.add(const LoadClassList());
         break;
       case 2:
-        // Teacher list - luôn reload
+        
         bloc.add(const LoadTeacherList());
         break;
       case 3:
-        // Student list - luôn reload
+        
         bloc.add(const LoadStudentList());
         break;
     }
@@ -110,6 +110,7 @@ class _HomeAdminScreenState extends State<HomeAdminScreen> {
         body: IndexedStack(index: _selectedIndex, children: _screens),
 
         floatingActionButton: FloatingActionButton.extended(
+          heroTag: 'admin_home_fab',
           onPressed: () {
             Navigator.pushNamed(context, AppRouter.adminQuickRegistration);
           },

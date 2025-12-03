@@ -27,7 +27,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    // Load được quản lý bởi HomeAdminScreen._loadDataForTab
+    
   }
 
   @override

@@ -25,21 +25,34 @@ class TeacherClassListScreen extends StatefulWidget {
   State<TeacherClassListScreen> createState() => _TeacherClassListScreenState();
 }
 
-class _TeacherClassListScreenState extends State<TeacherClassListScreen> {
+class _TeacherClassListScreenState extends State<TeacherClassListScreen>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
-  String _selectedFilter = 'all';
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(_onTabChanged);
     
     
     context.read<TeacherBloc>().add(LoadMyClasses());
   }
 
+  void _onTabChanged() {
+    if (_tabController.indexIsChanging) return;
+    
+    
+    final filter = _tabController.index == 0 ? 'ongoing' : 'completed';
+    context.read<TeacherBloc>().add(FilterClasses(filter));
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
+    _tabController.removeListener(_onTabChanged);
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -98,24 +111,27 @@ class _TeacherClassListScreenState extends State<TeacherClassListScreen> {
 
         
         Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: isDesktop ? 32.w : 20.w,
-            vertical: 12.h,
-          ),
           color: isDark ? const Color(0xFF1F2937) : Colors.white,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildFilterChip('all', 'Tất cả', isDark, isDesktop),
-                SizedBox(width: 8.w),
-                _buildFilterChip('ongoing', 'Đang diễn ra', isDark, isDesktop),
-                SizedBox(width: 8.w),
-                _buildFilterChip('upcoming', 'Sắp diễn ra', isDark, isDesktop),
-                SizedBox(width: 8.w),
-                _buildFilterChip('completed', 'Đã kết thúc', isDark, isDesktop),
-              ],
+          child: TabBar(
+            controller: _tabController,
+            labelColor: AppColors.primary,
+            unselectedLabelColor: isDark ? Colors.white70 : AppColors.textSecondary,
+            indicatorColor: AppColors.primary,
+            indicatorWeight: 3,
+            labelStyle: TextStyle(
+              fontSize: isDesktop ? 16.sp : 14.sp,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Lexend',
             ),
+            unselectedLabelStyle: TextStyle(
+              fontSize: isDesktop ? 16.sp : 14.sp,
+              fontWeight: FontWeight.w500,
+              fontFamily: 'Lexend',
+            ),
+            tabs: const [
+              Tab(text: 'Đang diễn ra'),
+              Tab(text: 'Kết thúc'),
+            ],
           ),
         ),
 
@@ -213,7 +229,7 @@ class _TeacherClassListScreenState extends State<TeacherClassListScreen> {
                                   final classId = state.classes[index].id;
 
                                   if (widget.mode == 'attendance') {
-                                    // Navigate to schedule to select session
+                                    
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: const Text('Vui lòng chọn buổi học từ Lịch dạy để điểm danh'),
@@ -244,7 +260,7 @@ class _TeacherClassListScreenState extends State<TeacherClassListScreen> {
                                     final classId = state.classes[index].id;
 
                                     if (widget.mode == 'attendance') {
-                                      // Navigate to schedule to select session
+                                      
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
                                           content: const Text('Vui lòng chọn buổi học từ Lịch dạy để điểm danh'),
@@ -301,49 +317,5 @@ class _TeacherClassListScreenState extends State<TeacherClassListScreen> {
     }
 
     return content;
-  }
-
-  Widget _buildFilterChip(
-    String value,
-    String label,
-    bool isDark,
-    bool isDesktop,
-  ) {
-    final isSelected = _selectedFilter == value;
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _selectedFilter = value;
-        });
-        context.read<TeacherBloc>().add(FilterClasses(value));
-      },
-      borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primary
-              : (isDark ? const Color(0xFF374151) : Colors.white),
-          borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.primary
-                : (isDark ? const Color(0xFF4B5563) : AppColors.border),
-            width: 1,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            color: isSelected
-                ? Colors.white
-                : (isDark ? Colors.white : AppColors.textPrimary),
-            fontFamily: 'Lexend',
-          ),
-        ),
-      ),
-    );
   }
 }

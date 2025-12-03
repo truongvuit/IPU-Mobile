@@ -1,7 +1,7 @@
 enum RoomStatus {
-  available, // Đang sử dụng
-  occupied, // Đang sử dụng
-  maintenance, // Bảo trì
+  available, 
+  occupied, 
+  maintenance, 
 }
 
 class ClassroomStatistics {

@@ -21,7 +21,7 @@ class PromotionRemoteDataSourceImpl implements PromotionRemoteDataSource {
     if (dioClient == null) {
       throw const ServerException('Chưa khởi tạo API client');
     }
-    
+
     final response = await dioClient!.get('/promotions');
     if (response.statusCode == 200 && response.data['code'] == 1000) {
       final List<dynamic> data = response.data['data'] ?? [];
@@ -35,7 +35,7 @@ class PromotionRemoteDataSourceImpl implements PromotionRemoteDataSource {
     if (dioClient == null) {
       throw const ServerException('Chưa khởi tạo API client');
     }
-    
+
     final response = await dioClient!.get('/promotions/$id');
     if (response.statusCode == 200 && response.data['code'] == 1000) {
       return _mapToPromotionModel(response.data['data']);
@@ -45,17 +45,77 @@ class PromotionRemoteDataSourceImpl implements PromotionRemoteDataSource {
 
   @override
   Future<void> createPromotion(PromotionModel promotion) async {
-    throw const ServerException('API tạo khuyến mãi chưa được triển khai ở BE');
+    if (dioClient == null) {
+      throw const ServerException('Chưa khởi tạo API client');
+    }
+
+    final response = await dioClient!.post(
+      '/promotions',
+      data: _toRequestJson(promotion),
+    );
+    if (response.statusCode == 200 && response.data['code'] == 1000) {
+      return;
+    }
+    throw ServerException(
+      response.data['message'] ?? 'Không thể tạo khuyến mãi',
+    );
   }
 
   @override
   Future<void> updatePromotion(PromotionModel promotion) async {
-    throw const ServerException('API cập nhật khuyến mãi chưa được triển khai ở BE');
+    if (dioClient == null) {
+      throw const ServerException('Chưa khởi tạo API client');
+    }
+
+    final response = await dioClient!.put(
+      '/promotions/${promotion.id}',
+      data: _toRequestJson(promotion),
+    );
+    if (response.statusCode == 200 && response.data['code'] == 1000) {
+      return;
+    }
+    throw ServerException(
+      response.data['message'] ?? 'Không thể cập nhật khuyến mãi',
+    );
   }
 
   @override
   Future<void> deletePromotion(String id) async {
-    throw const ServerException('API xóa khuyến mãi chưa được triển khai ở BE');
+    if (dioClient == null) {
+      throw const ServerException('Chưa khởi tạo API client');
+    }
+
+    final response = await dioClient!.delete('/promotions/$id');
+    if (response.statusCode == 200 && response.data['code'] == 1000) {
+      return;
+    }
+    throw ServerException(
+      response.data['message'] ?? 'Không thể xóa khuyến mãi',
+    );
+  }
+
+  Map<String, dynamic> _toRequestJson(PromotionModel promotion) {
+    return {
+      'name': promotion.title,
+      'code': promotion.code,
+      'description': promotion.description,
+      'discountPercent': promotion.discountType == DiscountType.percentage
+          ? promotion.discountValue.toInt()
+          : 0,
+      'discountAmount': promotion.discountType == DiscountType.fixedAmount
+          ? promotion.discountValue
+          : 0,
+      'startDate': promotion.startDate.toIso8601String().split('T')[0],
+      'endDate': promotion.endDate.toIso8601String().split('T')[0],
+      'active': promotion.status == PromotionStatus.active,
+      'usageLimit': promotion.usageLimit,
+      'minOrderValue': promotion.minOrderValue,
+      'applicableCourseIds': promotion.applicableCourseIds
+          ?.map((e) => int.tryParse(e) ?? 0)
+          .toList(),
+      'promotionType': promotion.promotionType.toString().split('.').last,
+      'requireAllCourses': promotion.requireAllCourses,
+    };
   }
 
   PromotionModel _mapToPromotionModel(Map<String, dynamic> json) {
@@ -78,16 +138,16 @@ class PromotionRemoteDataSourceImpl implements PromotionRemoteDataSource {
         status = PromotionStatus.draft;
     }
 
-    // Lấy danh sách khóa học được áp dụng từ API
+    
     List<String>? applicableCourseIds;
     List<String>? applicableCourseNames;
-    
+
     if (json['applicableCourseIds'] != null) {
       applicableCourseIds = (json['applicableCourseIds'] as List<dynamic>)
           .map((e) => e.toString())
           .toList();
     }
-    
+
     if (json['applicableCourseNames'] != null) {
       applicableCourseNames = (json['applicableCourseNames'] as List<dynamic>)
           .map((e) => e.toString())

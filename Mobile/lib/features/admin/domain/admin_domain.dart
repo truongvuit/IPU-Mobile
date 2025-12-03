@@ -1,4 +1,4 @@
-// Domain Entities
+
 export 'entities/admin_profile.dart';
 export 'entities/admin_dashboard_stats.dart';
 export 'entities/admin_activity.dart';
@@ -12,3 +12,4 @@ export 'entities/revenue_statistics.dart';
 export 'entities/student_statistics.dart';
 export 'entities/teacher_statistics.dart';
 export 'entities/classroom_statistics.dart';
+export 'entities/course_detail.dart';

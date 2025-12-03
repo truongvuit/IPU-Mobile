@@ -47,7 +47,7 @@ class UpdateStudentInfo extends RegistrationEvent {
   ];
 }
 
-// Select existing student (from admin student list)
+
 class SelectStudent extends RegistrationEvent {
   final String studentId;
   final String studentName;
@@ -65,12 +65,12 @@ class SelectStudent extends RegistrationEvent {
   List<Object?> get props => [studentId, studentName, phoneNumber, email];
 }
 
-// Select class (add to list)
+
 class SelectClass extends RegistrationEvent {
   final String classId;
   final String className;
   final double tuitionFee;
-  final String? courseId; // ID của khóa học để filter khuyến mãi
+  final String? courseId; 
   final String? courseName;
 
   const SelectClass({
@@ -91,7 +91,7 @@ class SelectClass extends RegistrationEvent {
   ];
 }
 
-// Remove class from list
+
 class RemoveClass extends RegistrationEvent {
   final String classId;
 
@@ -101,12 +101,12 @@ class RemoveClass extends RegistrationEvent {
   List<Object?> get props => [classId];
 }
 
-// Clear all selected classes
+
 class ClearAllClasses extends RegistrationEvent {
   const ClearAllClasses();
 }
 
-// Load available classes
+
 class LoadAvailableClasses extends RegistrationEvent {
   final String? searchQuery;
 
@@ -116,7 +116,7 @@ class LoadAvailableClasses extends RegistrationEvent {
   List<Object?> get props => [searchQuery];
 }
 
-// Filter classes by course, teacher, schedule
+
 class FilterClasses extends RegistrationEvent {
   final String? courseId;
   final String? teacherId;
@@ -132,7 +132,7 @@ class FilterClasses extends RegistrationEvent {
   List<Object?> get props => [courseId, teacherId, schedule];
 }
 
-// Clear class filter
+
 class ClearClassFilter extends RegistrationEvent {
   const ClearClassFilter();
 }
@@ -148,7 +148,7 @@ class ApplyPromotion extends RegistrationEvent {
 
 class LoadPromotions extends RegistrationEvent {
   final String? courseId;
-  final List<String>? selectedCourseIds; // Danh sách các khóa đã chọn
+  final List<String>? selectedCourseIds; 
 
   const LoadPromotions({this.courseId, this.selectedCourseIds});
 

@@ -55,15 +55,15 @@ class SelectedClassInfo {
   int get hashCode => classId.hashCode;
 }
 
-// Registration in progress with current data
+
 class RegistrationInProgress extends RegistrationState {
-  final bool isNewStudent; // true = học viên mới, false = học viên đã có
-  final String? studentId; // ID học viên đã chọn (null nếu là học viên mới)
+  final bool isNewStudent; 
+  final String? studentId; 
   final String? studentName;
   final String? studentGroup;
   final String? phoneNumber;
   final String? email;
-  final List<SelectedClassInfo> selectedClasses; // Danh sách lớp đã chọn
+  final List<SelectedClassInfo> selectedClasses; 
   final double discount;
   final String? promotionCode;
   final Promotion? appliedPromotion;
@@ -85,28 +85,28 @@ class RegistrationInProgress extends RegistrationState {
     this.notes,
   });
 
-  // Tính tổng học phí từ tất cả các lớp
+  
   double get tuitionFee =>
       selectedClasses.fold(0, (sum, c) => sum + c.tuitionFee);
 
   double get totalAmount => tuitionFee - discount;
 
-  // Lấy tên tất cả lớp đã chọn
+  
   String? get className => selectedClasses.isEmpty
       ? null
       : selectedClasses.map((c) => c.className).join(', ');
 
-  // Lấy class ID đầu tiên (để tương thích code cũ)
+  
   String? get classId =>
       selectedClasses.isEmpty ? null : selectedClasses.first.classId;
 
-  // Lấy course ID đầu tiên (để filter khuyến mãi)
+  
   String? get courseId =>
       selectedClasses.isEmpty ? null : selectedClasses.first.courseId;
   String? get courseName =>
       selectedClasses.isEmpty ? null : selectedClasses.first.courseName;
 
-  // Lấy tất cả course IDs đã chọn (unique)
+  
   List<String> get selectedCourseIds => selectedClasses
       .where((c) => c.courseId != null)
       .map((c) => c.courseId!)
@@ -114,8 +114,8 @@ class RegistrationInProgress extends RegistrationState {
       .toList();
 
   bool get isValid {
-    // Học viên mới: cần có tên và SĐT
-    // Học viên cũ: cần có studentId
+    
+    
     final hasValidStudent = isNewStudent
         ? (studentName != null &&
               studentName!.isNotEmpty &&
@@ -178,13 +178,13 @@ class RegistrationInProgress extends RegistrationState {
   }
 }
 
-/// Thông tin filter cho màn chọn lớp
+
 class ClassFilterInfo {
   final String? courseId;
   final String? courseName;
   final String? teacherId;
   final String? teacherName;
-  final String? schedule; // Ví dụ: "2-4-6", "3-5-7"
+  final String? schedule; 
 
   const ClassFilterInfo({
     this.courseId,
@@ -195,15 +195,15 @@ class ClassFilterInfo {
   });
 }
 
-// Classes list loaded
+
 class ClassesLoaded extends RegistrationState {
   final List<AdminClass> classes;
   final RegistrationInProgress currentRegistration;
-  // Dữ liệu filter từ API
+  
   final List<Map<String, dynamic>> courses;
   final List<Map<String, dynamic>> teachers;
   final List<String> schedules;
-  // Filter đang áp dụng
+  
   final ClassFilterInfo? appliedFilter;
 
   const ClassesLoaded({
@@ -249,7 +249,7 @@ class ClassesLoaded extends RegistrationState {
   }
 }
 
-// Promotions loaded
+
 class PromotionsLoaded extends RegistrationState {
   final List<Promotion> promotions;
   final RegistrationInProgress currentRegistration;
@@ -262,19 +262,19 @@ class PromotionsLoaded extends RegistrationState {
   @override
   List<Object?> get props => [promotions, currentRegistration];
 
-  /// Lọc khuyến mãi có thể áp dụng cho các khóa đã chọn
+  
   List<Promotion> get validPromotions {
     final selectedCourseIds = currentRegistration.selectedCourseIds;
     return promotions.where((p) {
-      // Kiểm tra khuyến mãi còn hiệu lực
+      
       if (!p.isValid) return false;
-      // Kiểm tra có thể áp dụng cho các khóa đã chọn
+      
       return p.canApplyForCourses(selectedCourseIds);
     }).toList();
   }
 }
 
-// Registration submitted
+
 class RegistrationSubmitted extends RegistrationState {
   final QuickRegistration registration;
 
@@ -284,7 +284,7 @@ class RegistrationSubmitted extends RegistrationState {
   List<Object?> get props => [registration];
 }
 
-// Registration submitting
+
 class RegistrationSubmitting extends RegistrationState {
   const RegistrationSubmitting();
 }

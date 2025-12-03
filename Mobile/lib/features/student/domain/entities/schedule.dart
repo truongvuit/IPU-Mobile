@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-
 class Schedule extends Equatable {
   final String id;
   final String classId;
@@ -14,7 +13,7 @@ class Schedule extends Equatable {
   final String? courseName;
   final String? status;
   final String? note;
-  final String? period; // Sáng / Chiều / Tối
+  final String? period; 
 
   const Schedule({
     required this.id,
@@ -32,16 +31,20 @@ class Schedule extends Equatable {
     this.period,
   });
 
-  /// Parse from SessionInfo JSON format from backend
-  factory Schedule.fromSessionInfo(Map<String, dynamic> json, DateTime sessionDate, String period) {
+  
+  factory Schedule.fromSessionInfo(
+    Map<String, dynamic> json,
+    DateTime sessionDate,
+    String period,
+  ) {
     final startTimeStr = json['startTime'] as String? ?? '08:00';
     final durationMinutes = json['durationMinutes'] as int? ?? 90;
+
     
-    // Parse startTime từ "HH:mm" format
     final timeParts = startTimeStr.split(':');
     final hour = int.tryParse(timeParts[0]) ?? 8;
     final minute = timeParts.length > 1 ? int.tryParse(timeParts[1]) ?? 0 : 0;
-    
+
     final startTime = DateTime(
       sessionDate.year,
       sessionDate.month,
@@ -50,7 +53,7 @@ class Schedule extends Equatable {
       minute,
     );
     final endTime = startTime.add(Duration(minutes: durationMinutes));
-    
+
     return Schedule(
       id: (json['sessionId']?.toString() ?? ''),
       classId: (json['classId']?.toString() ?? ''),
@@ -69,20 +72,20 @@ class Schedule extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        classId,
-        className,
-        teacherName,
-        room,
-        startTime,
-        endTime,
-        isOnline,
-        meetingLink,
-        courseName,
-        status,
-        note,
-        period,
-      ];
+    id,
+    classId,
+    className,
+    teacherName,
+    room,
+    startTime,
+    endTime,
+    isOnline,
+    meetingLink,
+    courseName,
+    status,
+    note,
+    period,
+  ];
 
   Schedule copyWith({
     String? id,

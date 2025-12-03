@@ -40,14 +40,14 @@ class AdminFeedback extends Equatable {
   ];
 
   factory AdminFeedback.fromJson(Map<String, dynamic> json) {
-    // Calculate rating from averageRating or individual ratings
+    
     double rating = 0.0;
     if (json['averageRating'] != null) {
       rating = (json['averageRating'] as num).toDouble();
     } else if (json['rating'] != null) {
       rating = (json['rating'] as num).toDouble();
     } else {
-      // Calculate from individual ratings if available
+      
       final teacherRating = (json['teacherRating'] as num?)?.toDouble() ?? 0.0;
       final facilityRating = (json['facilityRating'] as num?)?.toDouble() ?? 0.0;
       final overallRating = (json['overallRating'] as num?)?.toDouble() ?? 0.0;

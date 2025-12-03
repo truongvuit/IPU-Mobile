@@ -80,7 +80,7 @@ class TeacherRepositoryWithApi implements TeacherRepository {
   Future<Either<String, List<AttendanceSession>>> getClassSessions(
     String classId,
   ) async {
-    // Not needed - we use session-based attendance
+    
     return const Left('Use getAttendanceSession with sessionId instead');
   }
 
@@ -89,8 +89,8 @@ class TeacherRepositoryWithApi implements TeacherRepository {
     String classId,
     DateTime date,
   ) async {
-    // Note: This method expects classId but API uses sessionId
-    // The screen should pass sessionId, not classId
+    
+    
     try {
       final sessionId = int.tryParse(classId);
       if (sessionId == null) {
@@ -130,7 +130,7 @@ class TeacherRepositoryWithApi implements TeacherRepository {
     String status,
     String? note,
   ) async {
-    // Single record - will be batched in UI
+    
     return const Left('Use batchRecordAttendance instead');
   }
 
@@ -155,7 +155,7 @@ class TeacherRepositoryWithApi implements TeacherRepository {
 
   @override
   Future<Either<String, void>> submitAttendance(String sessionId) async {
-    // Attendance is submitted via batchRecordAttendance
+    
     return const Right(null);
   }
 
@@ -211,6 +211,15 @@ class TeacherRepositoryWithApi implements TeacherRepository {
 
   @override
   Future<Either<String, List<TeacherSchedule>>> getTodaySchedule() async {
-    return getWeekSchedule(DateTime.now());
+    final result = await getWeekSchedule(DateTime.now());
+    return result.map((schedules) {
+      final now = DateTime.now();
+      
+      return schedules.where((s) {
+        return s.startTime.year == now.year &&
+            s.startTime.month == now.month &&
+            s.startTime.day == now.day;
+      }).toList();
+    });
   }
 }

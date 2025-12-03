@@ -6,6 +6,7 @@ import '../../domain/entities/admin_class.dart';
 import '../../domain/entities/admin_student.dart';
 import '../../domain/entities/admin_teacher.dart';
 import '../../domain/entities/class_student.dart';
+import '../../domain/entities/class_session.dart';
 import '../../domain/entities/promotion.dart';
 import '../../domain/entities/admin_feedback.dart';
 import 'admin_api_datasource.dart';
@@ -20,13 +21,15 @@ class AdminRemoteDataSource implements AdminApiDataSource {
     try {
       final response = await dioClient.get('/users/name-email');
       final data = response.data['data'] ?? response.data;
-      
+
       final fullName = data['fullName'] ?? data['name'] ?? data['hoten'] ?? '';
       final email = data['email'] ?? '';
-      
+
       return AdminProfile(
         id: userId,
-        fullName: fullName.toString().isNotEmpty ? fullName.toString() : 'Admin',
+        fullName: fullName.toString().isNotEmpty
+            ? fullName.toString()
+            : 'Admin',
         email: email.toString(),
         phoneNumber: (data['phoneNumber'] ?? data['sdt'] ?? '').toString(),
         avatarUrl: data['avatarUrl']?.toString() ?? data['avatar']?.toString(),
@@ -62,12 +65,24 @@ class AdminRemoteDataSource implements AdminApiDataSource {
       if (response.statusCode == 200 && response.data['code'] == 1000) {
         final data = response.data['data'];
         return AdminDashboardStats(
-          ongoingClasses: _parseToInt(data['lopDangDay'] ?? data['ongoingClasses']),
-          todayRegistrations: _parseToInt(data['dangKyHomNay'] ?? data['todayRegistrations']),
-          activeStudents: _parseToInt(data['tongHocVien'] ?? data['activeStudents']),
-          monthlyRevenue: _parseToDouble(data['doanhThuThang'] ?? data['monthlyRevenue']),
-          totalTeachers: _parseToInt(data['tongGiangVien'] ?? data['totalTeachers']),
-          totalCourses: _parseToInt(data['tongKhoaHoc'] ?? data['totalCourses']),
+          ongoingClasses: _parseToInt(
+            data['lopDangDay'] ?? data['ongoingClasses'],
+          ),
+          todayRegistrations: _parseToInt(
+            data['dangKyHomNay'] ?? data['todayRegistrations'],
+          ),
+          activeStudents: _parseToInt(
+            data['tongHocVien'] ?? data['activeStudents'],
+          ),
+          monthlyRevenue: _parseToDouble(
+            data['doanhThuThang'] ?? data['monthlyRevenue'],
+          ),
+          totalTeachers: _parseToInt(
+            data['tongGiangVien'] ?? data['totalTeachers'],
+          ),
+          totalCourses: _parseToInt(
+            data['tongKhoaHoc'] ?? data['totalCourses'],
+          ),
         );
       } else {
         throw Exception(
@@ -108,17 +123,13 @@ class AdminRemoteDataSource implements AdminApiDataSource {
       );
       final classesData = classesResponse.data['data'];
       totalClasses = classesData['totalItems'] ?? 0;
-    } catch (_) {
-      
-    }
+    } catch (_) {}
 
     try {
       final teachersResponse = await dioClient.get('/lecturers/lecturer-name');
       final teachersData = teachersResponse.data['data'] ?? [];
       totalTeachers = teachersData is List ? teachersData.length : 0;
-    } catch (_) {
-      
-    }
+    } catch (_) {}
 
     try {
       final coursesResponse = await dioClient.get('/courses/activecourses');
@@ -129,9 +140,7 @@ class AdminRemoteDataSource implements AdminApiDataSource {
           totalCourses += (courses as List).length;
         }
       }
-    } catch (_) {
-      
-    }
+    } catch (_) {}
 
     try {
       final studentsResponse = await dioClient.get(
@@ -140,9 +149,7 @@ class AdminRemoteDataSource implements AdminApiDataSource {
       );
       final studentsData = studentsResponse.data['data'];
       totalStudents = studentsData['totalItems'] ?? 0;
-    } catch (_) {
-      
-    }
+    } catch (_) {}
 
     return AdminDashboardStats(
       ongoingClasses: totalClasses,
@@ -463,7 +470,6 @@ class AdminRemoteDataSource implements AdminApiDataSource {
   @override
   Future<AdminStudent> getStudentById(String studentId) async {
     try {
-
       final response = await dioClient.get('/admin/students/$studentId');
 
       if (response.statusCode == 200 && response.data['code'] == 1000) {
@@ -557,12 +563,13 @@ class AdminRemoteDataSource implements AdminApiDataSource {
         'fullName': fullName,
         'phoneNumber': phoneNumber,
       };
-      
+
       if (email != null) data['email'] = email;
       if (address != null) data['address'] = address;
       if (occupation != null) data['occupation'] = occupation;
       if (educationLevel != null) data['educationLevel'] = educationLevel;
-      if (dateOfBirth != null) data['dateOfBirth'] = dateOfBirth.toIso8601String().split('T')[0];
+      if (dateOfBirth != null)
+        data['dateOfBirth'] = dateOfBirth.toIso8601String().split('T')[0];
       if (password != null && password.isNotEmpty) data['password'] = password;
 
       final response = await dioClient.put(
@@ -613,11 +620,12 @@ class AdminRemoteDataSource implements AdminApiDataSource {
 
       if (data is List) {
         for (var json in data) {
-          final lecturerId = (json['lecturerId'] ?? json['magv'] ?? '').toString();
-          
+          final lecturerId = (json['lecturerId'] ?? json['magv'] ?? '')
+              .toString();
+
           int totalClasses = 0;
           int totalStudents = 0;
-          
+
           try {
             final classesResponse = await dioClient.get(
               '/courseclasses/filter',
@@ -631,24 +639,24 @@ class AdminRemoteDataSource implements AdminApiDataSource {
                 totalStudents += (cls['currentEnrollment'] ?? 0) as int;
               }
             }
-          } catch (_) {
-            
-          }
-          
-          teachers.add(AdminTeacher(
-            id: lecturerId,
-            fullName: json['lecturerName'] ?? json['hoten'] ?? '',
-            email: json['email'],
-            phoneNumber: json['phoneNumber'] ?? json['sdt'],
-            avatarUrl: json['avatarUrl'] ?? json['hinhanh'],
-            subjects: const [],
-            rating: 0.0,
-            totalClasses: totalClasses,
-            totalStudents: totalStudents,
-            attendanceRate: 0.0,
-            activeClasses: totalClasses,
-            status: 'active',
-          ));
+          } catch (_) {}
+
+          teachers.add(
+            AdminTeacher(
+              id: lecturerId,
+              fullName: json['lecturerName'] ?? json['hoten'] ?? '',
+              email: json['email'],
+              phoneNumber: json['phoneNumber'] ?? json['sdt'],
+              avatarUrl: json['avatarUrl'] ?? json['hinhanh'],
+              subjects: const [],
+              rating: 0.0,
+              totalClasses: totalClasses,
+              totalStudents: totalStudents,
+              attendanceRate: 0.0,
+              activeClasses: totalClasses,
+              status: 'active',
+            ),
+          );
         }
       }
 
@@ -675,36 +683,46 @@ class AdminRemoteDataSource implements AdminApiDataSource {
       final response = await dioClient.get('/lecturers/$teacherId');
       final data = response.data['data'] ?? response.data;
 
-      final qualifications =
-          (data['qualifications'] as List<dynamic>?)
-              ?.map((q) => '${q['degreeName'] ?? ''} - ${q['level'] ?? ''}')
-              .join(', ') ??
-          '';
-
-      final totalClasses = data['totalClasses'] ?? 0;
-      final totalStudents = data['totalStudents'] ?? 0;
-      final rating = (data['rating'] ?? 0.0).toDouble();
-
-      return AdminTeacher(
-        id: (data['lecturerId'] ?? data['magv'] ?? teacherId).toString(),
-        fullName: data['fullName'] ?? data['hoten'] ?? '',
-        email: data['email'],
-        phoneNumber: data['phoneNumber'] ?? data['sdt'],
-        avatarUrl: data['imagePath'] ?? data['hinhanh'],
-        subjects: const [],
-        rating: rating,
-        totalClasses: totalClasses,
-        totalStudents: totalStudents,
-        attendanceRate: 0.0,
-        activeClasses: totalClasses,
-        status: 'active',
-        experience: null,
-        qualifications: qualifications,
-        recentReviews: const [],
-        todaySchedule: const [],
-      );
+      
+      
+      return AdminTeacher.fromJson(data);
     } catch (e) {
       throw Exception('Failed to load teacher details: $e');
+    }
+  }
+
+  @override
+  Future<void> createTeacher({
+    required String name,
+    required String phoneNumber,
+    String? email,
+    DateTime? dateOfBirth,
+    String? imageUrl,
+  }) async {
+    try {
+      final body = <String, dynamic>{'name': name, 'phoneNumber': phoneNumber};
+
+      if (email != null && email.isNotEmpty) {
+        body['email'] = email;
+      }
+      if (dateOfBirth != null) {
+        body['dateOfBirth'] = dateOfBirth.toIso8601String().split('T')[0];
+      }
+      if (imageUrl != null && imageUrl.isNotEmpty) {
+        body['imageUrl'] = imageUrl;
+      }
+
+      final response = await dioClient.post('/users/add-lecturer', data: body);
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception(response.data['message'] ?? 'Failed to create teacher');
+      }
+
+      if (response.data['code'] != null && response.data['code'] != 1000) {
+        throw Exception(response.data['message'] ?? 'Failed to create teacher');
+      }
+    } catch (e) {
+      throw Exception('Failed to create teacher: $e');
     }
   }
 
@@ -744,6 +762,15 @@ class AdminRemoteDataSource implements AdminApiDataSource {
         ? '$startTime - $endTime'
         : '';
 
+    
+    final List<ClassSession> sessions = [];
+    final sessionsList = json['sessions'] as List<dynamic>? ?? [];
+    for (final sessionJson in sessionsList) {
+      if (sessionJson is Map<String, dynamic>) {
+        sessions.add(ClassSession.fromJson(sessionJson));
+      }
+    }
+
     return AdminClass(
       id: (json['classId'] ?? json['malop'] ?? '').toString(),
       name: json['className'] ?? json['tenlop'] ?? '',
@@ -765,6 +792,8 @@ class AdminRemoteDataSource implements AdminApiDataSource {
       maxStudents: json['maxCapacity'] ?? json['succhua'] ?? 30,
       imageUrl: json['imageUrl'] ?? json['hinhanh'],
       tuitionFee: (json['tuitionFee'] ?? json['hocphi'] ?? 0).toDouble(),
+      totalSessions: json['totalSessions'] ?? sessions.length,
+      sessions: sessions,
     );
   }
 
@@ -830,7 +859,7 @@ class AdminRemoteDataSource implements AdminApiDataSource {
     try {
       final response = await dioClient.get('/promotions/active');
       final data = response.data['data'] ?? response.data;
-      
+
       if (data is List) {
         return data.map((json) => _mapToPromotion(json)).toList();
       }
@@ -845,7 +874,7 @@ class AdminRemoteDataSource implements AdminApiDataSource {
     try {
       final response = await dioClient.get('/promotions/course/$courseId');
       final data = response.data['data'] ?? response.data;
-      
+
       if (data is List) {
         return data.map((json) => _mapToPromotion(json)).toList();
       }
@@ -870,13 +899,12 @@ class AdminRemoteDataSource implements AdminApiDataSource {
         if (notes != null) 'notes': notes,
       };
 
-      final response = await dioClient.post(
-        '/orders',
-        data: body,
-      );
+      final response = await dioClient.post('/orders', data: body);
 
       if ((response.statusCode == 200 || response.statusCode == 201) &&
-          (response.data == null || response.data['code'] == null || response.data['code'] == 1000)) {
+          (response.data == null ||
+              response.data['code'] == null ||
+              response.data['code'] == 1000)) {
         return response.data['data'] ?? response.data ?? {};
       }
 
@@ -926,7 +954,9 @@ class AdminRemoteDataSource implements AdminApiDataSource {
       title: json['name'] ?? '',
       description: json['description'] ?? '',
       discountType: DiscountType.percentage,
-      discountValue: (discountPercent is int) ? discountPercent.toDouble() : (discountPercent as num).toDouble(),
+      discountValue: (discountPercent is int)
+          ? discountPercent.toDouble()
+          : (discountPercent as num).toDouble(),
       startDate: _parseDate(json['startDate']),
       endDate: _parseDate(json['endDate']),
       status: status,
@@ -948,13 +978,12 @@ class AdminRemoteDataSource implements AdminApiDataSource {
         if (email != null && email.isNotEmpty) 'email': email,
       };
 
-      final response = await dioClient.post(
-        '/admin/students',
-        data: body,
-      );
+      final response = await dioClient.post('/admin/students', data: body);
 
       if ((response.statusCode == 200 || response.statusCode == 201) &&
-          (response.data == null || response.data['code'] == null || response.data['code'] == 1000)) {
+          (response.data == null ||
+              response.data['code'] == null ||
+              response.data['code'] == 1000)) {
         return response.data['data'] ?? response.data ?? {};
       }
 
@@ -987,12 +1016,11 @@ class AdminRemoteDataSource implements AdminApiDataSource {
     try {
       final response = await dioClient.get('/degrees');
       final data = response.data['data'] ?? response.data;
-      
+
       if (data is List) {
-        return data.map((item) => {
-          'id': item['id'],
-          'name': item['name'] ?? '',
-        }).toList();
+        return data
+            .map((item) => {'id': item['id'], 'name': item['name'] ?? ''})
+            .toList();
       }
       return [];
     } catch (e) {
@@ -1010,14 +1038,18 @@ class AdminRemoteDataSource implements AdminApiDataSource {
     try {
       final response = await dioClient.get('/categories');
       final data = response.data['data'] ?? response.data;
-      
+
       if (data is List) {
-        return data.map((item) => {
-          'id': item['id'],
-          'name': item['name'] ?? '',
-          'level': item['level'],
-          'description': item['description'],
-        }).toList();
+        return data
+            .map(
+              (item) => {
+                'id': item['id'],
+                'name': item['name'] ?? '',
+                'level': item['level'],
+                'description': item['description'],
+              },
+            )
+            .toList();
       }
       return [];
     } catch (e) {
@@ -1034,12 +1066,16 @@ class AdminRemoteDataSource implements AdminApiDataSource {
     try {
       final response = await dioClient.get('/rooms/room-name');
       final data = response.data['data'] ?? response.data;
-      
+
       if (data is List) {
-        return data.map((item) => {
-          'id': item['roomId'] ?? item['id'],
-          'name': item['roomName'] ?? item['name'] ?? '',
-        }).toList();
+        return data
+            .map(
+              (item) => {
+                'id': item['roomId'] ?? item['id'],
+                'name': item['roomName'] ?? item['name'] ?? '',
+              },
+            )
+            .toList();
       }
       return [];
     } catch (e) {
@@ -1058,19 +1094,19 @@ class AdminRemoteDataSource implements AdminApiDataSource {
   Future<List<AdminFeedback>> getClassFeedbacks(String classId) async {
     try {
       final response = await dioClient.get('/courseclasses/$classId/reviews');
-      
+
       if (response.statusCode == 200 && response.data['code'] == 1000) {
         final data = response.data['data'];
         if (data == null || data is! List) return [];
-        
+
         return (data).map((item) {
           return AdminFeedback(
             id: item['reviewId']?.toString() ?? '',
             studentName: item['studentName'] ?? 'Học viên',
             rating: _calculateAverageRating(item),
             comment: item['comment'] ?? '',
-            createdAt: item['createdAt'] != null 
-                ? DateTime.parse(item['createdAt']) 
+            createdAt: item['createdAt'] != null
+                ? DateTime.parse(item['createdAt'])
                 : DateTime.now(),
             className: item['className'] ?? '',
             studentAvatar: item['studentAvatar'],
@@ -1090,17 +1126,71 @@ class AdminRemoteDataSource implements AdminApiDataSource {
     final teacherRating = (item['teacherRating'] as num?)?.toDouble() ?? 0;
     final facilityRating = (item['facilityRating'] as num?)?.toDouble() ?? 0;
     final overallRating = (item['overallRating'] as num?)?.toDouble() ?? 0;
-    
+
     if (item['averageRating'] != null) {
       return (item['averageRating'] as num).toDouble();
     }
-    
+
     int count = 0;
     double sum = 0;
-    if (teacherRating > 0) { sum += teacherRating; count++; }
-    if (facilityRating > 0) { sum += facilityRating; count++; }
-    if (overallRating > 0) { sum += overallRating; count++; }
-    
+    if (teacherRating > 0) {
+      sum += teacherRating;
+      count++;
+    }
+    if (facilityRating > 0) {
+      sum += facilityRating;
+      count++;
+    }
+    if (overallRating > 0) {
+      sum += overallRating;
+      count++;
+    }
+
     return count > 0 ? sum / count : 0;
+  }
+
+  @override
+  Future<ClassSession> updateSession({
+    required int sessionId,
+    required String status,
+    String? note,
+  }) async {
+    try {
+      final response = await dioClient.put(
+        '/courseclasses/sessions/$sessionId',
+        data: {'status': status, if (note != null) 'note': note},
+      );
+
+      final data = response.data['data'] ?? response.data;
+      return ClassSession.fromJson(data);
+    } catch (e) {
+      throw Exception('Failed to update session: $e');
+    }
+  }
+
+  @override
+  Future<SessionAttendanceInfo> getSessionAttendance(int sessionId) async {
+    try {
+      final response = await dioClient.get(
+        '/courseclasses/sessions/$sessionId/attendance',
+      );
+
+      final data = response.data['data'] ?? response.data;
+
+      final List<StudentAttendanceEntry> entries = [];
+      final entriesList = data['entries'] as List<dynamic>? ?? [];
+      for (final entry in entriesList) {
+        if (entry is Map<String, dynamic>) {
+          entries.add(StudentAttendanceEntry.fromJson(entry));
+        }
+      }
+
+      return SessionAttendanceInfo(
+        sessionId: data['sessionId'] ?? sessionId,
+        entries: entries,
+      );
+    } catch (e) {
+      throw Exception('Failed to get session attendance: $e');
+    }
   }
 }

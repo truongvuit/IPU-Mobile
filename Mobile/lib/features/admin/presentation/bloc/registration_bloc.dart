@@ -11,7 +11,7 @@ import '../../domain/repositories/admin_repository.dart';
 class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
   final AdminRepository? adminRepository;
   
-  // Cache dữ liệu filter
+  
   List<Map<String, dynamic>> _cachedCourses = [];
   List<Map<String, dynamic>> _cachedTeachers = [];
   List<String> _cachedSchedules = [];
@@ -41,7 +41,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     InitializeRegistration event,
     Emitter<RegistrationState> emit,
   ) async {
-    // Mặc định là học viên mới (phù hợp cho đăng ký nhanh tại quầy)
+    
     emit(const RegistrationInProgress(isNewStudent: true));
   }
 
@@ -61,7 +61,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
       return;
     }
     
-    // Xóa thông tin học viên cũ khi chuyển mode
+    
     emit(
       current.copyWith(isNewStudent: event.isNewStudent, clearStudent: true),
     );
@@ -137,7 +137,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
       return;
     }
 
-    // Tạo thông tin lớp mới
+    
     final newClass = SelectedClassInfo(
       classId: event.classId,
       className: event.className,
@@ -146,7 +146,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
       tuitionFee: event.tuitionFee,
     );
 
-    // Kiểm tra xem lớp đã được chọn chưa
+    
     final existingClasses = List<SelectedClassInfo>.from(
       current.selectedClasses,
     );
@@ -155,21 +155,21 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     );
 
     if (alreadySelected) {
-      // Nếu đã chọn rồi, xóa khỏi danh sách (toggle)
+      
       existingClasses.removeWhere((c) => c.classId == event.classId);
     } else {
-      // Nếu chưa chọn, thêm vào danh sách
+      
       existingClasses.add(newClass);
     }
 
-    // Tạo state mới với danh sách lớp đã cập nhật
+    
     final updatedRegistration = current.copyWith(
       selectedClasses: existingClasses,
       clearPromotion: true,
       discount: 0,
     );
 
-    // Nếu đang ở ClassesLoaded, giữ nguyên state đó với currentRegistration mới
+    
     if (classesLoadedState != null) {
       emit(classesLoadedState.copyWith(
         currentRegistration: updatedRegistration,
@@ -204,7 +204,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
       discount: 0,
     );
 
-    // Nếu đang ở ClassesLoaded, giữ nguyên state đó
+    
     if (classesLoadedState != null) {
       emit(classesLoadedState.copyWith(
         currentRegistration: updatedRegistration,
@@ -236,7 +236,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
       discount: 0,
     );
 
-    // Nếu đang ở ClassesLoaded, giữ nguyên state đó
+    
     if (classesLoadedState != null) {
       emit(classesLoadedState.copyWith(
         currentRegistration: updatedRegistration,
@@ -250,7 +250,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     LoadAvailableClasses event,
     Emitter<RegistrationState> emit,
   ) async {
-    // Lưu current state trước khi emit loading
+    
     RegistrationInProgress savedState;
     if (state is RegistrationInProgress) {
       savedState = state as RegistrationInProgress;
@@ -269,19 +269,19 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
       List<Map<String, dynamic>> courses = [];
       List<Map<String, dynamic>> teachers = [];
 
-      // Sử dụng API thực nếu có repository
+      
       if (adminRepository != null) {
         try {
-          // Load classes và filter data song song
+          
           final results = await Future.wait([
             adminRepository!.getClasses(),
-            adminRepository!.getCategories(), // Lấy danh sách khóa học
+            adminRepository!.getCategories(), 
           ]);
           
           classes = results[0] as List<AdminClass>;
           courses = results[1] as List<Map<String, dynamic>>;
           
-          // Lấy danh sách giảng viên unique từ classes
+          
           final teacherSet = <String, Map<String, dynamic>>{};
           for (final c in classes) {
             if (c.teacherId != null && !teacherSet.containsKey(c.teacherId)) {
@@ -293,16 +293,16 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
           }
           teachers = teacherSet.values.toList();
         } catch (e) {
-          // Fallback to mock nếu lỗi
+          
           classes = _getMockClasses();
         }
       } else {
-        // Fallback to mock data
+        
         await Future.delayed(const Duration(milliseconds: 500));
         classes = _getMockClasses();
       }
 
-      // Lấy danh sách schedule unique
+      
       final scheduleSet = <String>{};
       for (final c in classes) {
         if (c.schedule.isNotEmpty) {
@@ -311,7 +311,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
       }
       final schedules = scheduleSet.toList()..sort();
 
-      // Cache data
+      
       _allClasses = classes;
       _cachedCourses = courses;
       _cachedTeachers = teachers;
@@ -339,10 +339,10 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     
     final currentState = state as ClassesLoaded;
     
-    // Lọc classes dựa trên filter
+    
     List<AdminClass> filteredClasses = List.from(_allClasses);
     
-    // Filter theo khóa học
+    
     if (event.courseId != null && event.courseId!.isNotEmpty) {
       filteredClasses = filteredClasses
           .where((c) => c.courseId == event.courseId || 
@@ -358,21 +358,21 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
           .toList();
     }
     
-    // Filter theo giảng viên
+    
     if (event.teacherId != null && event.teacherId!.isNotEmpty) {
       filteredClasses = filteredClasses
           .where((c) => c.teacherId == event.teacherId)
           .toList();
     }
     
-    // Filter theo lịch học
+    
     if (event.schedule != null && event.schedule!.isNotEmpty) {
       filteredClasses = filteredClasses
           .where((c) => c.schedule == event.schedule)
           .toList();
     }
 
-    // Tạo filter info
+    
     String? courseName;
     String? teacherName;
     if (event.courseId != null) {
@@ -434,14 +434,14 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     try {
       Promotion? promotion;
 
-      // Thử validate từ API trước
+      
       if (adminRepository != null) {
         try {
           promotion = await adminRepository!.validatePromotionCode(
             event.promotionCode,
           );
         } catch (e) {
-          // Fallback to local search in loaded promotions
+          
           if (state is PromotionsLoaded) {
             final loadedPromotions = (state as PromotionsLoaded).promotions;
             promotion = loadedPromotions.firstWhere(
@@ -453,7 +453,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
           }
         }
       } else {
-        // Fallback to mock
+        
         promotion = _getMockPromotions().firstWhere(
           (p) => p.code.toUpperCase() == event.promotionCode.toUpperCase(),
           orElse: () => throw Exception('Mã khuyến mãi không hợp lệ'),
@@ -471,7 +471,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
       );
     } catch (e) {
       emit(RegistrationError(e.toString()));
-      emit(current); // Return to previous state
+      emit(current); 
     }
   }
 
@@ -479,7 +479,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     LoadPromotions event,
     Emitter<RegistrationState> emit,
   ) async {
-    // Lưu current state trước khi emit loading
+    
     RegistrationInProgress savedState;
     if (state is RegistrationInProgress) {
       savedState = state as RegistrationInProgress;
@@ -491,7 +491,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
       savedState = const RegistrationInProgress();
     }
 
-    // Lấy courseId từ event hoặc từ state đã lưu
+    
     final courseId = event.courseId ?? savedState.courseId;
 
     emit(const RegistrationLoading());
@@ -499,22 +499,22 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     try {
       List<Promotion> promotions;
 
-      // Sử dụng API thực nếu có repository
+      
       if (adminRepository != null) {
         try {
-          // Nếu có courseId, lấy khuyến mãi theo khóa học
+          
           if (courseId != null) {
             promotions = await adminRepository!.getPromotionsByCourse(courseId);
           } else {
-            // Nếu không có courseId, lấy tất cả khuyến mãi active
+            
             promotions = await adminRepository!.getActivePromotions();
           }
         } catch (e) {
-          // Fallback to mock nếu API lỗi
+          
           promotions = _getMockPromotions();
         }
       } else {
-        // Fallback to mock data
+        
         await Future.delayed(const Duration(milliseconds: 500));
         promotions = _getMockPromotions();
       }
@@ -615,22 +615,22 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
         try {
           int studentIdInt;
 
-          // Nếu là học viên mới, tạo học viên trước
+          
           if (current.isNewStudent) {
-            // Kiểm tra thông tin học viên mới
+            
             if (current.studentName == null || current.phoneNumber == null) {
               throw Exception('Vui lòng nhập tên và số điện thoại học viên');
             }
 
-            // Gọi API tạo học viên mới
+            
             final createStudentResponse = await adminRepository!.createStudent(
               name: current.studentName!,
               phoneNumber: current.phoneNumber!,
               email: current.email,
             );
 
-            // Parse studentId từ response
-            // BE trả về StudentInfo với trường studentId
+            
+            
             studentIdInt =
                 createStudentResponse['studentId'] ??
                 createStudentResponse['id'] ??
@@ -641,7 +641,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
               throw Exception('Không thể tạo học viên mới');
             }
           } else {
-            // Học viên cũ - parse studentId từ state
+            
             if (current.studentId == null) {
               throw Exception('Vui lòng chọn học viên');
             }
@@ -655,7 +655,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
             }
           }
 
-          // Parse tất cả classIds sang List<int>
+          
           final classIds = current.selectedClasses.map((c) {
             final parsed =
                 int.tryParse(c.classId.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
@@ -669,8 +669,8 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
             throw Exception('Vui lòng chọn ít nhất một lớp học');
           }
 
-          // Map PaymentMethod enum sang int cho BE
-          // 1: Tiền mặt, 2: Chuyển khoản, 3: Quét thẻ
+          
+          
           int paymentMethodId;
           switch (current.paymentMethod) {
             case PaymentMethod.cash:
@@ -684,7 +684,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
               break;
           }
 
-          // Gọi API đăng ký khóa học (với danh sách nhiều lớp)
+          
           final response = await adminRepository!.registerCourses(
             studentId: studentIdInt,
             classIds: classIds,
@@ -692,7 +692,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
             notes: current.notes,
           );
 
-          // Parse response từ BE để hiển thị kết quả
+          
           final invoiceId =
               response['invoiceId'] ??
               response['mahoadon'] ??
@@ -718,14 +718,14 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
           emit(RegistrationSubmitted(registration));
           return;
         } catch (e) {
-          // Nếu API lỗi, hiển thị lỗi thay vì fallback
+          
           emit(RegistrationError('Đăng ký thất bại: ${e.toString()}'));
           emit(current);
           return;
         }
       }
 
-      // Fallback: tạo mock registration khi không có API
+      
       await Future.delayed(const Duration(seconds: 1));
 
       final registration = QuickRegistration(
@@ -752,7 +752,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     }
   }
 
-  // Mock data - Replace with actual repository calls
+  
   List<AdminClass> _getMockClasses() {
     return [
       AdminClass(
@@ -767,7 +767,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
         startDate: DateTime(2024, 12, 25),
         totalStudents: 13,
         maxStudents: 15,
-        tuitionFee: 4500000, // 4.5 triệu
+        tuitionFee: 4500000, 
       ),
       AdminClass(
         id: '2',
@@ -781,7 +781,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
         startDate: DateTime(2024, 11, 1),
         totalStudents: 8,
         maxStudents: 15,
-        tuitionFee: 5500000, // 5.5 triệu
+        tuitionFee: 5500000, 
       ),
       AdminClass(
         id: '3',
@@ -795,7 +795,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
         startDate: DateTime(2024, 12, 15),
         totalStudents: 15,
         maxStudents: 15,
-        tuitionFee: 3000000, // 3 triệu
+        tuitionFee: 3000000, 
       ),
     ];
   }

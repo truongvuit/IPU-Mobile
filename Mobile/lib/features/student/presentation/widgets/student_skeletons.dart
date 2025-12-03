@@ -3,11 +3,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/widgets/skeleton_widget.dart';
 import '../../../../core/constants/app_sizes.dart';
 
-/// Reusable skeleton loading widgets for Student module
+
 class StudentSkeletons {
   StudentSkeletons._();
 
-  /// Skeleton for course card
+  
   static Widget courseCard({bool isDesktop = false}) {
     return Container(
       margin: EdgeInsets.only(bottom: AppSizes.paddingMedium),
@@ -18,7 +18,7 @@ class StudentSkeletons {
     );
   }
 
-  /// Skeleton for class item
+  
   static Widget classItem() {
     return Padding(
       padding: EdgeInsets.only(bottom: AppSizes.paddingSmall),
@@ -29,7 +29,7 @@ class StudentSkeletons {
     );
   }
 
-  /// Skeleton for schedule item
+  
   static Widget scheduleItem() {
     return Padding(
       padding: EdgeInsets.only(bottom: AppSizes.paddingSmall),
@@ -40,7 +40,7 @@ class StudentSkeletons {
     );
   }
 
-  /// Skeleton for grade item
+  
   static Widget gradeItem() {
     return Padding(
       padding: EdgeInsets.only(bottom: AppSizes.paddingSmall),
@@ -51,7 +51,7 @@ class StudentSkeletons {
     );
   }
 
-  /// Skeleton list builder
+  
   static Widget list({
     required Widget Function() itemBuilder,
     int itemCount = 5,
@@ -64,7 +64,7 @@ class StudentSkeletons {
     );
   }
 
-  /// Skeleton grid builder
+  
   static Widget grid({
     required Widget Function() itemBuilder,
     int itemCount = 6,
@@ -84,7 +84,7 @@ class StudentSkeletons {
     );
   }
 
-  /// Dashboard skeleton
+  
   static Widget dashboard({bool isDesktop = false}) {
     return SingleChildScrollView(
       padding: EdgeInsets.all(AppSizes.paddingMedium),

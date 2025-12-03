@@ -55,12 +55,12 @@ class _TeacherScheduleScreenState extends State<TeacherScheduleScreen> {
   }
 
   List<TeacherSchedule> _filterSchedules(List<TeacherSchedule> schedules) {
-    // Filter by selected date
+    
     final dateFiltered = schedules
         .where((s) => isSameDay(s.startTime, _selectedDay))
         .toList();
 
-    // Apply search filter
+    
     List<TeacherSchedule> filtered;
     if (_searchQuery.isEmpty) {
       filtered = dateFiltered;
@@ -71,11 +71,11 @@ class _TeacherScheduleScreenState extends State<TeacherScheduleScreen> {
       }).toList();
     }
 
-    // Sort: ongoing first, then upcoming, then completed
+    
     filtered.sort((a, b) {
       final priorityCompare = a.sortPriority.compareTo(b.sortPriority);
       if (priorityCompare != 0) return priorityCompare;
-      // If same priority, sort by start time
+      
       return a.startTime.compareTo(b.startTime);
     });
 

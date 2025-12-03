@@ -5,14 +5,11 @@ import '../../domain/entities/schedule.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 
-/// Schedule Detail Modal - Hiển thị chi tiết buổi học
+
 class ScheduleDetailModal extends StatelessWidget {
   final Schedule schedule;
 
-  const ScheduleDetailModal({
-    super.key,
-    required this.schedule,
-  });
+  const ScheduleDetailModal({super.key, required this.schedule});
 
   static void show(BuildContext context, Schedule schedule) {
     showModalBottomSheet(
@@ -29,13 +26,14 @@ class ScheduleDetailModal extends StatelessWidget {
     final timeFormat = DateFormat('HH:mm');
     final dateFormat = DateFormat('EEEE, dd/MM/yyyy', 'vi_VN');
 
-    // Determine if schedule is today
+    
     final now = DateTime.now();
-    final isToday = schedule.startTime.year == now.year &&
+    final isToday =
+        schedule.startTime.year == now.year &&
         schedule.startTime.month == now.month &&
         schedule.startTime.day == now.day;
 
-    // Determine if schedule is upcoming
+    
     final isUpcoming = schedule.startTime.isAfter(now);
     final isPast = schedule.endTime.isBefore(now);
 
@@ -51,13 +49,15 @@ class ScheduleDetailModal extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle bar
+            
             Container(
               margin: EdgeInsets.only(top: 12.h),
               width: 40.w,
               height: 4.h,
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF4B5563) : const Color(0xFFE5E7EB),
+                color: isDark
+                    ? const Color(0xFF4B5563)
+                    : const Color(0xFFE5E7EB),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -67,7 +67,7 @@ class ScheduleDetailModal extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header with status badge
+                  
                   Row(
                     children: [
                       Expanded(
@@ -76,7 +76,9 @@ class ScheduleDetailModal extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 20.sp,
                             fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white : AppColors.textPrimary,
+                            color: isDark
+                                ? Colors.white
+                                : AppColors.textPrimary,
                             fontFamily: 'Lexend',
                           ),
                         ),
@@ -104,7 +106,7 @@ class ScheduleDetailModal extends StatelessWidget {
 
                   SizedBox(height: 24.h),
 
-                  // Class name
+                  
                   _buildInfoSection(
                     icon: Icons.school,
                     label: 'Lớp học',
@@ -114,7 +116,7 @@ class ScheduleDetailModal extends StatelessWidget {
 
                   SizedBox(height: 16.h),
 
-                  // Teacher
+                  
                   _buildInfoSection(
                     icon: Icons.person,
                     label: 'Giảng viên',
@@ -124,17 +126,18 @@ class ScheduleDetailModal extends StatelessWidget {
 
                   SizedBox(height: 16.h),
 
-                  // Time
+                  
                   _buildInfoSection(
                     icon: Icons.access_time,
                     label: 'Thời gian',
-                    value: '${timeFormat.format(schedule.startTime)} - ${timeFormat.format(schedule.endTime)}',
+                    value:
+                        '${timeFormat.format(schedule.startTime)} - ${timeFormat.format(schedule.endTime)}',
                     isDark: isDark,
                   ),
 
                   SizedBox(height: 16.h),
 
-                  // Date
+                  
                   _buildInfoSection(
                     icon: Icons.calendar_today,
                     label: 'Ngày học',
@@ -144,9 +147,11 @@ class ScheduleDetailModal extends StatelessWidget {
 
                   SizedBox(height: 16.h),
 
-                  // Room/Location
+                  
                   _buildInfoSection(
-                    icon: schedule.isOnline ? Icons.videocam : Icons.location_on,
+                    icon: schedule.isOnline
+                        ? Icons.videocam
+                        : Icons.location_on,
                     label: schedule.isOnline ? 'Link học online' : 'Phòng học',
                     value: schedule.room,
                     isDark: isDark,
@@ -155,7 +160,7 @@ class ScheduleDetailModal extends StatelessWidget {
 
                   SizedBox(height: 24.h),
 
-                  // Action buttons
+                  
                   Row(
                     children: [
                       Expanded(
@@ -164,10 +169,14 @@ class ScheduleDetailModal extends StatelessWidget {
                           style: OutlinedButton.styleFrom(
                             padding: EdgeInsets.symmetric(vertical: 14.h),
                             side: BorderSide(
-                              color: isDark ? const Color(0xFF4B5563) : const Color(0xFFE5E7EB),
+                              color: isDark
+                                  ? const Color(0xFF4B5563)
+                                  : const Color(0xFFE5E7EB),
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+                              borderRadius: BorderRadius.circular(
+                                AppSizes.radiusMedium,
+                              ),
                             ),
                           ),
                           child: Text(
@@ -175,7 +184,9 @@ class ScheduleDetailModal extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white : AppColors.textPrimary,
+                              color: isDark
+                                  ? Colors.white
+                                  : AppColors.textPrimary,
                               fontFamily: 'Lexend',
                             ),
                           ),
@@ -232,11 +243,7 @@ class ScheduleDetailModal extends StatelessWidget {
               color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(
-              icon,
-              size: 20.sp,
-              color: AppColors.primary,
-            ),
+            child: Icon(icon, size: 20.sp, color: AppColors.primary),
           ),
           SizedBox(width: 12.w),
           Expanded(
@@ -247,7 +254,9 @@ class ScheduleDetailModal extends StatelessWidget {
                   label,
                   style: TextStyle(
                     fontSize: 12.sp,
-                    color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
+                    color: isDark
+                        ? const Color(0xFF9CA3AF)
+                        : const Color(0xFF6B7280),
                     fontFamily: 'Lexend',
                   ),
                 ),
@@ -257,7 +266,9 @@ class ScheduleDetailModal extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
-                    color: isLink ? AppColors.primary : (isDark ? Colors.white : AppColors.textPrimary),
+                    color: isLink
+                        ? AppColors.primary
+                        : (isDark ? Colors.white : AppColors.textPrimary),
                     fontFamily: 'Lexend',
                     decoration: isLink ? TextDecoration.underline : null,
                   ),

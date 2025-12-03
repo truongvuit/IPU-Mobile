@@ -100,13 +100,11 @@ class StudentApiDataSourceImpl implements StudentApiDataSource {
   @override
   Future<List<CourseModel>> getCourses() async {
     try {
-      
       final response = await dioClient.get(ApiEndpoints.coursesActive);
 
       if (response.statusCode == 200 && response.data['code'] == 1000) {
         final List<dynamic> data = response.data['data'];
 
-        
         List<CourseModel> courses = [];
         for (var category in data) {
           final List<dynamic> categoryCourses = category['courses'] ?? [];
@@ -134,23 +132,12 @@ class StudentApiDataSourceImpl implements StudentApiDataSource {
   @override
   Future<List<CourseModel>> getEnrolledCourses() async {
     try {
-      
       final response = await dioClient.get(ApiEndpoints.studentCoursesEnrolled);
 
       if (response.statusCode == 200 && response.data['code'] == 1000) {
         final data = response.data['data'];
         List<CourseModel> courses = [];
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         final categories = data['categories'] as List? ?? [];
         for (var category in categories) {
           final categoryCourses = category['courses'] as List? ?? [];
@@ -183,7 +170,6 @@ class StudentApiDataSourceImpl implements StudentApiDataSource {
     int size = 10,
   }) async {
     try {
-      
       final response = await dioClient.get(
         ApiEndpoints.studentClassesEnrolled,
         queryParameters: {'page': page, 'size': size},
@@ -191,13 +177,7 @@ class StudentApiDataSourceImpl implements StudentApiDataSource {
 
       if (response.statusCode == 200 && response.data['code'] == 1000) {
         final data = response.data['data'];
-        
-        
-        
-        
-        
-        
-        
+
         final List<dynamic> classes = data['classes'] ?? [];
         return classes.map((json) => StudentClassModel.fromJson(json)).toList();
       } else {
@@ -220,7 +200,6 @@ class StudentApiDataSourceImpl implements StudentApiDataSource {
   @override
   Future<CourseModel> getCourseDetail(String courseId) async {
     try {
-      
       final response = await dioClient.get(
         '${ApiEndpoints.courseDetail}/$courseId',
       );
@@ -247,7 +226,6 @@ class StudentApiDataSourceImpl implements StudentApiDataSource {
   @override
   Future<StudentClassModel> getClassDetail(String classId) async {
     try {
-      
       final response = await dioClient.get(
         '${ApiEndpoints.classDetail}/$classId',
       );
@@ -276,17 +254,12 @@ class StudentApiDataSourceImpl implements StudentApiDataSource {
     required DateTime date,
   }) async {
     try {
-      
       final response = await dioClient.get(
         ApiEndpoints.scheduleByWeek,
-        queryParameters: {
-          'date': date.toIso8601String().split('T')[0], 
-        },
+        queryParameters: {'date': date.toIso8601String().split('T')[0]},
       );
 
       if (response.statusCode == 200 && response.data['code'] == 1000) {
-        
-        
         return response.data['data'] as Map<String, dynamic>;
       } else {
         throw ServerException(
@@ -310,26 +283,12 @@ class StudentApiDataSourceImpl implements StudentApiDataSource {
     required DateTime date,
   }) async {
     try {
-      
-      
       final response = await dioClient.get(
         ApiEndpoints.studentSchedule,
-        queryParameters: {
-          'date': date.toIso8601String().split('T')[0], 
-        },
+        queryParameters: {'date': date.toIso8601String().split('T')[0]},
       );
 
       if (response.statusCode == 200 && response.data['code'] == 1000) {
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         return response.data['data'] as Map<String, dynamic>;
       } else {
         throw ServerException(
@@ -351,7 +310,6 @@ class StudentApiDataSourceImpl implements StudentApiDataSource {
   @override
   Future<String> uploadAvatar(String filePath) async {
     try {
-      
       final fileName = filePath.split('/').last;
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(filePath, filename: fileName),
@@ -413,9 +371,7 @@ class StudentApiDataSourceImpl implements StudentApiDataSource {
         }
         return [];
       } else {
-        throw ServerException(
-          response.data['message'] ?? 'Get grades failed',
-        );
+        throw ServerException(response.data['message'] ?? 'Get grades failed');
       }
     } on DioException catch (e) {
       if (e.response != null && e.response!.data != null) {
@@ -439,7 +395,6 @@ class StudentApiDataSourceImpl implements StudentApiDataSource {
     required String comment,
   }) async {
     try {
-      
       final response = await dioClient.post(
         ApiEndpoints.studentReviews,
         data: {

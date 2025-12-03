@@ -109,14 +109,31 @@ class _AdminEditClassScreenState extends State<AdminEditClassScreen> {
   }
 
   void _parseSchedule(String schedule) {
+    // Clear trước khi parse
+    _selectedDays.clear();
     
-    if (schedule.contains('T2')) _selectedDays.add(1);
-    if (schedule.contains('T3')) _selectedDays.add(2);
-    if (schedule.contains('T4')) _selectedDays.add(3);
-    if (schedule.contains('T5')) _selectedDays.add(4);
-    if (schedule.contains('T6')) _selectedDays.add(5);
-    if (schedule.contains('T7')) _selectedDays.add(6);
-    if (schedule.contains('CN')) _selectedDays.add(7);
+    // Format 1: "T2-T4-T6" hoặc "T2T4T6"
+    if (schedule.contains('T2') || schedule.contains('Thứ 2')) _selectedDays.add(1);
+    if (schedule.contains('T3') || schedule.contains('Thứ 3')) _selectedDays.add(2);
+    if (schedule.contains('T4') || schedule.contains('Thứ 4')) _selectedDays.add(3);
+    if (schedule.contains('T5') || schedule.contains('Thứ 5')) _selectedDays.add(4);
+    if (schedule.contains('T6') || schedule.contains('Thứ 6')) _selectedDays.add(5);
+    if (schedule.contains('T7') || schedule.contains('Thứ 7')) _selectedDays.add(6);
+    if (schedule.contains('CN') || schedule.contains('Chủ nhật')) _selectedDays.add(7);
+    
+    // Format 2: "3-5-7" hoặc "2-4-6" (chỉ số ngày trong tuần, 2=Thứ 2, 7=CN)
+    if (_selectedDays.isEmpty) {
+      // Parse theo format số, ví dụ "3-5-7"
+      final parts = schedule.split('-');
+      for (final part in parts) {
+        final dayNum = int.tryParse(part.trim());
+        if (dayNum != null && dayNum >= 2 && dayNum <= 8) {
+          // dayNum: 2=Thứ 2, 3=Thứ 3, ..., 7=Thứ 7, 8=CN
+          // Chuyển thành: 1=Thứ 2, 2=Thứ 3, ..., 6=Thứ 7, 7=CN
+          _selectedDays.add(dayNum - 1);
+        }
+      }
+    }
   }
 
   String _getDayLabel(int day) {

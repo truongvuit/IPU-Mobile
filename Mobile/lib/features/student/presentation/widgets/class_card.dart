@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import '../../domain/entities/student_class.dart';
 
@@ -26,7 +27,7 @@ class ClassCard extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 600;
 
-    // Use compact layout on mobile by default
+    
     final useCompact = compact || isMobile;
 
     if (useCompact) {
@@ -38,14 +39,14 @@ class ClassCard extends StatelessWidget {
   Widget _buildCompactCard(BuildContext context, bool isDark) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(12.r),
       child: Container(
-        constraints: const BoxConstraints(minWidth: 280),
+        constraints: BoxConstraints(minWidth: 280.w),
         decoration: BoxDecoration(
           color: isDark
               ? const Color(0xFF0F172A).withValues(alpha: 0.5)
               : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(12.r),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.05),
@@ -56,24 +57,24 @@ class ClassCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Class Image - smaller for compact view
+            
             ClipRRect(
-              borderRadius: const BorderRadius.horizontal(
-                left: Radius.circular(12),
+              borderRadius: BorderRadius.horizontal(
+                left: Radius.circular(12.r),
               ),
               child: SizedBox(
-                width: 100,
-                height: 90,
+                width: 100.w,
+                height: 90.h,
                 child: Image.network(
                   studentClass.imageUrl,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
                       color: const Color(0xFF135BEC).withValues(alpha: 0.1),
-                      child: const Icon(
+                      child: Icon(
                         Icons.class_,
-                        size: 32,
-                        color: Color(0xFF135BEC),
+                        size: 32.sp,
+                        color: const Color(0xFF135BEC),
                       ),
                     );
                   },
@@ -81,19 +82,19 @@ class ClassCard extends StatelessWidget {
               ),
             ),
 
-            // Class Info
+            
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Class Name
+                    
                     Text(
                       studentClass.courseName,
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
                         fontFamily: 'Lexend',
@@ -101,43 +102,47 @@ class ClassCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4.h),
 
-                    // Time and Room
+                    
                     Row(
                       children: [
                         Icon(
                           Icons.access_time,
-                          size: 12,
+                          size: 12.sp,
                           color: isDark
                               ? const Color(0xFF94A3B8)
                               : const Color(0xFF64748B),
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4.w),
                         Text(
                           _formatTime(studentClass.startTime),
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 12.sp,
                             color: isDark
                                 ? const Color(0xFF94A3B8)
                                 : const Color(0xFF64748B),
                             fontFamily: 'Lexend',
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8.w),
                         Icon(
-                          studentClass.isOnline ? Icons.videocam : Icons.location_on,
-                          size: 12,
+                          studentClass.isOnline
+                              ? Icons.videocam
+                              : Icons.location_on,
+                          size: 12.sp,
                           color: isDark
                               ? const Color(0xFF94A3B8)
                               : const Color(0xFF64748B),
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4.w),
                         Expanded(
                           child: Text(
-                            studentClass.isOnline ? 'Online' : studentClass.room,
+                            studentClass.isOnline
+                                ? 'Online'
+                                : studentClass.room,
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 12.sp,
                               color: isDark
                                   ? const Color(0xFF94A3B8)
                                   : const Color(0xFF64748B),
@@ -149,24 +154,24 @@ class ClassCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4.h),
 
-                    // Teacher Name
+                    
                     Row(
                       children: [
                         Icon(
                           Icons.person_outline,
-                          size: 12,
+                          size: 12.sp,
                           color: isDark
                               ? const Color(0xFF94A3B8)
                               : const Color(0xFF64748B),
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4.w),
                         Expanded(
                           child: Text(
                             studentClass.teacherName,
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 12.sp,
                               color: isDark
                                   ? const Color(0xFF94A3B8)
                                   : const Color(0xFF64748B),
@@ -183,12 +188,12 @@ class ClassCard extends StatelessWidget {
               ),
             ),
 
-            // Arrow icon
+            
             Padding(
-              padding: const EdgeInsets.only(right: 12),
+              padding: EdgeInsets.only(right: 12.w),
               child: Icon(
                 Icons.arrow_forward_ios,
-                size: 16,
+                size: 16.sp,
                 color: isDark
                     ? const Color(0xFF94A3B8)
                     : const Color(0xFF64748B),
@@ -202,12 +207,12 @@ class ClassCard extends StatelessWidget {
 
   Widget _buildFullCard(BuildContext context, bool isDark) {
     return Container(
-      constraints: const BoxConstraints(minWidth: 280),
+      constraints: BoxConstraints(minWidth: 280.w),
       decoration: BoxDecoration(
         color: isDark
             ? const Color(0xFF0F172A).withValues(alpha: 0.5)
             : Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -219,11 +224,9 @@ class ClassCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Class Image
+          
           ClipRRect(
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(12),
-            ),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
             child: AspectRatio(
               aspectRatio: 16 / 9,
               child: Image.network(
@@ -232,10 +235,10 @@ class ClassCard extends StatelessWidget {
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
                     color: const Color(0xFF135BEC).withValues(alpha: 0.1),
-                    child: const Icon(
+                    child: Icon(
                       Icons.class_,
-                      size: 48,
-                      color: Color(0xFF135BEC),
+                      size: 48.sp,
+                      color: const Color(0xFF135BEC),
                     ),
                   );
                 },
@@ -243,40 +246,44 @@ class ClassCard extends StatelessWidget {
             ),
           ),
 
-          // Class Info
+          
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(16.w),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Class Name
+                
                 Text(
                   studentClass.courseName,
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 16.sp,
                     fontWeight: FontWeight.w500,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
                     fontFamily: 'Lexend',
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8.h),
 
-                // Time and Location
+                
                 Text(
                   '${_formatTime(studentClass.startTime)} - ${studentClass.room} - ${studentClass.teacherName}',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 14.sp,
                     color: isDark
                         ? const Color(0xFF94A3B8)
                         : const Color(0xFF64748B),
                     fontFamily: 'Lexend',
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
 
                 if (showAction) ...[
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16.h),
 
-                  // Action Button
+                  
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -287,15 +294,15 @@ class ClassCard extends StatelessWidget {
                             : const Color(0xFF135BEC),
                         foregroundColor: const Color(0xFF135BEC),
                         elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        padding: EdgeInsets.symmetric(vertical: 10.h),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(8.r),
                         ),
                       ),
                       child: Text(
                         'Xem chi tiết',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 14.sp,
                           fontWeight: FontWeight.w700,
                           color: studentClass.isOnline
                               ? const Color(0xFF135BEC)
@@ -314,4 +321,3 @@ class ClassCard extends StatelessWidget {
     );
   }
 }
-

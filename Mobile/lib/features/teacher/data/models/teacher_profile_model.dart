@@ -1,6 +1,5 @@
 import '../../domain/entities/teacher_profile.dart';
 
-
 class TeacherProfileModel extends TeacherProfile {
   const TeacherProfileModel({
     required super.id,
@@ -20,14 +19,28 @@ class TeacherProfileModel extends TeacherProfile {
   });
 
   
+  static int _parseInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value) ?? 0;
+    if (value is double) return value.toInt();
+    return 0;
+  }
+
   
+  static double _parseDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
+  }
+
   factory TeacherProfileModel.fromJson(Map<String, dynamic> json) {
-    
     List<String> certs = [];
     if (json['qualifications'] != null && json['qualifications'] is List) {
       certs = (json['qualifications'] as List)
           .map((q) {
-            
             final degreeName = q['degreeName'] ?? '';
             final level = q['level'] ?? '';
             return level.isNotEmpty ? '$degreeName ($level)' : degreeName;
@@ -56,7 +69,7 @@ class TeacherProfileModel extends TeacherProfile {
           json['maGiangVien'] ??
           '',
       fullName: json['fullName'] ?? json['hoTen'] ?? '',
-      
+
       avatarUrl: json['imagePath'] ?? json['avatarUrl'] ?? json['hinhAnh'],
       dateOfBirth: json['dateOfBirth'] != null
           ? DateTime.parse(json['dateOfBirth'])
@@ -69,14 +82,13 @@ class TeacherProfileModel extends TeacherProfile {
       address: json['address'] ?? json['diaChi'],
       specialization: json['specialization'] ?? json['chuyenMon'],
       certificates: certs,
-      
-      totalClasses: json['totalClasses'] ?? 0,
-      totalStudents: json['totalStudents'] ?? 0,
-      rating: (json['rating'] ?? 0.0).toDouble(),
+
+      totalClasses: _parseInt(json['totalClasses']),
+      totalStudents: _parseInt(json['totalStudents']),
+      rating: _parseDouble(json['rating']),
     );
   }
 
-  
   Map<String, dynamic> toJson() {
     return {
       'lecturerId': id,

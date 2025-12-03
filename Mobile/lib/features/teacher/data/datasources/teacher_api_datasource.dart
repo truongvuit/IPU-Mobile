@@ -261,7 +261,7 @@ class TeacherApiDataSourceImpl implements TeacherApiDataSource {
       classId: '', 
       date: DateTime.now(),
       records: records,
-      isCompleted: false, // Will be determined by UI based on session time
+      isCompleted: false, 
     );
   }
 }

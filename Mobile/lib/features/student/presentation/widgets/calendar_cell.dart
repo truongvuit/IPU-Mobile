@@ -27,7 +27,8 @@ class CalendarCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isSelected = date.day == selectedDate.day &&
+    final isSelected =
+        date.day == selectedDate.day &&
         date.month == selectedDate.month &&
         date.year == selectedDate.year;
 
@@ -43,7 +44,9 @@ class CalendarCell extends StatelessWidget {
               width: 40.w,
               height: 40.h,
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFF135BEC) : Colors.transparent,
+                color: isSelected
+                    ? const Color(0xFF135BEC)
+                    : Colors.transparent,
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,

@@ -1,12 +1,18 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/repositories/teacher_repository.dart';
 import '../../domain/entities/teacher_class.dart';
+import '../../domain/entities/teacher_profile.dart';
 import 'teacher_event.dart';
 import 'teacher_state.dart';
 
 class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
   final TeacherRepository repository;
   List<TeacherClass>? _cachedClasses;
+  
+  
+  TeacherProfile? _cachedProfile;
+  TeacherProfile? get cachedProfile => _cachedProfile;
 
   TeacherBloc({required this.repository}) : super(TeacherInitial()) {
     on<LoadTeacherDashboard>(_onLoadDashboard);
@@ -68,7 +74,10 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
       final classes = classesResult.getOrElse(() => []);
       final profile = profileResult.getOrElse(() => throw Exception('Profile not found'));
       
-      // Sort classes: ongoing first, then upcoming, then completed
+      
+      _cachedProfile = profile;
+      
+      
       final sortedClasses = [...classes];
       sortedClasses.sort((a, b) {
         int getStatusPriority(String? status) {
@@ -107,7 +116,11 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
       (error) => emit(TeacherError(error)),
       (classes) {
         _cachedClasses = classes;
-        emit(ClassesLoaded(classes));
+        
+        final filtered = classes
+            .where((c) => c.status?.toLowerCase() == 'inprogress')
+            .toList();
+        emit(ClassesLoaded(filtered));
       },
     );
   }
@@ -138,9 +151,27 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
       if (_cachedClasses == null) return;
     }
     
-    final filtered = event.status == 'all'
-        ? _cachedClasses!
-        : _cachedClasses!.where((c) => c.status == event.status).toList();
+    List<TeacherClass> filtered;
+    final statusLower = event.status.toLowerCase();
+    
+    if (statusLower == 'all') {
+      filtered = _cachedClasses!;
+    } else if (statusLower == 'ongoing') {
+      
+      filtered = _cachedClasses!
+          .where((c) => c.status?.toLowerCase() == 'inprogress')
+          .toList();
+    } else if (statusLower == 'completed') {
+      
+      filtered = _cachedClasses!
+          .where((c) {
+            final s = c.status?.toLowerCase();
+            return s == 'completed' || s == 'closed';
+          })
+          .toList();
+    } else {
+      filtered = _cachedClasses!.where((c) => c.status?.toLowerCase() == statusLower).toList();
+    }
     emit(ClassesLoaded(filtered));
   }
 
@@ -210,12 +241,19 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
     LoadAttendance event,
     Emitter<TeacherState> emit,
   ) async {
+    
     emit(TeacherLoading());
     
     final result = await repository.getAttendanceBySessionId(event.sessionId);
     result.fold(
-      (error) => emit(TeacherError(error)),
-      (session) => emit(AttendanceLoaded(session)),
+      (error) {
+        
+        emit(TeacherError(error));
+      },
+      (session) {
+        
+        emit(AttendanceLoaded(session));
+      },
     );
   }
 
@@ -358,7 +396,10 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
     final result = await repository.getProfile();
     result.fold(
       (error) => emit(TeacherError(error)),
-      (profile) => emit(ProfileLoaded(profile)),
+      (profile) {
+        _cachedProfile = profile;
+        emit(ProfileLoaded(profile));
+      },
     );
   }
 
@@ -370,7 +411,11 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
     final result = await repository.updateProfile(event.profile);
     result.fold(
       (error) => emit(TeacherError(error)),
-      (_) => emit(const ProfileUpdated('Hồ sơ đã được cập nhật')),
+      (_) {
+        
+        _cachedProfile = event.profile;
+        emit(ProfileUpdated('Hồ sơ đã được cập nhật', profile: event.profile));
+      },
     );
   }
 }

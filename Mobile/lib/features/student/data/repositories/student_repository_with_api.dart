@@ -38,11 +38,11 @@ class StudentRepositoryWithApi implements StudentRepository {
     StudentProfile profile,
   ) async {
     try {
-      // Convert to model for API call
+      
       final profileModel = StudentProfileModel.fromEntity(profile);
       await apiDataSource.updateProfile(profileModel);
+
       
-      // Fetch updated profile from server
       final updatedProfile = await apiDataSource.getProfile();
       return Right(updatedProfile);
     } on ServerException catch (e) {
@@ -80,7 +80,7 @@ class StudentRepositoryWithApi implements StudentRepository {
   Future<Either<Failure, List<Course>>> searchCourses(String query) async {
     try {
       final allCourses = await apiDataSource.getCourses();
-      
+
       final filtered = allCourses.where((course) {
         final nameLower = course.name.toLowerCase();
         final queryLower = query.toLowerCase();
@@ -144,31 +144,33 @@ class StudentRepositoryWithApi implements StudentRepository {
   ) async {
     try {
       final data = await apiDataSource.getStudentSchedule(date: startDate);
+
       
-      // Parse WeeklyScheduleResponse format
       final List<Schedule> schedules = [];
       final days = data['days'] as List<dynamic>? ?? [];
-      
+
       for (final day in days) {
         final dayMap = day as Map<String, dynamic>;
         final dateStr = dayMap['date'] as String?;
         if (dateStr == null) continue;
-        
+
         final sessionDate = DateTime.parse(dateStr);
         final periods = dayMap['periods'] as List<dynamic>? ?? [];
-        
+
         for (final periodData in periods) {
           final periodMap = periodData as Map<String, dynamic>;
           final period = periodMap['period'] as String? ?? '';
           final sessions = periodMap['sessions'] as List<dynamic>? ?? [];
-          
+
           for (final session in sessions) {
             final sessionMap = session as Map<String, dynamic>;
-            schedules.add(Schedule.fromSessionInfo(sessionMap, sessionDate, period));
+            schedules.add(
+              Schedule.fromSessionInfo(sessionMap, sessionDate, period),
+            );
           }
         }
       }
-      
+
       return Right(schedules);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
@@ -186,17 +188,21 @@ class StudentRepositoryWithApi implements StudentRepository {
   Future<Either<Failure, List<Grade>>> getGradesByCourse(
     String courseId,
   ) async {
-    // Backend không có endpoint filter by course, nên lấy tất cả grades
-    // và filter phía client nếu cần
+    
+    
     try {
       final result = await apiDataSource.getGrades();
-      List<Grade> grades = result.map((json) => Grade.fromJson(json as Map<String, dynamic>)).toList();
+      List<Grade> grades = result
+          .map((json) => Grade.fromJson(json as Map<String, dynamic>))
+          .toList();
+
       
-      // Filter by courseId nếu được cung cấp
       if (courseId.isNotEmpty) {
-        grades = grades.where((g) => g.courseId?.toString() == courseId).toList();
+        grades = grades
+            .where((g) => g.courseId?.toString() == courseId)
+            .toList();
       }
-      
+
       return Right(grades);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
@@ -208,10 +214,7 @@ class StudentRepositoryWithApi implements StudentRepository {
   @override
   Future<Either<Failure, void>> enrollCourse(String courseId) async {
     try {
-      final data = {
-        'courseId': int.parse(courseId),
-        'classId': null, 
-      };
+      final data = {'courseId': int.parse(courseId), 'classId': null};
       await apiDataSource.enrollCourse(data);
       return const Right(null);
     } on ServerException catch (e) {
@@ -225,7 +228,9 @@ class StudentRepositoryWithApi implements StudentRepository {
   Future<Either<Failure, List<Grade>>> getMyGrades() async {
     try {
       final result = await apiDataSource.getGrades();
-      final grades = result.map((json) => Grade.fromJson(json as Map<String, dynamic>)).toList();
+      final grades = result
+          .map((json) => Grade.fromJson(json as Map<String, dynamic>))
+          .toList();
       return Right(grades);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
@@ -263,6 +268,23 @@ class StudentRepositoryWithApi implements StudentRepository {
     try {
       final result = await apiDataSource.getReviewHistory();
       return Right(result);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Review?>> getClassReview(String classId) async {
+    try {
+      final result = await apiDataSource.getReviewHistory();
+      
+      final review = result
+          .cast<Review>()
+          .where((r) => r.classId.toString() == classId)
+          .firstOrNull;
+      return Right(review);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
     } catch (e) {

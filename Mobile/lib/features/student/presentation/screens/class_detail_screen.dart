@@ -88,8 +88,8 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
 
             if (state is ClassDetailLoaded) {
               final studentClass = state.studentClass;
+
               
-              // Build schedule text from schedule list
               String scheduleText = 'Chưa có lịch';
               if (studentClass.schedule.isNotEmpty) {
                 final weekdays = <int>{};
@@ -97,7 +97,16 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                   weekdays.add(dt.weekday);
                 }
                 final sortedDays = weekdays.toList()..sort();
-                const dayNames = ['', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN'];
+                const dayNames = [
+                  '',
+                  'Thứ 2',
+                  'Thứ 3',
+                  'Thứ 4',
+                  'Thứ 5',
+                  'Thứ 6',
+                  'Thứ 7',
+                  'CN',
+                ];
                 scheduleText = sortedDays.map((d) => dayNames[d]).join(', ');
               }
 
@@ -131,12 +140,34 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                       background: Stack(
                         fit: StackFit.expand,
                         children: [
-                          CustomImage(
-                            imageUrl: studentClass.imageUrl,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            height: double.infinity,
-                          ),
+                          
+                          if (studentClass.imageUrl.isEmpty)
+                            Container(
+                              decoration: const BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Color(0xFFFF6B35), 
+                                    Color(0xFFE85A24),
+                                  ],
+                                ),
+                              ),
+                              child: Center(
+                                child: Icon(
+                                  Icons.school,
+                                  size: 64.sp,
+                                  color: Colors.white.withValues(alpha: 0.5),
+                                ),
+                              ),
+                            )
+                          else
+                            CustomImage(
+                              imageUrl: studentClass.imageUrl,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                            ),
                           Container(
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
@@ -154,7 +185,6 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                     ),
                   ),
 
-                  
                   SliverToBoxAdapter(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -184,6 +214,8 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                                         : AppColors.textPrimary,
                                     fontFamily: 'Lexend',
                                   ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                                 SizedBox(height: 4.h),
                                 Text(
@@ -201,7 +233,6 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
 
                         SizedBox(height: 12.h),
 
-                        
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 16.w),
                           child: _buildSection(
@@ -240,7 +271,6 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
 
                         SizedBox(height: 12.h),
 
-                        
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 16.w),
                           child: _buildSection(
@@ -274,6 +304,35 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                                           fontFamily: 'Lexend',
                                         ),
                                       ),
+                                      
+                                      if (studentClass.teacherEmail != null &&
+                                          studentClass
+                                              .teacherEmail!
+                                              .isNotEmpty) ...[
+                                        SizedBox(height: 4.h),
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.email_outlined,
+                                              size: 14.sp,
+                                              color: AppColors.textSecondary,
+                                            ),
+                                            SizedBox(width: 4.w),
+                                            Expanded(
+                                              child: Text(
+                                                studentClass.teacherEmail!,
+                                                style: TextStyle(
+                                                  fontSize: 13.sp,
+                                                  color:
+                                                      AppColors.textSecondary,
+                                                  fontFamily: 'Lexend',
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                       if (studentClass.teacherSpecialization !=
                                           null) ...[
                                         SizedBox(height: 4.h),
@@ -297,12 +356,16 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                                               color: AppColors.success,
                                             ),
                                             SizedBox(width: 4.w),
-                                            Text(
-                                              studentClass.teacherCertificates!,
-                                              style: TextStyle(
-                                                fontSize: 12.sp,
-                                                color: AppColors.success,
-                                                fontFamily: 'Lexend',
+                                            Expanded(
+                                              child: Text(
+                                                studentClass
+                                                    .teacherCertificates!,
+                                                style: TextStyle(
+                                                  fontSize: 12.sp,
+                                                  color: AppColors.success,
+                                                  fontFamily: 'Lexend',
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
                                               ),
                                             ),
                                           ],
@@ -319,55 +382,52 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                         SizedBox(height: 12.h),
 
                         
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16.w),
-                          child: _buildSection(
-                            isDark,
-                            'Thông tin khóa học',
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (studentClass.courseType != null) ...[
-                                  _buildCourseInfoRow(
-                                    Icons.school_outlined,
-                                    'Loại khóa học',
-                                    studentClass.courseType!,
-                                    isDark,
-                                  ),
-                                  SizedBox(height: 10.h),
+                        if (studentClass.courseType != null ||
+                            studentClass.level != null ||
+                            studentClass.duration != null)
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16.w),
+                            child: _buildSection(
+                              isDark,
+                              'Thông tin khóa học',
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (studentClass.courseType != null) ...[
+                                    _buildCourseInfoRow(
+                                      Icons.school_outlined,
+                                      'Loại khóa học',
+                                      studentClass.courseType!,
+                                      isDark,
+                                    ),
+                                    SizedBox(height: 10.h),
+                                  ],
+                                  if (studentClass.level != null) ...[
+                                    _buildCourseInfoRow(
+                                      Icons.signal_cellular_alt,
+                                      'Trình độ',
+                                      studentClass.level!,
+                                      isDark,
+                                    ),
+                                    SizedBox(height: 10.h),
+                                  ],
+                                  if (studentClass.duration != null)
+                                    _buildCourseInfoRow(
+                                      Icons.timer_outlined,
+                                      'Thời lượng',
+                                      studentClass.duration!,
+                                      isDark,
+                                    ),
                                 ],
-                                if (studentClass.level != null) ...[
-                                  _buildCourseInfoRow(
-                                    Icons.signal_cellular_alt,
-                                    'Trình độ',
-                                    studentClass.level!,
-                                    isDark,
-                                  ),
-                                  SizedBox(height: 10.h),
-                                ],
-                                if (studentClass.duration != null) ...[
-                                  _buildCourseInfoRow(
-                                    Icons.timer_outlined,
-                                    'Thời lượng',
-                                    studentClass.duration!,
-                                    isDark,
-                                  ),
-                                  SizedBox(height: 10.h),
-                                ],
-                                _buildCourseInfoRow(
-                                  Icons.people_outline,
-                                  'Học viên',
-                                  '${studentClass.currentStudents}/${studentClass.maxStudents ?? 35} học viên',
-                                  isDark,
-                                ),
-                              ],
+                              ),
                             ),
                           ),
-                        ),
 
-                        SizedBox(height: 12.h),
+                        if (studentClass.courseType != null ||
+                            studentClass.level != null ||
+                            studentClass.duration != null)
+                          SizedBox(height: 12.h),
 
-                        
                         if (studentClass.students.isNotEmpty)
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -379,7 +439,6 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
 
                         SizedBox(height: 16.h),
 
-                        
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 16.w),
                           child: SizedBox(
@@ -389,8 +448,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                                 Navigator.pushNamed(
                                   context,
                                   AppRouter.studentGrades,
-                                  arguments: studentClass
-                                      .courseName, 
+                                  arguments: studentClass.courseName,
                                 );
                               },
                               style: ElevatedButton.styleFrom(
@@ -403,20 +461,13 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                                   ),
                                 ),
                               ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.assessment, size: 20.sp),
-                                  SizedBox(width: 8.w),
-                                  Text(
-                                    'Xem điểm số',
-                                    style: TextStyle(
-                                      fontSize: 16.sp,
-                                      fontWeight: FontWeight.w700,
-                                      fontFamily: 'Lexend',
-                                    ),
-                                  ),
-                                ],
+                              child: Text(
+                                'Xem điểm số',
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'Lexend',
+                                ),
                               ),
                             ),
                           ),
@@ -424,7 +475,6 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
 
                         SizedBox(height: 12.h),
 
-                        
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 16.w),
                           child: SizedBox(
@@ -434,7 +484,8 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                                 Navigator.pushNamed(
                                   context,
                                   AppRouter.studentRating,
-                                  arguments: studentClass.id, // classId cho API đánh giá
+                                  arguments: studentClass
+                                      .id, 
                                 );
                               },
                               style: OutlinedButton.styleFrom(
@@ -537,6 +588,8 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                   color: isDark ? Colors.white : AppColors.textPrimary,
                   fontFamily: 'Lexend',
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -578,11 +631,13 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
     );
   }
 
-  /// Danh sách học viên với giới hạn hiển thị và expand
+  
   Widget _buildStudentListSection(bool isDark, List<ClassStudent> students) {
     const int maxVisible = 5;
     final bool hasMore = students.length > maxVisible;
-    final displayStudents = hasMore ? students.take(maxVisible).toList() : students;
+    final displayStudents = hasMore
+        ? students.take(maxVisible).toList()
+        : students;
 
     return Container(
       padding: EdgeInsets.all(16.w),
@@ -604,42 +659,44 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                   color: isDark ? Colors.white : AppColors.textPrimary,
                   fontFamily: 'Lexend',
                 ),
-                  ),
-                  if (hasMore)
-                    TextButton(
-                      onPressed: () {
-                        _showAllStudentsModal(context, students, isDark);
-                      },
-                      child: Text(
-                        'Xem tất cả',
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                ],
               ),
-              SizedBox(height: 12.h),
-              ...displayStudents.map((student) => _buildStudentItem(student, isDark)),
               if (hasMore)
-                Padding(
-                  padding: EdgeInsets.only(top: 8.h),
-                  child: Center(
-                    child: Text(
-                      '+ ${students.length - maxVisible} học viên khác',
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: AppColors.textSecondary,
-                        fontStyle: FontStyle.italic,
-                      ),
+                TextButton(
+                  onPressed: () {
+                    _showAllStudentsModal(context, students, isDark);
+                  },
+                  child: Text(
+                    'Xem tất cả',
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
             ],
           ),
-        );
+          SizedBox(height: 12.h),
+          ...displayStudents.map(
+            (student) => _buildStudentItem(student, isDark),
+          ),
+          if (hasMore)
+            Padding(
+              padding: EdgeInsets.only(top: 8.h),
+              child: Center(
+                child: Text(
+                  '+ ${students.length - maxVisible} học viên khác',
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: AppColors.textSecondary,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   Widget _buildStudentItem(ClassStudent student, bool isDark) {
@@ -655,9 +712,11 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
           CircleAvatar(
             radius: 18.r,
             backgroundColor: AppColors.primary.withValues(alpha: 0.2),
-            backgroundImage: (student.avatarUrl != null && student.avatarUrl!.isNotEmpty)
+            backgroundImage:
+                (student.avatarUrl != null && student.avatarUrl!.isNotEmpty)
                 ? NetworkImage(student.avatarUrl!)
-                : const AssetImage('assets/images/avatar-default.png') as ImageProvider,
+                : const AssetImage('assets/images/avatar-default.png')
+                      as ImageProvider,
           ),
           SizedBox(width: 12.w),
           Expanded(
@@ -689,7 +748,11 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
     );
   }
 
-  void _showAllStudentsModal(BuildContext context, List<ClassStudent> students, bool isDark) {
+  void _showAllStudentsModal(
+    BuildContext context,
+    List<ClassStudent> students,
+    bool isDark,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -705,7 +768,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
           ),
           child: Column(
             children: [
-              // Handle bar
+              
               Container(
                 margin: EdgeInsets.symmetric(vertical: 12.h),
                 width: 40.w,
@@ -715,7 +778,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                   borderRadius: BorderRadius.circular(2.r),
                 ),
               ),
-              // Header
+              
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
                 child: Row(
@@ -738,11 +801,14 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                 ),
               ),
               Divider(color: AppColors.border),
-              // List
+              
               Expanded(
                 child: ListView.builder(
                   controller: scrollController,
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 8.h,
+                  ),
                   itemCount: students.length,
                   itemBuilder: (context, index) {
                     return _buildStudentItem(students[index], isDark);

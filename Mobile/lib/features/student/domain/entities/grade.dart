@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-/// Grade entity matching backend GradeResponse
+
 class Grade extends Equatable {
   final int? gradeId;
   final int? classId;
@@ -8,18 +8,18 @@ class Grade extends Equatable {
   final int? courseId;
   final String? courseName;
   final String? courseImage;
+
   
-  // Điểm theo từng loại
-  final double? attendanceScore;  // Điểm chuyên cần
-  final double? midtermScore;     // Điểm giữa kỳ
-  final double? finalScore;       // Điểm cuối kỳ
+  final double? attendanceScore; 
+  final double? midtermScore; 
+  final double? finalScore; 
+
   
-  // Điểm tổng kết và xếp loại
   final double? totalScore;
-  final String? grade;            // Xuất sắc/Giỏi/Khá/TB/Yếu
-  final String? status;           // Hoàn thành / Chưa hoàn thành
+  final String? grade; 
+  final String? status; 
+
   
-  // Thông tin bổ sung
   final String? comment;
   final DateTime? lastGradedAt;
   final String? gradedByName;
@@ -57,7 +57,7 @@ class Grade extends Equatable {
       grade: json['grade'] as String?,
       status: json['status'] as String?,
       comment: json['comment'] as String?,
-      lastGradedAt: json['lastGradedAt'] != null 
+      lastGradedAt: json['lastGradedAt'] != null
           ? DateTime.tryParse(json['lastGradedAt'].toString())
           : null,
       gradedByName: json['gradedByName'] as String?,
@@ -73,7 +73,7 @@ class Grade extends Equatable {
   }
 
   bool get isCompleted => status == 'Hoàn thành';
-  
+
   String get displayTotalScore {
     if (totalScore == null) return '--';
     return totalScore!.toStringAsFixed(1);
@@ -81,20 +81,20 @@ class Grade extends Equatable {
 
   @override
   List<Object?> get props => [
-        gradeId,
-        classId,
-        className,
-        courseId,
-        courseName,
-        courseImage,
-        attendanceScore,
-        midtermScore,
-        finalScore,
-        totalScore,
-        grade,
-        status,
-        comment,
-        lastGradedAt,
-        gradedByName,
-      ];
+    gradeId,
+    classId,
+    className,
+    courseId,
+    courseName,
+    courseImage,
+    attendanceScore,
+    midtermScore,
+    finalScore,
+    totalScore,
+    grade,
+    status,
+    comment,
+    lastGradedAt,
+    gradedByName,
+  ];
 }

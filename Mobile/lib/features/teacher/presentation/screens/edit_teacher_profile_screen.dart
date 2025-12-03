@@ -14,7 +14,6 @@ import '../bloc/teacher_state.dart';
 import '../widgets/teacher_app_bar.dart';
 import '../../domain/entities/teacher_profile.dart';
 
-
 class EditTeacherProfileScreen extends StatefulWidget {
   const EditTeacherProfileScreen({super.key});
 
@@ -33,7 +32,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
   DateTime? _selectedDate;
   String? _selectedGender;
   TeacherProfile? _currentProfile;
-  Uint8List? _selectedImageBytes; 
+  Uint8List? _selectedImageBytes;
   final ImagePicker _imagePicker = ImagePicker();
 
   @override
@@ -252,11 +251,9 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            
                             _buildAvatarSection(isDark, isDesktop),
                             SizedBox(height: AppSizes.p32),
 
-                            
                             _buildSectionHeader(
                               'Thông tin cơ bản',
                               Icons.person_outline,
@@ -281,7 +278,6 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
                             ),
                             SizedBox(height: AppSizes.p16),
 
-                            
                             InkWell(
                               onTap: () => _selectDate(context),
                               child: InputDecorator(
@@ -310,9 +306,8 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
                             ),
                             SizedBox(height: AppSizes.p16),
 
-                            
                             DropdownButtonFormField<String>(
-                              initialValue: _selectedGender,
+                              value: _selectedGender,
                               style: TextStyle(
                                 fontSize: isDesktop
                                     ? AppSizes.textBase
@@ -327,39 +322,18 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
                                 isDark,
                                 isDesktop,
                               ),
-                              items: [
+                              items: const [
                                 DropdownMenuItem(
                                   value: 'Nam',
-                                  child: Text(
-                                    'Nam',
-                                    style: TextStyle(
-                                      fontSize: isDesktop
-                                          ? AppSizes.textBase
-                                          : AppSizes.textSm,
-                                    ),
-                                  ),
+                                  child: Text('Nam'),
                                 ),
                                 DropdownMenuItem(
                                   value: 'Nữ',
-                                  child: Text(
-                                    'Nữ',
-                                    style: TextStyle(
-                                      fontSize: isDesktop
-                                          ? AppSizes.textBase
-                                          : AppSizes.textSm,
-                                    ),
-                                  ),
+                                  child: Text('Nữ'),
                                 ),
                                 DropdownMenuItem(
                                   value: 'Khác',
-                                  child: Text(
-                                    'Khác',
-                                    style: TextStyle(
-                                      fontSize: isDesktop
-                                          ? AppSizes.textBase
-                                          : AppSizes.textSm,
-                                    ),
-                                  ),
+                                  child: Text('Khác'),
                                 ),
                               ],
                               onChanged: (value) {
@@ -368,7 +342,6 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
                             ),
                             SizedBox(height: AppSizes.p24),
 
-                            
                             _buildSectionHeader(
                               'Thông tin liên hệ',
                               Icons.contact_phone_outlined,
@@ -410,7 +383,6 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
                             ),
                             SizedBox(height: AppSizes.p24),
 
-                            
                             _buildSectionHeader(
                               'Thông tin chuyên môn',
                               Icons.workspace_premium_outlined,
@@ -429,7 +401,6 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
                             ),
                             SizedBox(height: AppSizes.p32),
 
-                            
                             BlocBuilder<TeacherBloc, TeacherState>(
                               builder: (context, btnState) {
                                 final isLoading = btnState is TeacherLoading;

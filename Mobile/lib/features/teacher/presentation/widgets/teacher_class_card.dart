@@ -40,7 +40,7 @@ class TeacherClassCard extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
             child: Row(
               children: [
-                // Status indicator
+                
                 Container(
                   width: 4.w,
                   height: 40.h,
@@ -52,7 +52,7 @@ class TeacherClassCard extends StatelessWidget {
                 
                 SizedBox(width: 12.w),
                 
-                // Class info
+                
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,7 +92,7 @@ class TeacherClassCard extends StatelessWidget {
                 
                 SizedBox(width: 8.w),
                 
-                // Right side: students count + status
+                
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   mainAxisSize: MainAxisSize.min,

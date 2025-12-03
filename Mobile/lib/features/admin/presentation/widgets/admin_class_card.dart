@@ -58,10 +58,10 @@ class AdminClassCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header: Course name tag + Status
+                
                 Row(
                   children: [
-                    // Course tag
+                    
                     Expanded(
                       child: Container(
                         padding: EdgeInsets.symmetric(
@@ -98,7 +98,7 @@ class AdminClassCard extends StatelessWidget {
                       ),
                     ),
                     SizedBox(width: 8.w),
-                    // Status badge
+                    
                     Container(
                       padding: EdgeInsets.symmetric(
                         horizontal: 8.w,
@@ -133,7 +133,7 @@ class AdminClassCard extends StatelessWidget {
 
                 SizedBox(height: 10.h),
 
-                // Class name
+                
                 Text(
                   classItem.name,
                   style: TextStyle(
@@ -148,7 +148,7 @@ class AdminClassCard extends StatelessWidget {
 
                 SizedBox(height: 10.h),
 
-                // Info row 1: Schedule + Time
+                
                 _buildInfoRow(
                   context,
                   icon: Icons.calendar_month_outlined,
@@ -159,7 +159,7 @@ class AdminClassCard extends StatelessWidget {
 
                 SizedBox(height: 6.h),
 
-                // Info row 2: Teacher + Room
+                
                 _buildInfoRow(
                   context,
                   icon: Icons.person_outline,
@@ -170,7 +170,7 @@ class AdminClassCard extends StatelessWidget {
 
                 SizedBox(height: 10.h),
 
-                // Footer: Students count
+                
                 Container(
                   padding: EdgeInsets.symmetric(
                     horizontal: 10.w,

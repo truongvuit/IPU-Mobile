@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-
 abstract class StudentEvent extends Equatable {
   const StudentEvent();
 
@@ -8,11 +7,9 @@ abstract class StudentEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-
 class LoadDashboard extends StudentEvent {
   const LoadDashboard();
 }
-
 
 class LoadAllCourses extends StudentEvent {
   const LoadAllCourses();
@@ -36,7 +33,6 @@ class LoadCourseDetail extends StudentEvent {
   List<Object?> get props => [courseId];
 }
 
-
 class LoadMyClasses extends StudentEvent {
   const LoadMyClasses();
 }
@@ -49,7 +45,6 @@ class LoadClassDetail extends StudentEvent {
   @override
   List<Object?> get props => [classId];
 }
-
 
 class LoadSchedule extends StudentEvent {
   final DateTime date;
@@ -69,7 +64,6 @@ class LoadWeekSchedule extends StudentEvent {
   List<Object?> get props => [startDate];
 }
 
-
 class LoadMyGrades extends StudentEvent {
   const LoadMyGrades();
 }
@@ -83,7 +77,6 @@ class LoadGradesByCourse extends StudentEvent {
   List<Object?> get props => [courseId];
 }
 
-
 class LoadProfile extends StudentEvent {
   const LoadProfile();
 }
@@ -94,7 +87,12 @@ class UpdateProfile extends StudentEvent {
   final String address;
   final String? avatarPath;
 
-  const UpdateProfile(this.fullName, this.phoneNumber, this.address, {this.avatarPath});
+  const UpdateProfile(
+    this.fullName,
+    this.phoneNumber,
+    this.address, {
+    this.avatarPath,
+  });
 
   @override
   List<Object?> get props => [fullName, phoneNumber, address, avatarPath];
@@ -126,14 +124,24 @@ class SubmitRating extends StudentEvent {
 
   @override
   List<Object?> get props => [
-        classId,
-        overallRating,
-        teacherRating,
-        facilityRating,
-        comment,
-      ];
+    classId,
+    overallRating,
+    teacherRating,
+    facilityRating,
+    comment,
+  ];
 }
 
 class LoadReviewHistory extends StudentEvent {
   const LoadReviewHistory();
+}
+
+
+class LoadClassReview extends StudentEvent {
+  final String classId;
+
+  const LoadClassReview(this.classId);
+
+  @override
+  List<Object?> get props => [classId];
 }

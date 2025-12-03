@@ -1,7 +1,7 @@
 enum PaymentMethod {
-  cash, // Tiền mặt
-  transfer, // Chuyển khoản
-  card, // Quét thẻ
+  cash, 
+  transfer, 
+  card, 
 }
 
 class QuickRegistration {

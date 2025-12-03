@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/routing/app_router.dart';
@@ -24,18 +24,30 @@ class StudentDrawer extends StatelessWidget {
 
     return BlocBuilder<StudentBloc, StudentState>(
       builder: (context, state) {
+        final bloc = context.read<StudentBloc>();
+        
+        
         String displayName = 'Học viên';
-        String displayCode = '';
         String? displayAvatar;
+        bool isLoading = state is StudentLoading || state is StudentInitial;
 
-        if (state is StudentLoaded) {
-          displayName = state.profile?.fullName ?? 'Học viên';
-          displayCode = state.profile?.id ?? '';
-          displayAvatar = state.profile?.avatarUrl;
-        } else if (state is DashboardLoaded) {
-          displayName = state.profile?.fullName ?? 'Học viên';
-          displayCode = state.profile?.id ?? '';
-          displayAvatar = state.profile?.avatarUrl;
+        
+        if (state is DashboardLoaded && state.profile != null) {
+          displayName = state.profile!.fullName;
+          displayAvatar = state.profile!.avatarUrl;
+        } else if (state is StudentLoaded && state.profile != null) {
+          displayName = state.profile!.fullName;
+          displayAvatar = state.profile!.avatarUrl;
+        } else if (state is ProfileLoaded) {
+          displayName = state.profile.fullName;
+          displayAvatar = state.profile.avatarUrl;
+        } else if (state is ProfileUpdated) {
+          displayName = state.profile.fullName;
+          displayAvatar = state.profile.avatarUrl;
+        } else if (bloc.cachedProfile != null) {
+          
+          displayName = bloc.cachedProfile!.fullName;
+          displayAvatar = bloc.cachedProfile!.avatarUrl;
         }
 
         return Drawer(
@@ -45,7 +57,7 @@ class StudentDrawer extends StatelessWidget {
               children: [
                 InkWell(
                   onTap: () {
-                    Navigator.pop(context);
+                    
                     onNavigate(AppRouter.studentProfile);
                   },
                   child: Padding(
@@ -57,9 +69,12 @@ class StudentDrawer extends StatelessWidget {
                           height: 64.h,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: const Color(0xFF135BEC).withValues(alpha: 0.2),
+                            color: const Color(
+                              0xFF135BEC,
+                            ).withValues(alpha: 0.2),
                           ),
-                          child: displayAvatar != null && displayAvatar.isNotEmpty
+                          child:
+                              displayAvatar != null && displayAvatar.isNotEmpty
                               ? ClipOval(
                                   child: Image.network(
                                     displayAvatar,
@@ -76,18 +91,30 @@ class StudentDrawer extends StatelessWidget {
                                         ),
                                       );
                                     },
-                                    loadingBuilder: (context, child, loadingProgress) {
-                                      if (loadingProgress == null) return child;
-                                      return Center(
-                                        child: CircularProgressIndicator(
-                                          value: loadingProgress.expectedTotalBytes != null
-                                              ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                              : null,
-                                          strokeWidth: 2,
-                                          valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF135BEC)),
-                                        ),
-                                      );
-                                    },
+                                    loadingBuilder:
+                                        (context, child, loadingProgress) {
+                                          if (loadingProgress == null) {
+                                            return child;
+                                          }
+                                          return Center(
+                                            child: CircularProgressIndicator(
+                                              value:
+                                                  loadingProgress
+                                                          .expectedTotalBytes !=
+                                                      null
+                                                  ? loadingProgress
+                                                            .cumulativeBytesLoaded /
+                                                        loadingProgress
+                                                            .expectedTotalBytes!
+                                                  : null,
+                                              strokeWidth: 2,
+                                              valueColor:
+                                                  const AlwaysStoppedAnimation<
+                                                    Color
+                                                  >(Color(0xFF135BEC)),
+                                            ),
+                                          );
+                                        },
                                   ),
                                 )
                               : ClipOval(
@@ -101,84 +128,157 @@ class StudentDrawer extends StatelessWidget {
                         ),
                         SizedBox(width: 12.w),
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                displayName,
-                                style: TextStyle(
-                                  fontSize: 18.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                  fontFamily: 'Lexend',
+                          child: isLoading
+                              ? Container(
+                                  height: 20.h,
+                                  width: 120.w,
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? const Color(0xFF374151)
+                                        : const Color(0xFFE5E7EB),
+                                    borderRadius: BorderRadius.circular(4.r),
+                                  ),
+                                )
+                              : Text(
+                                  displayName,
+                                  style: TextStyle(
+                                    fontSize: 18.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark
+                                        ? Colors.white
+                                        : const Color(0xFF0F172A),
+                                    fontFamily: 'Lexend',
+                                  ),
                                 ),
-                              ),
-                              SizedBox(height: 2.h),
-                              Text(
-                                displayCode,
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF64748B),
-                                  fontFamily: 'Lexend',
-                                ),
-                              ),
-                            ],
-                          ),
                         ),
                         Icon(
                           Icons.chevron_right,
-                          color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF64748B),
+                          color: isDark
+                              ? const Color(0xFF9CA3AF)
+                              : const Color(0xFF64748B),
                           size: 24.sp,
                         ),
                       ],
                     ),
                   ),
                 ),
-                Divider(height: 1, color: isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB)),
+                Divider(
+                  height: 1,
+                  color: isDark
+                      ? const Color(0xFF374151)
+                      : const Color(0xFFE5E7EB),
+                ),
                 Expanded(
                   child: ListView(
-                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 8.w,
+                      vertical: 8.h,
+                    ),
                     children: [
-                      _buildNavItem(context, icon: Icons.home_outlined, title: 'Trang chủ', route: AppRouter.studentDashboard, isDark: isDark),
-                      _buildNavItem(context, icon: Icons.calendar_month_outlined, title: 'Lịch học', route: AppRouter.studentSchedule, isDark: isDark),
-                      _buildNavItem(context, icon: Icons.school_outlined, title: 'Điểm số', route: AppRouter.studentGrades, isDark: isDark),
-                      _buildNavItem(context, icon: Icons.class_outlined, title: 'Các lớp học của tôi', route: AppRouter.studentClasses, isDark: isDark),
-                      _buildNavItem(context, icon: Icons.book_outlined, title: 'Khóa học', route: AppRouter.studentCourses, isDark: isDark),
+                      _buildNavItem(
+                        context,
+                        icon: Icons.home_outlined,
+                        title: 'Trang chủ',
+                        route: AppRouter.studentDashboard,
+                        isDark: isDark,
+                      ),
+                      _buildNavItem(
+                        context,
+                        icon: Icons.class_outlined,
+                        title: 'Các lớp học của tôi',
+                        route: AppRouter.studentClasses,
+                        isDark: isDark,
+                      ),
+                      _buildNavItem(
+                        context,
+                        icon: Icons.calendar_month_outlined,
+                        title: 'Lịch học',
+                        route: AppRouter.studentSchedule,
+                        isDark: isDark,
+                      ),
+                      _buildNavItem(
+                        context,
+                        icon: Icons.grading_outlined,
+                        title: 'Điểm số',
+                        route: AppRouter.studentGrades,
+                        isDark: isDark,
+                      ),
+                      _buildNavItem(
+                        context,
+                        icon: Icons.book_outlined,
+                        title: 'Khóa học',
+                        route: AppRouter.studentCourses,
+                        isDark: isDark,
+                      ),
                       SizedBox(height: 8.h),
-                      Divider(height: 1, color: isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB)),
+                      Divider(
+                        height: 1,
+                        color: isDark
+                            ? const Color(0xFF374151)
+                            : const Color(0xFFE5E7EB),
+                      ),
                       SizedBox(height: 8.h),
                       _buildNavItem(
-                        context, 
-                        icon: Icons.settings_outlined, 
-                        title: 'Cài đặt', 
+                        context,
+                        icon: Icons.settings_outlined,
+                        title: 'Cài đặt',
                         isDark: isDark,
                         onTap: () {
                           Navigator.pop(context);
                           Navigator.pushNamed(
-                            context, 
+                            context,
                             AppRouter.settings,
                             arguments: {'userRole': 'student'},
                           );
                         },
-                      ),                     
+                      ),
                     ],
                   ),
                 ),
-                Divider(height: 1, color: isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB)),
+                Divider(
+                  height: 1,
+                  color: isDark
+                      ? const Color(0xFF374151)
+                      : const Color(0xFFE5E7EB),
+                ),
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
                   child: ListTile(
-                    leading: Icon(Icons.logout, color: AppColors.error, size: 24.sp),
-                    title: Text('Đăng xuất', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500, color: AppColors.error, fontFamily: 'Lexend')),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                    leading: Icon(
+                      Icons.logout,
+                      color: AppColors.error,
+                      size: 24.sp,
+                    ),
+                    title: Text(
+                      'Đăng xuất',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.error,
+                        fontFamily: 'Lexend',
+                      ),
+                    ),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 4.h,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
                     onTap: () {
-                      Navigator.pop(context);
+                      
+                      final authBloc = context.read<AuthBloc>();
+                      final navigator = Navigator.of(context);
+
+                      navigator.pop(); 
+
                       showDialog(
                         context: context,
                         builder: (ctx) => AlertDialog(
                           title: const Text('Đăng xuất'),
-                          content: const Text('Bạn có chắc chắn muốn đăng xuất?'),
+                          content: const Text(
+                            'Bạn có chắc chắn muốn đăng xuất?',
+                          ),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(ctx),
@@ -187,12 +287,18 @@ class StudentDrawer extends StatelessWidget {
                             TextButton(
                               onPressed: () {
                                 Navigator.pop(ctx);
-                                // Gọi AuthBloc để đăng xuất
-                                context.read<AuthBloc>().add(const LogoutRequested());
-                                // Navigate đến login
-                                Navigator.pushNamedAndRemoveUntil(context, AppRouter.welcome, (route) => false);
+                                
+                                authBloc.add(const LogoutRequested());
+                                
+                                navigator.pushNamedAndRemoveUntil(
+                                  AppRouter.welcome,
+                                  (route) => false,
+                                );
                               },
-                              child: const Text('Đăng xuất', style: TextStyle(color: AppColors.error)),
+                              child: const Text(
+                                'Đăng xuất',
+                                style: TextStyle(color: AppColors.error),
+                              ),
                             ),
                           ],
                         ),
@@ -206,7 +312,13 @@ class StudentDrawer extends StatelessWidget {
                   child: Text(
                     'Phiên bản 1.0.2',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12.sp, color: isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF), fontFamily: 'Lexend'),
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: isDark
+                          ? const Color(0xFF6B7280)
+                          : const Color(0xFF9CA3AF),
+                      fontFamily: 'Lexend',
+                    ),
                   ),
                 ),
               ],
@@ -217,29 +329,50 @@ class StudentDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildNavItem(BuildContext context, {
-    required IconData icon, 
-    required String title, 
-    String? route, 
-    VoidCallback? onTap, 
-    required bool isDark
+  Widget _buildNavItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    String? route,
+    VoidCallback? onTap,
+    required bool isDark,
   }) {
     final isActive = route != null && currentRoute == route;
     return Container(
       margin: EdgeInsets.symmetric(vertical: 2.h),
       decoration: BoxDecoration(
-        color: isActive ? const Color(0xFF135BEC).withValues(alpha: 0.1) : Colors.transparent,
+        color: isActive
+            ? const Color(0xFF135BEC).withValues(alpha: 0.1)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(8.r),
       ),
       child: ListTile(
-        leading: Icon(icon, color: isActive ? const Color(0xFF135BEC) : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563)), size: 24.sp),
-        title: Text(title, style: TextStyle(fontSize: 14.sp, fontWeight: isActive ? FontWeight.w600 : FontWeight.w500, color: isActive ? const Color(0xFF135BEC) : (isDark ? Colors.white : const Color(0xFF0F172A)), fontFamily: 'Lexend')),
+        leading: Icon(
+          icon,
+          color: isActive
+              ? const Color(0xFF135BEC)
+              : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563)),
+          size: 24.sp,
+        ),
+        title: Text(
+          title,
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+            color: isActive
+                ? const Color(0xFF135BEC)
+                : (isDark ? Colors.white : const Color(0xFF0F172A)),
+            fontFamily: 'Lexend',
+          ),
+        ),
         contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-        onTap: onTap ?? () {
-          if (route != null) {
-            onNavigate(route);
-          }
-        },
+        onTap:
+            onTap ??
+            () {
+              if (route != null) {
+                onNavigate(route);
+              }
+            },
       ),
     );
   }

@@ -14,6 +14,7 @@ import '../bloc/admin_state.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../domain/entities/admin_teacher.dart';
 import '../../domain/entities/course_detail.dart';
+import '../../domain/entities/class_session.dart';
 
 import 'admin_edit_class_screen.dart';
 
@@ -32,13 +33,311 @@ class _AdminClassDetailScreenState extends State<AdminClassDetailScreen> {
     super.initState();
     _loadClassDetail();
   }
-  
+
   void _loadClassDetail() {
     context.read<AdminBloc>().add(LoadClassDetail(widget.classId));
   }
 
   String _formatDate(DateTime date) {
     return DateFormat('dd/MM/yyyy').format(date);
+  }
+
+  Widget _buildSessionsSection(
+    BuildContext context,
+    dynamic classInfo,
+    bool isDark,
+    ThemeData theme,
+  ) {
+    final sessions = classInfo.sessions as List<ClassSession>;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Danh sách buổi học',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: AppSizes.textXl,
+              ),
+            ),
+            Text(
+              classInfo.sessionStatsText,
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: isDark ? AppColors.gray400 : AppColors.gray600,
+                fontSize: AppSizes.textLg,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: AppSizes.p12),
+
+        
+        _buildSessionStats(classInfo, isDark, theme),
+        SizedBox(height: AppSizes.p12),
+
+        
+        Container(
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.surfaceDark : AppColors.surface,
+            borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+          ),
+          child: sessions.isEmpty
+              ? Padding(
+                  padding: EdgeInsets.all(AppSizes.paddingMedium),
+                  child: Center(
+                    child: Text(
+                      'Chưa có buổi học nào',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: isDark ? AppColors.gray400 : AppColors.gray600,
+                      ),
+                    ),
+                  ),
+                )
+              : Column(
+                  children: [
+                    ...sessions.take(5).map((session) {
+                      final index = sessions.indexOf(session);
+                      return _SessionItem(
+                        session: session,
+                        sessionNumber: index + 1,
+                        isDark: isDark,
+                        isLast:
+                            index ==
+                            (sessions.length > 5 ? 4 : sessions.length - 1),
+                        onTap: () =>
+                            _showSessionDetail(context, session, index + 1),
+                        onStatusChange: () =>
+                            _showStatusChangeDialog(context, session),
+                      );
+                    }),
+                    if (sessions.length > 5)
+                      Padding(
+                        padding: EdgeInsets.all(AppSizes.p12),
+                        child: TextButton.icon(
+                          onPressed: () => _showAllSessions(
+                            context,
+                            sessions,
+                            classInfo.name,
+                          ),
+                          icon: const Icon(Icons.arrow_forward),
+                          label: Text('Xem tất cả ${sessions.length} buổi học'),
+                        ),
+                      ),
+                  ],
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSessionStats(dynamic classInfo, bool isDark, ThemeData theme) {
+    final completed = classInfo.completedSessionsCount;
+    final canceled = classInfo.canceledSessionsCount;
+    final remaining = classInfo.remainingSessionsCount;
+    final total = classInfo.sessions.length;
+
+    return Row(
+      children: [
+        Expanded(
+          child: _StatCard(
+            icon: Icons.check_circle,
+            label: 'Hoàn thành',
+            value: '$completed',
+            color: AppColors.success,
+            isDark: isDark,
+          ),
+        ),
+        SizedBox(width: AppSizes.p8),
+        Expanded(
+          child: _StatCard(
+            icon: Icons.pending,
+            label: 'Chưa học',
+            value: '$remaining',
+            color: AppColors.warning,
+            isDark: isDark,
+          ),
+        ),
+        SizedBox(width: AppSizes.p8),
+        Expanded(
+          child: _StatCard(
+            icon: Icons.cancel,
+            label: 'Đã hủy',
+            value: '$canceled',
+            color: AppColors.error,
+            isDark: isDark,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showSessionDetail(
+    BuildContext context,
+    ClassSession session,
+    int sessionNumber,
+  ) {
+    Navigator.pushNamed(
+      context,
+      AppRouter.adminSessionDetail,
+      arguments: {
+        'sessionId': session.id,
+        'sessionNumber': sessionNumber,
+        'session': session,
+        'classId': widget.classId,
+      },
+    ).then((_) => _loadClassDetail());
+  }
+
+  void _showStatusChangeDialog(BuildContext context, ClassSession session) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.all(AppSizes.paddingMedium),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.gray600 : AppColors.gray300,
+                  borderRadius: BorderRadius.circular(2.r),
+                ),
+              ),
+            ),
+            SizedBox(height: AppSizes.paddingMedium),
+            Text(
+              'Cập nhật trạng thái buổi học',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: AppSizes.p8),
+            Text(
+              'Ngày: ${_formatDate(session.date)}',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: isDark ? AppColors.gray400 : AppColors.gray600,
+              ),
+            ),
+            SizedBox(height: AppSizes.paddingMedium),
+
+            _StatusOption(
+              icon: Icons.check_circle,
+              label: 'Đã hoàn thành',
+              description: 'Buổi học đã diễn ra bình thường',
+              color: AppColors.success,
+              isSelected: session.status == SessionStatus.completed,
+              onTap: () => _updateSessionStatus(
+                context,
+                session,
+                SessionStatus.completed,
+              ),
+            ),
+            SizedBox(height: AppSizes.p8),
+            _StatusOption(
+              icon: Icons.pending,
+              label: 'Chưa hoàn thành',
+              description: 'Buổi học chưa diễn ra hoặc đang chờ',
+              color: AppColors.warning,
+              isSelected: session.status == SessionStatus.notCompleted,
+              onTap: () => _updateSessionStatus(
+                context,
+                session,
+                SessionStatus.notCompleted,
+              ),
+            ),
+            SizedBox(height: AppSizes.p8),
+            _StatusOption(
+              icon: Icons.cancel,
+              label: 'Đã hủy',
+              description: 'Buổi học bị hủy, cần sắp xếp bù',
+              color: AppColors.error,
+              isSelected: session.status == SessionStatus.canceled,
+              onTap: () => _updateSessionStatus(
+                context,
+                session,
+                SessionStatus.canceled,
+              ),
+            ),
+            SizedBox(height: AppSizes.paddingMedium),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _updateSessionStatus(
+    BuildContext context,
+    ClassSession session,
+    SessionStatus newStatus,
+  ) async {
+    Navigator.pop(context); 
+
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final bloc = context.read<AdminBloc>();
+      await bloc.adminRepository.updateSession(
+        sessionId: session.id,
+        status: newStatus == SessionStatus.completed
+            ? 'Completed'
+            : newStatus == SessionStatus.canceled
+            ? 'Canceled'
+            : 'NotCompleted',
+      );
+
+      if (context.mounted) {
+        Navigator.pop(context); 
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Đã cập nhật trạng thái buổi học'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        _loadClassDetail(); 
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context); 
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    }
+  }
+
+  void _showAllSessions(
+    BuildContext context,
+    List<ClassSession> sessions,
+    String className,
+  ) {
+    Navigator.pushNamed(
+      context,
+      AppRouter.adminClassSessions,
+      arguments: {
+        'classId': widget.classId,
+        'className': className,
+        'sessions': sessions,
+      },
+    ).then((_) => _loadClassDetail());
   }
 
   @override
@@ -130,7 +429,6 @@ class _AdminClassDetailScreenState extends State<AdminClassDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    
                     Container(
                       padding: EdgeInsets.all(AppSizes.paddingMedium),
                       decoration: BoxDecoration(
@@ -182,7 +480,6 @@ class _AdminClassDetailScreenState extends State<AdminClassDetailScreen> {
 
                     SizedBox(height: AppSizes.paddingMedium),
 
-                    
                     Container(
                       decoration: BoxDecoration(
                         color: isDark
@@ -200,9 +497,10 @@ class _AdminClassDetailScreenState extends State<AdminClassDetailScreen> {
                             isDark: isDark,
                             hasArrow: true,
                             onTap: () {
-                              
                               final course = CourseDetail(
-                                id: classInfo.courseId ?? 'course_${classInfo.courseName.hashCode}',
+                                id:
+                                    classInfo.courseId ??
+                                    'course_${classInfo.courseName.hashCode}',
                                 name: classInfo.courseName,
                                 totalHours: 60,
                                 tuitionFee: classInfo.tuitionFee,
@@ -264,7 +562,18 @@ class _AdminClassDetailScreenState extends State<AdminClassDetailScreen> {
                             label:
                                 '${_formatDate(classInfo.startDate)} - ${classInfo.endDate != null ? _formatDate(classInfo.endDate!) : ""}',
                             isDark: isDark,
+                          ),
+                          _InfoRow(
+                            icon: Icons.schedule,
+                            label: classInfo.sessionStatsText,
+                            isDark: isDark,
                             isLast: true,
+                            hasArrow: true,
+                            onTap: () => _showAllSessions(
+                              context,
+                              classInfo.sessions,
+                              classInfo.name,
+                            ),
                           ),
                         ],
                       ),
@@ -272,7 +581,6 @@ class _AdminClassDetailScreenState extends State<AdminClassDetailScreen> {
 
                     SizedBox(height: AppSizes.paddingMedium),
 
-                    
                     GridView.count(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -286,7 +594,6 @@ class _AdminClassDetailScreenState extends State<AdminClassDetailScreen> {
                           icon: Icons.edit,
                           color: AppColors.primary,
                           onTap: () {
-                            
                             final adminBloc = context.read<AdminBloc>();
                             Navigator.push(
                               context,
@@ -318,7 +625,6 @@ class _AdminClassDetailScreenState extends State<AdminClassDetailScreen> {
 
                     SizedBox(height: AppSizes.p20),
 
-                    
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -342,7 +648,6 @@ class _AdminClassDetailScreenState extends State<AdminClassDetailScreen> {
                     ),
                     SizedBox(height: AppSizes.p12),
 
-                    
                     Container(
                       padding: EdgeInsets.all(AppSizes.paddingMedium),
                       decoration: BoxDecoration(
@@ -355,7 +660,6 @@ class _AdminClassDetailScreenState extends State<AdminClassDetailScreen> {
                       ),
                       child: Column(
                         children: [
-                          
                           ...students.take(3).map((student) {
                             return Padding(
                               padding: EdgeInsets.only(bottom: AppSizes.p8),
@@ -389,7 +693,6 @@ class _AdminClassDetailScreenState extends State<AdminClassDetailScreen> {
                             SizedBox(height: AppSizes.p8),
                             TextButton.icon(
                               onPressed: () {
-                                
                                 Navigator.pushNamed(
                                   context,
                                   AppRouter.adminClassStudents,
@@ -400,7 +703,6 @@ class _AdminClassDetailScreenState extends State<AdminClassDetailScreen> {
                               label: const Text('Xem tất cả học viên'),
                             ),
                           ],
-                        
                         ],
                       ),
                     ),
@@ -536,6 +838,293 @@ class _ActionButton extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+class _StatCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+  final bool isDark;
+
+  const _StatCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: EdgeInsets.all(AppSizes.p12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 24.sp),
+          SizedBox(height: 4.h),
+          Text(
+            value,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: isDark ? AppColors.gray400 : AppColors.gray600,
+              fontSize: 11.sp,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+class _SessionItem extends StatelessWidget {
+  final ClassSession session;
+  final int sessionNumber;
+  final bool isDark;
+  final bool isLast;
+  final VoidCallback onTap;
+  final VoidCallback onStatusChange;
+
+  const _SessionItem({
+    required this.session,
+    required this.sessionNumber,
+    required this.isDark,
+    required this.isLast,
+    required this.onTap,
+    required this.onStatusChange,
+  });
+
+  Color get _statusColor {
+    switch (session.status) {
+      case SessionStatus.completed:
+        return AppColors.success;
+      case SessionStatus.canceled:
+        return AppColors.error;
+      case SessionStatus.notCompleted:
+        return session.isPast ? AppColors.warning : AppColors.gray500;
+    }
+  }
+
+  IconData get _statusIcon {
+    switch (session.status) {
+      case SessionStatus.completed:
+        return Icons.check_circle;
+      case SessionStatus.canceled:
+        return Icons.cancel;
+      case SessionStatus.notCompleted:
+        return session.isPast ? Icons.warning : Icons.pending;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dateFormat = DateFormat('dd/MM/yyyy');
+    final dayFormat = DateFormat('EEEE', 'vi_VN');
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: AppSizes.p16),
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: AppSizes.p12),
+                child: Row(
+                  children: [
+                    
+                    Container(
+                      width: 32.w,
+                      height: 32.h,
+                      decoration: BoxDecoration(
+                        color: _statusColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '$sessionNumber',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: _statusColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: AppSizes.p12),
+
+                    
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            dateFormat.format(session.date),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            dayFormat.format(session.date),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: isDark
+                                  ? AppColors.gray400
+                                  : AppColors.gray600,
+                            ),
+                          ),
+                          if (session.note != null && session.note!.isNotEmpty)
+                            Padding(
+                              padding: EdgeInsets.only(top: 2.h),
+                              child: Text(
+                                session.note!,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: AppColors.info,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+
+                    
+                    GestureDetector(
+                      onTap: onStatusChange,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppSizes.p8,
+                          vertical: 4.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _statusColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(_statusIcon, color: _statusColor, size: 14.sp),
+                            SizedBox(width: 4.w),
+                            Text(
+                              session.statusText,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: _statusColor,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 11.sp,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(width: AppSizes.p8),
+                    Icon(
+                      Icons.chevron_right,
+                      size: 20.sp,
+                      color: isDark ? AppColors.gray400 : AppColors.gray600,
+                    ),
+                  ],
+                ),
+              ),
+              if (!isLast)
+                Divider(
+                  height: 1,
+                  color: isDark ? AppColors.gray700 : AppColors.gray200,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+class _StatusOption extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String description;
+  final Color color;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _StatusOption({
+    required this.icon,
+    required this.label,
+    required this.description,
+    required this.color,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Material(
+      color: isSelected
+          ? color.withValues(alpha: 0.1)
+          : (isDark ? AppColors.gray800 : AppColors.gray100),
+      borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+        child: Container(
+          padding: EdgeInsets.all(AppSizes.p12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+            border: isSelected ? Border.all(color: color, width: 2) : null,
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: color, size: 24.sp),
+              SizedBox(width: AppSizes.p12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: isSelected ? color : null,
+                      ),
+                    ),
+                    Text(
+                      description,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: isDark ? AppColors.gray400 : AppColors.gray600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isSelected) Icon(Icons.check, color: color, size: 20.sp),
             ],
           ),
         ),

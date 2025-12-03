@@ -37,7 +37,7 @@ class _PromotionDetailContent extends StatelessWidget {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text(state.message)));
-          Navigator.pop(context, true); // Return true to refresh list
+          Navigator.pop(context, true); 
         } else if (state is PromotionError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message), backgroundColor: Colors.red),
@@ -79,7 +79,7 @@ class _PromotionDetailContent extends StatelessWidget {
                     arguments: promotion,
                   );
                   if (result == true) {
-                    // Refresh data
+                    
                     if (context.mounted) {
                       context.read<PromotionBloc>().add(
                         promotion_events.LoadPromotions(),
@@ -386,7 +386,7 @@ class _PromotionDetailContent extends StatelessWidget {
                       spacing: 8,
                       runSpacing: 8,
                       children: List.generate(courseIds.length, (index) {
-                        // Ưu tiên hiển thị tên khóa học nếu có
+                        
                         final displayText = (courseNames != null && index < courseNames.length)
                             ? courseNames[index]
                             : 'Khóa học ${courseIds[index]}';

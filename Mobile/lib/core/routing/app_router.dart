@@ -26,9 +26,8 @@ import '../../features/student/presentation/screens/grades_screen.dart';
 import '../../features/student/presentation/screens/profile_screen.dart';
 import '../../features/student/presentation/screens/edit_profile_screen.dart';
 import '../../features/student/presentation/screens/rating_screen.dart';
-import '../../features/student/presentation/screens/review_history_screen.dart';
-import '../../features/student/presentation/screens/learning_path_screen.dart';
 import '../../features/student/presentation/bloc/student_bloc.dart';
+import '../../features/student/presentation/bloc/student_event.dart';
 
 
 import '../../features/teacher/presentation/screens/home_teacher_screen.dart';
@@ -70,6 +69,8 @@ import '../../features/admin/presentation/screens/courses/admin_course_detail_ne
 import '../../features/admin/presentation/screens/courses/admin_course_edit_screen.dart'; 
 import '../../features/admin/presentation/bloc/admin_course_bloc.dart'; 
 import '../../features/admin/presentation/screens/admin_class_feedback_screen.dart';
+import '../../features/admin/presentation/screens/admin_session_detail_screen.dart';
+import '../../features/admin/presentation/screens/admin_class_sessions_screen.dart';
 import '../../features/admin/presentation/screens/promotions/promotion_list_screen.dart';
 import '../../features/admin/presentation/screens/promotions/promotion_form_screen.dart';
 import '../../features/admin/presentation/screens/promotions/promotion_detail_screen.dart';
@@ -145,6 +146,8 @@ class AppRouter {
   
   static const String adminCourseDetail = '/admin/course-detail';
   static const String adminClassFeedback = '/admin/class-feedback';
+  static const String adminSessionDetail = '/admin/session-detail';
+  static const String adminClassSessions = '/admin/class-sessions';
   static const String adminPromotions = '/admin/promotions';
   static const String adminPromotionForm = '/admin/promotion-form';
   static const String adminPromotionDetail = '/admin/promotion-detail';
@@ -226,7 +229,7 @@ class AppRouter {
       case studentDashboard:
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
-            create: (_) => getIt<StudentBloc>(),
+            create: (_) => getIt<StudentBloc>()..add(const LoadDashboard()),
             child: const StudentDashboardScreen(),
           ),
           settings: routeSettings,
@@ -308,29 +311,11 @@ class AppRouter {
         );
 
       case studentRating:
-        final courseId = routeSettings.arguments as String;
+        final classId = routeSettings.arguments as String;
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
             create: (_) => getIt<StudentBloc>(),
-            child: RatingScreen(courseId: courseId),
-          ),
-          settings: routeSettings,
-        );
-
-      case studentReviewHistory:
-        return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<StudentBloc>(),
-            child: const ReviewHistoryScreen(),
-          ),
-          settings: routeSettings,
-        );
-
-      case studentLearningPath:
-        return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<StudentBloc>(),
-            child: const LearningPathScreen(),
+            child: RatingScreen(classId: classId),
           ),
           settings: routeSettings,
         );
@@ -375,14 +360,25 @@ class AppRouter {
         );
 
       case teacherAttendance:
-        final args = routeSettings.arguments as AttendanceArguments;
-        return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<TeacherBloc>(),
-            child: TeacherAttendanceScreen(args: args),
-          ),
-          settings: routeSettings,
-        );
+        try {
+          final args = routeSettings.arguments as AttendanceArguments;
+          return MaterialPageRoute(
+            builder: (_) => BlocProvider(
+              create: (_) => getIt<TeacherBloc>(),
+              child: TeacherAttendanceScreen(args: args),
+            ),
+            settings: routeSettings,
+          );
+        } catch (e) {
+          debugPrint('Error parsing AttendanceArguments: $e');
+          return MaterialPageRoute(
+            builder: (_) => Scaffold(
+              appBar: AppBar(title: const Text('Lỗi')),
+              body: Center(child: Text('Không thể tải trang điểm danh: $e')),
+            ),
+            settings: routeSettings,
+          );
+        }
       case teacherSchedule:
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
@@ -629,6 +625,35 @@ class AppRouter {
           builder: (_) => BlocProvider.value(
             value: getIt<AdminBloc>(),
             child: AdminClassFeedbackScreen(classId: classId),
+          ),
+          settings: routeSettings,
+        );
+
+      case adminSessionDetail:
+        final args = routeSettings.arguments as Map<String, dynamic>;
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider.value(
+            value: getIt<AdminBloc>(),
+            child: AdminSessionDetailScreen(
+              sessionId: args['sessionId'] as int,
+              sessionNumber: args['sessionNumber'] as int,
+              session: args['session'],
+              classId: args['classId'] as String,
+            ),
+          ),
+          settings: routeSettings,
+        );
+
+      case adminClassSessions:
+        final args = routeSettings.arguments as Map<String, dynamic>;
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider.value(
+            value: getIt<AdminBloc>(),
+            child: AdminClassSessionsScreen(
+              classId: args['classId'] as String,
+              className: args['className'] as String,
+              sessions: args['sessions'] as List,
+            ),
           ),
           settings: routeSettings,
         );

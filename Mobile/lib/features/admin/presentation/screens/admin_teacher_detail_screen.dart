@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
@@ -6,12 +7,14 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/custom_image.dart';
+import '../../../../core/auth/models/user_role.dart';
+import '../../../authentication/presentation/bloc/auth_bloc.dart';
+import '../../../authentication/presentation/bloc/auth_state.dart';
 import '../../domain/entities/admin_teacher.dart';
 import '../bloc/admin_bloc.dart';
 import '../bloc/admin_event.dart';
 import '../bloc/admin_state.dart';
 import 'admin_teacher_form_screen.dart';
-
 
 class AdminTeacherDetailScreen extends StatefulWidget {
   final AdminTeacher teacher;
@@ -24,12 +27,25 @@ class AdminTeacherDetailScreen extends StatefulWidget {
 }
 
 class _AdminTeacherDetailScreenState extends State<AdminTeacherDetailScreen> {
+  bool _showPassword = false;
+  UserRole? _currentUserRole;
+  
+  bool get _isAdmin => _currentUserRole?.isAdmin == true;
+
   @override
   void initState() {
     super.initState();
+    _loadCurrentUserRole();
     _loadTeacherDetail();
   }
   
+  void _loadCurrentUserRole() {
+    final authState = context.read<AuthBloc>().state;
+    if (authState is AuthSuccess) {
+      _currentUserRole = UserRole.fromString(authState.user.role);
+    }
+  }
+
   void _loadTeacherDetail() {
     context.read<AdminBloc>().add(LoadTeacherDetail(widget.teacher.id));
   }
@@ -54,26 +70,50 @@ class _AdminTeacherDetailScreenState extends State<AdminTeacherDetailScreen> {
             slivers: [
               
               SliverAppBar(
-                expandedHeight: 180.h,
+                expandedHeight: 200.h,
                 pinned: true,
                 backgroundColor: AppColors.primary,
                 flexibleSpace: FlexibleSpaceBar(
                   background: Container(
-                    color: AppColors.primary,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          AppColors.primary,
+                          AppColors.primary.withOpacity(0.8),
+                        ],
+                      ),
+                    ),
                     child: SafeArea(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           SizedBox(height: 40.h),
-                          ClipOval(
-                            child: CustomImage(
-                              imageUrl: teacher.avatarUrl ?? '',
-                              width: 70.r,
-                              height: 70.r,
-                              fit: BoxFit.cover,
+                          
+                          Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 3),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ClipOval(
+                              child: CustomImage(
+                                imageUrl: teacher.avatarUrl ?? '',
+                                width: 80.r,
+                                height: 80.r,
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
-                          SizedBox(height: 8.h),
+                          SizedBox(height: 12.h),
+                          
                           Padding(
                             padding: EdgeInsets.symmetric(
                               horizontal: AppSizes.paddingMedium,
@@ -82,12 +122,32 @@ class _AdminTeacherDetailScreenState extends State<AdminTeacherDetailScreen> {
                               teacher.fullName,
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: AppSizes.textLg,
+                                fontSize: 20.sp,
                                 fontWeight: FontWeight.bold,
                               ),
                               textAlign: TextAlign.center,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          SizedBox(height: 4.h),
+                          
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              teacher.statusText,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                         ],
@@ -129,6 +189,7 @@ class _AdminTeacherDetailScreenState extends State<AdminTeacherDetailScreen> {
                 ],
               ),
 
+              
               SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.all(AppSizes.paddingMedium),
@@ -136,129 +197,76 @@ class _AdminTeacherDetailScreenState extends State<AdminTeacherDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppSizes.p12,
-                          vertical: 6.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: teacher.status == 'active'
-                              ? AppColors.success.withValues(alpha: 0.1)
-                              : AppColors.warning.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(20.r),
-                        ),
-                        child: Text(
-                          teacher.statusText,
-                          style: TextStyle(
-                            color: teacher.status == 'active'
-                                ? AppColors.success
-                                : AppColors.warning,
-                            fontSize: AppSizes.textSm,
-                            fontWeight: FontWeight.w600,
-                          ),
+                      _buildStatsSection(context, teacher),
+
+                      SizedBox(height: 24.h),
+
+                      
+                      _buildSection(
+                        context,
+                        theme,
+                        isDark,
+                        title: 'Thông tin cá nhân',
+                        icon: Icons.person,
+                        child: _buildPersonalInfoContent(
+                          context,
+                          theme,
+                          isDark,
+                          teacher,
                         ),
                       ),
 
-                      SizedBox(height: AppSizes.p20),
+                      SizedBox(height: 16.h),
 
                       
-                      if (teacher.experience != null) ...[
-                        Text(
-                          'Kinh nghiệm',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
+                      _buildSection(
+                        context,
+                        theme,
+                        isDark,
+                        title: 'Thông tin liên hệ',
+                        icon: Icons.contact_phone,
+                        child: _buildContactInfoContent(
+                          context,
+                          theme,
+                          isDark,
+                          teacher,
+                        ),
+                      ),
+
+                      SizedBox(height: 16.h),
+
+                      
+                      _buildSection(
+                        context,
+                        theme,
+                        isDark,
+                        title: 'Bằng cấp & Chuyên môn',
+                        icon: Icons.school,
+                        child: _buildQualificationsContent(
+                          context,
+                          theme,
+                          isDark,
+                          teacher,
+                        ),
+                      ),
+
+                      
+                      if (teacher.accountInfo != null && _isAdmin) ...[
+                        SizedBox(height: 16.h),
+                        _buildSection(
+                          context,
+                          theme,
+                          isDark,
+                          title: 'Thông tin tài khoản',
+                          icon: Icons.account_circle,
+                          child: _buildAccountInfoContent(
+                            context,
+                            theme,
+                            isDark,
+                            teacher,
                           ),
                         ),
-                        SizedBox(height: AppSizes.p8),
-                        Text(
-                          teacher.experience!,
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                        SizedBox(height: AppSizes.paddingMedium),
                       ],
-
-                      
-                      if (teacher.qualifications != null) ...[
-                        Text(
-                          'Bằng cấp',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: AppSizes.p8),
-                        Text(
-                          teacher.qualifications!,
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                        SizedBox(height: AppSizes.paddingMedium),
-                      ],
-
-                      
-                      Text(
-                        'Môn dạy',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: AppSizes.p8),
-                      Wrap(
-                        spacing: AppSizes.p8,
-                        runSpacing: AppSizes.p8,
-                        children: teacher.subjects.map((subject) {
-                          return Chip(
-                            label: Text(subject),
-                            backgroundColor: AppColors.primary.withValues(
-                              alpha: 0.1,
-                            ),
-                            labelStyle: TextStyle(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          );
-                        }).toList(),
-                      ),
-
-                      SizedBox(height: AppSizes.p20),
-
-                      
-                      GridView.count(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: 2,
-                        mainAxisSpacing: AppSizes.p12,
-                        crossAxisSpacing: AppSizes.p12,
-                        childAspectRatio: 2.0,
-                        children: [
-                          _buildStatCard(
-                            context,
-                            'Lớp đang dạy',
-                            teacher.activeClasses.toString(),
-                            Icons.class_,
-                            AppColors.primary,
-                          ),
-                          _buildStatCard(
-                            context,
-                            'Tổng học viên',
-                            teacher.totalStudents.toString(),
-                            Icons.people,
-                            AppColors.success,
-                          ),
-                          _buildStatCard(
-                            context,
-                            'Đánh giá TB',
-                            teacher.rating.toStringAsFixed(1),
-                            Icons.star,
-                            AppColors.warning,
-                          ),
-                          _buildStatCard(
-                            context,
-                            'Chuyên cần',
-                            '${(teacher.attendanceRate * 100).toInt()}%',
-                            Icons.check_circle,
-                            AppColors.success,
-                          ),
-                        ],
-                      ),
 
                       SizedBox(height: 24.h),
 
@@ -267,7 +275,10 @@ class _AdminTeacherDetailScreenState extends State<AdminTeacherDetailScreen> {
                         context,
                         'Lịch dạy hôm nay',
                         teacher.todaySchedule.length > 3
-                            ? () => _showAllSchedules(context, teacher.todaySchedule)
+                            ? () => _showAllSchedules(
+                                context,
+                                teacher.todaySchedule,
+                              )
                             : () {},
                       ),
                       SizedBox(height: AppSizes.p12),
@@ -285,7 +296,10 @@ class _AdminTeacherDetailScreenState extends State<AdminTeacherDetailScreen> {
                         context,
                         'Đánh giá gần đây',
                         teacher.recentReviews.length > 3
-                            ? () => _showAllReviews(context, teacher.recentReviews)
+                            ? () => _showAllReviews(
+                                context,
+                                teacher.recentReviews,
+                              )
                             : () {},
                       ),
                       SizedBox(height: AppSizes.p12),
@@ -294,8 +308,7 @@ class _AdminTeacherDetailScreenState extends State<AdminTeacherDetailScreen> {
                         isDark,
                         teacher.recentReviews.take(3).toList(),
                       ),
-                      
-                      
+
                       SizedBox(height: 24.h),
                     ],
                   ),
@@ -305,6 +318,48 @@ class _AdminTeacherDetailScreenState extends State<AdminTeacherDetailScreen> {
           );
         },
       ),
+    );
+  }
+
+  
+  Widget _buildStatsSection(BuildContext context, AdminTeacher teacher) {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      mainAxisSpacing: AppSizes.p12,
+      crossAxisSpacing: AppSizes.p12,
+      childAspectRatio: 2.0,
+      children: [
+        _buildStatCard(
+          context,
+          'Lớp đang dạy',
+          teacher.activeClasses.toString(),
+          Icons.class_,
+          AppColors.primary,
+        ),
+        _buildStatCard(
+          context,
+          'Tổng học viên',
+          teacher.totalStudents.toString(),
+          Icons.people,
+          AppColors.success,
+        ),
+        _buildStatCard(
+          context,
+          'Đánh giá TB',
+          teacher.rating > 0 ? teacher.rating.toStringAsFixed(1) : '-',
+          Icons.star,
+          AppColors.warning,
+        ),
+        _buildStatCard(
+          context,
+          'Số đánh giá',
+          teacher.totalReviews.toString(),
+          Icons.rate_review,
+          AppColors.info,
+        ),
+      ],
     );
   }
 
@@ -320,7 +375,7 @@ class _AdminTeacherDetailScreenState extends State<AdminTeacherDetailScreen> {
     return Container(
       padding: EdgeInsets.all(AppSizes.p12),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
       ),
       child: Column(
@@ -354,6 +409,398 @@ class _AdminTeacherDetailScreenState extends State<AdminTeacherDetailScreen> {
     );
   }
 
+  
+  Widget _buildSection(
+    BuildContext context,
+    ThemeData theme,
+    bool isDark, {
+    required String title,
+    required IconData icon,
+    required Widget child,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : AppColors.surface,
+        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          
+          Container(
+            padding: EdgeInsets.all(AppSizes.p12),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(AppSizes.radiusMedium),
+                topRight: Radius.circular(AppSizes.radiusMedium),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, size: 20.sp, color: AppColors.primary),
+                SizedBox(width: AppSizes.p8),
+                Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          Padding(padding: EdgeInsets.all(AppSizes.p16), child: child),
+        ],
+      ),
+    );
+  }
+
+  
+  Widget _buildPersonalInfoContent(
+    BuildContext context,
+    ThemeData theme,
+    bool isDark,
+    AdminTeacher teacher,
+  ) {
+    final dateFormat = DateFormat('dd/MM/yyyy');
+
+    return Column(
+      children: [
+        _buildInfoRow(
+          theme,
+          isDark,
+          icon: Icons.badge,
+          label: 'Mã giảng viên',
+          value: teacher.id,
+        ),
+        _buildInfoRow(
+          theme,
+          isDark,
+          icon: Icons.person,
+          label: 'Họ và tên',
+          value: teacher.fullName,
+        ),
+        _buildInfoRow(
+          theme,
+          isDark,
+          icon: Icons.cake,
+          label: 'Ngày sinh',
+          value: teacher.dateOfBirth != null
+              ? dateFormat.format(teacher.dateOfBirth!)
+              : 'Chưa cập nhật',
+        ),
+      ],
+    );
+  }
+
+  
+  Widget _buildContactInfoContent(
+    BuildContext context,
+    ThemeData theme,
+    bool isDark,
+    AdminTeacher teacher,
+  ) {
+    return Column(
+      children: [
+        _buildInfoRow(
+          theme,
+          isDark,
+          icon: Icons.email,
+          label: 'Email',
+          value: teacher.email ?? 'Chưa cập nhật',
+          canCopy: teacher.email != null,
+        ),
+        _buildInfoRow(
+          theme,
+          isDark,
+          icon: Icons.phone,
+          label: 'Số điện thoại',
+          value: teacher.phoneNumber ?? 'Chưa cập nhật',
+          canCopy: teacher.phoneNumber != null,
+        ),
+      ],
+    );
+  }
+
+  
+  Widget _buildQualificationsContent(
+    BuildContext context,
+    ThemeData theme,
+    bool isDark,
+    AdminTeacher teacher,
+  ) {
+    if (teacher.qualificationsList.isEmpty) {
+      return Text(
+        teacher.qualifications ?? 'Chưa cập nhật thông tin bằng cấp',
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: isDark ? AppColors.gray400 : AppColors.gray600,
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: teacher.qualificationsList.map((qual) {
+        return Container(
+          margin: EdgeInsets.only(bottom: AppSizes.p8),
+          padding: EdgeInsets.all(AppSizes.p12),
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppColors.gray800.withOpacity(0.5)
+                : AppColors.gray100,
+            borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.school, size: 20.sp, color: AppColors.primary),
+              SizedBox(width: AppSizes.p12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      qual.degreeName ?? 'Bằng cấp',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (qual.level != null) ...[
+                      SizedBox(height: 2),
+                      Text(
+                        'Trình độ: ${qual.level}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: isDark ? AppColors.gray400 : AppColors.gray600,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  
+  Widget _buildAccountInfoContent(
+    BuildContext context,
+    ThemeData theme,
+    bool isDark,
+    AdminTeacher teacher,
+  ) {
+    final accountInfo = teacher.accountInfo!;
+    final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
+
+    return Column(
+      children: [
+        _buildInfoRow(
+          theme,
+          isDark,
+          icon: Icons.account_circle,
+          label: 'Tên đăng nhập',
+          value: accountInfo.username ?? 'N/A',
+          canCopy: accountInfo.username != null,
+        ),
+        
+        if (accountInfo.password != null)
+          _buildPasswordRow(theme, isDark, accountInfo.password!),
+        _buildInfoRow(
+          theme,
+          isDark,
+          icon: Icons.security,
+          label: 'Vai trò',
+          value: _getRoleText(accountInfo.role),
+        ),
+        _buildInfoRow(
+          theme,
+          isDark,
+          icon: Icons.verified_user,
+          label: 'Trạng thái xác thực',
+          value: accountInfo.isVerified ? 'Đã xác thực' : 'Chưa xác thực',
+          valueColor: accountInfo.isVerified
+              ? AppColors.success
+              : AppColors.warning,
+        ),
+        _buildInfoRow(
+          theme,
+          isDark,
+          icon: Icons.calendar_today,
+          label: 'Ngày tạo tài khoản',
+          value: accountInfo.createdAt != null
+              ? dateFormat.format(accountInfo.createdAt!)
+              : 'N/A',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPasswordRow(ThemeData theme, bool isDark, String password) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: AppSizes.p12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.lock,
+            size: 18.sp,
+            color: isDark ? AppColors.gray400 : AppColors.gray600,
+          ),
+          SizedBox(width: AppSizes.p12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Mật khẩu (đã mã hóa)',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: isDark ? AppColors.gray400 : AppColors.gray600,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _showPassword ? password : '••••••••••••••••',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontFamily: 'monospace',
+                        ),
+                        maxLines: _showPassword ? 3 : 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        _showPassword ? Icons.visibility_off : Icons.visibility,
+                        size: 18.sp,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _showPassword = !_showPassword;
+                        });
+                      },
+                      constraints: BoxConstraints(),
+                      padding: EdgeInsets.all(8),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.copy, size: 18.sp),
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: password));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Đã sao chép mật khẩu'),
+                            duration: Duration(seconds: 1),
+                          ),
+                        );
+                      },
+                      constraints: BoxConstraints(),
+                      padding: EdgeInsets.all(8),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getRoleText(String? role) {
+    switch (role?.toUpperCase()) {
+      case 'ADMIN':
+        return 'Quản trị viên';
+      case 'TEACHER':
+        return 'Giảng viên';
+      case 'STUDENT':
+        return 'Học viên';
+      case 'EMPLOYEE':
+        return 'Nhân viên';
+      default:
+        return role ?? 'N/A';
+    }
+  }
+
+  
+  Widget _buildInfoRow(
+    ThemeData theme,
+    bool isDark, {
+    required IconData icon,
+    required String label,
+    required String value,
+    bool canCopy = false,
+    Color? valueColor,
+  }) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: AppSizes.p12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            icon,
+            size: 18.sp,
+            color: isDark ? AppColors.gray400 : AppColors.gray600,
+          ),
+          SizedBox(width: AppSizes.p12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: isDark ? AppColors.gray400 : AppColors.gray600,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        value,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w500,
+                          color: valueColor,
+                        ),
+                      ),
+                    ),
+                    if (canCopy)
+                      IconButton(
+                        icon: Icon(Icons.copy, size: 16.sp),
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: value));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Đã sao chép: $value'),
+                              duration: const Duration(seconds: 1),
+                            ),
+                          );
+                        },
+                        constraints: BoxConstraints(),
+                        padding: EdgeInsets.all(4),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  
   Widget _buildSectionHeader(
     BuildContext context,
     String title,
@@ -373,6 +820,7 @@ class _AdminTeacherDetailScreenState extends State<AdminTeacherDetailScreen> {
     );
   }
 
+  
   Widget _buildTodaySchedule(
     BuildContext context,
     bool isDark,
@@ -416,9 +864,12 @@ class _AdminTeacherDetailScreenState extends State<AdminTeacherDetailScreen> {
     );
   }
 
-  void _showAllSchedules(BuildContext context, List<TeacherSchedule> schedules) {
+  void _showAllSchedules(
+    BuildContext context,
+    List<TeacherSchedule> schedules,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -452,7 +903,9 @@ class _AdminTeacherDetailScreenState extends State<AdminTeacherDetailScreen> {
             ),
             Expanded(
               child: ListView.builder(
-                padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppSizes.paddingMedium,
+                ),
                 itemCount: schedules.length,
                 itemBuilder: (context, index) {
                   return _buildScheduleCard(schedules[index], isDark);
@@ -467,7 +920,7 @@ class _AdminTeacherDetailScreenState extends State<AdminTeacherDetailScreen> {
 
   void _showAllReviews(BuildContext context, List<TeacherReview> reviews) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -501,7 +954,9 @@ class _AdminTeacherDetailScreenState extends State<AdminTeacherDetailScreen> {
             ),
             Expanded(
               child: ListView.builder(
-                padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppSizes.paddingMedium,
+                ),
                 itemCount: reviews.length,
                 itemBuilder: (context, index) {
                   return _buildReviewCard(reviews[index], isDark);
@@ -537,14 +992,13 @@ class _AdminTeacherDetailScreenState extends State<AdminTeacherDetailScreen> {
       ),
       child: Row(
         children: [
-          
           Container(
             padding: EdgeInsets.symmetric(
               horizontal: AppSizes.p8,
               vertical: 4.h,
             ),
             decoration: BoxDecoration(
-              color: subjectColor.withValues(alpha: 0.1),
+              color: subjectColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(6.r),
             ),
             child: Column(
@@ -568,10 +1022,7 @@ class _AdminTeacherDetailScreenState extends State<AdminTeacherDetailScreen> {
               ],
             ),
           ),
-
           SizedBox(width: AppSizes.p12),
-
-          
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -601,16 +1052,26 @@ class _AdminTeacherDetailScreenState extends State<AdminTeacherDetailScreen> {
     );
   }
 
+  
   Widget _buildRecentReviews(
     BuildContext context,
     bool isDark,
     List<TeacherReview> reviews,
   ) {
     if (reviews.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24.0),
-          child: Text('Chưa có đánh giá nào'),
+      return Container(
+        padding: EdgeInsets.all(AppSizes.paddingMedium),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surfaceDark : AppColors.gray100,
+          borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+        ),
+        child: Center(
+          child: Text(
+            'Chưa có đánh giá nào',
+            style: TextStyle(
+              color: isDark ? AppColors.gray400 : AppColors.gray600,
+            ),
+          ),
         ),
       );
     }
@@ -667,7 +1128,6 @@ class _AdminTeacherDetailScreenState extends State<AdminTeacherDetailScreen> {
                   ],
                 ),
               ),
-              
               Row(
                 children: List.generate(5, (index) {
                   return Icon(
@@ -681,8 +1141,10 @@ class _AdminTeacherDetailScreenState extends State<AdminTeacherDetailScreen> {
               ),
             ],
           ),
-          SizedBox(height: AppSizes.p8),
-          Text(review.comment, style: TextStyle(fontSize: AppSizes.textSm)),
+          if (review.comment.isNotEmpty) ...[
+            SizedBox(height: AppSizes.p8),
+            Text(review.comment, style: TextStyle(fontSize: AppSizes.textSm)),
+          ],
         ],
       ),
     );

@@ -4,7 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/admin_class.dart';
 
-/// Compact class card for mobile - shows essential info only
+
 class AdminClassCardCompact extends StatelessWidget {
   final AdminClass classItem;
   final VoidCallback? onTap;
@@ -49,7 +49,7 @@ class AdminClassCardCompact extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
             child: Row(
               children: [
-                // Left indicator bar
+                
                 Container(
                   width: 4.w,
                   height: 50.h,
@@ -60,13 +60,13 @@ class AdminClassCardCompact extends StatelessWidget {
                 ),
                 SizedBox(width: 12.w),
 
-                // Main content
+                
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Class name
+                      
                       Text(
                         classItem.name,
                         style: TextStyle(
@@ -79,7 +79,7 @@ class AdminClassCardCompact extends StatelessWidget {
                       ),
                       SizedBox(height: 4.h),
 
-                      // Schedule + Time in one row
+                      
                       Row(
                         children: [
                           Icon(
@@ -103,12 +103,12 @@ class AdminClassCardCompact extends StatelessWidget {
 
                 SizedBox(width: 8.w),
 
-                // Right side: Student count + arrow
+                
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Student count badge
+                    
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
                       decoration: BoxDecoration(
@@ -136,7 +136,7 @@ class AdminClassCardCompact extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: 4.h),
-                    // Status text
+                    
                     Text(
                       classItem.statusText,
                       style: TextStyle(

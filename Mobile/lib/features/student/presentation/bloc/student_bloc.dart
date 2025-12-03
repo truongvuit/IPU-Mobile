@@ -1,14 +1,19 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/repositories/student_repository.dart';
 import '../../domain/entities/student_class.dart';
 import '../../domain/entities/schedule.dart';
+import '../../domain/entities/student_profile.dart';
 import '../constants/student_messages.dart';
 import 'student_event.dart';
 import 'student_state.dart';
 
-
 class StudentBloc extends Bloc<StudentEvent, StudentState> {
   final StudentRepository repository;
+  
+  
+  StudentProfile? _cachedProfile;
+  StudentProfile? get cachedProfile => _cachedProfile;
 
   StudentBloc({required this.repository}) : super(const StudentInitial()) {
     on<LoadDashboard>(_onLoadDashboard);
@@ -26,6 +31,7 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     on<EnrollCourse>(_onEnrollCourse);
     on<SubmitRating>(_onSubmitRating);
     on<LoadReviewHistory>(_onLoadReviewHistory);
+    on<LoadClassReview>(_onLoadClassReview);
   }
 
   Future<void> _onLoadDashboard(
@@ -35,40 +41,58 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     emit(const StudentLoading(action: 'Đang tải dashboard...'));
 
     try {
-      // Load classes, profile, và schedule hôm nay song song
+      
       final classesResultFuture = repository.getUpcomingClasses();
       final profileResultFuture = repository.getProfile();
       final todayScheduleFuture = repository.getScheduleByDate(DateTime.now());
-      
+
       final classesResult = await classesResultFuture;
       final profileResult = await profileResultFuture;
       final todayScheduleResult = await todayScheduleFuture;
 
       
+      final profile = profileResult.fold((_) => null, (profile) => profile);
+      if (profile != null) {
+        _cachedProfile = profile;
+      }
+      debugPrint('StudentBloc: LoadDashboard - profile loaded: ${profile?.fullName ?? "NULL"}, cached: ${_cachedProfile?.fullName ?? "NULL"}');
+
       if (classesResult.isLeft()) {
-        emit(StudentError(classesResult.fold(
-          (failure) => failure.message,
-          (_) => 'Unknown error',
-        )));
+        emit(
+          StudentError(
+            classesResult.fold(
+              (failure) => failure.message,
+              (_) => 'Unknown error',
+            ),
+          ),
+        );
         return;
       }
 
-      // Filter lịch học hôm nay
+      
       final today = DateTime.now();
       final todaySchedules = todayScheduleResult.fold(
         (_) => <Schedule>[],
-        (schedules) => schedules.where((s) =>
-          s.startTime.year == today.year &&
-          s.startTime.month == today.month &&
-          s.startTime.day == today.day
-        ).toList(),
+        (schedules) => schedules
+            .where(
+              (s) =>
+                  s.startTime.year == today.year &&
+                  s.startTime.month == today.month &&
+                  s.startTime.day == today.day,
+            )
+            .toList(),
       );
 
-      emit(DashboardLoaded(
-        upcomingClasses: classesResult.fold((_) => <StudentClass>[], (classes) => classes),
-        profile: profileResult.fold((_) => null, (profile) => profile),
-        todaySchedules: todaySchedules,
-      ));
+      emit(
+        DashboardLoaded(
+          upcomingClasses: classesResult.fold(
+            (_) => <StudentClass>[],
+            (classes) => classes,
+          ),
+          profile: _cachedProfile,
+          todaySchedules: todaySchedules,
+        ),
+      );
     } catch (e) {
       emit(StudentError('${StudentMessages.errorLoadDashboard}: $e'));
     }
@@ -175,10 +199,9 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
 
       result.fold(
         (failure) => emit(StudentError(failure.message)),
-        (schedules) => emit(ScheduleLoaded(
-          schedules: schedules,
-          selectedDate: event.date,
-        )),
+        (schedules) => emit(
+          ScheduleLoaded(schedules: schedules, selectedDate: event.date),
+        ),
       );
     } catch (e) {
       emit(StudentError('Không thể tải lịch học: $e'));
@@ -196,10 +219,9 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
 
       result.fold(
         (failure) => emit(StudentError(failure.message)),
-        (schedules) => emit(WeekScheduleLoaded(
-          schedules: schedules,
-          startDate: event.startDate,
-        )),
+        (schedules) => emit(
+          WeekScheduleLoaded(schedules: schedules, startDate: event.startDate),
+        ),
       );
     } catch (e) {
       emit(StudentError('Không thể tải lịch tuần: $e'));
@@ -235,10 +257,8 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
 
       result.fold(
         (failure) => emit(StudentError(failure.message)),
-        (grades) => emit(CourseGradesLoaded(
-          grades: grades,
-          courseId: event.courseId,
-        )),
+        (grades) =>
+            emit(CourseGradesLoaded(grades: grades, courseId: event.courseId)),
       );
     } catch (e) {
       emit(StudentError('Không thể tải điểm khóa học: $e'));
@@ -270,38 +290,37 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     emit(const StudentLoading());
 
     try {
-      
       final currentProfileResult = await repository.getProfile();
-      
+
       await currentProfileResult.fold(
         (failure) async => emit(StudentError(failure.message)),
         (currentProfile) async {
           String? newAvatarUrl = currentProfile.avatarUrl;
 
-          
           if (event.avatarPath != null) {
-             final uploadResult = await repository.uploadAvatar(event.avatarPath!);
-             final uploadSuccess = uploadResult.fold(
-               (failure) {
-                  emit(StudentError('Lỗi tải ảnh lên: ${failure.message}'));
-                  return false;
-               },
-               (url) {
-                 newAvatarUrl = url;
-                 return true;
-               }
-             );
-             if (!uploadSuccess) return;
+            final uploadResult = await repository.uploadAvatar(
+              event.avatarPath!,
+            );
+            final uploadSuccess = uploadResult.fold(
+              (failure) {
+                emit(StudentError('Lỗi tải ảnh lên: ${failure.message}'));
+                return false;
+              },
+              (url) {
+                newAvatarUrl = url;
+                return true;
+              },
+            );
+            if (!uploadSuccess) return;
           }
 
-          
           final updatedProfile = currentProfile.copyWith(
             fullName: event.fullName,
             phoneNumber: () => event.phoneNumber,
             address: () => event.address,
             avatarUrl: () => newAvatarUrl,
           );
-          
+
           final result = await repository.updateProfile(updatedProfile);
           result.fold(
             (failure) => emit(StudentError(failure.message)),
@@ -368,6 +387,37 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
       );
     } catch (e) {
       emit(StudentError('Không thể tải lịch sử đánh giá: $e'));
+    }
+  }
+
+  
+  Future<void> _onLoadClassReview(
+    LoadClassReview event,
+    Emitter<StudentState> emit,
+  ) async {
+    emit(const StudentLoading());
+
+    try {
+      final result = await repository.getReviewHistory();
+      result.fold(
+        (failure) =>
+            emit(ClassReviewLoaded(review: null, classId: event.classId)),
+        (reviews) {
+          
+          final classIdInt = int.tryParse(event.classId) ?? 0;
+          final existingReview = reviews
+              .where((r) => r.classId == classIdInt)
+              .toList();
+          emit(
+            ClassReviewLoaded(
+              review: existingReview.isNotEmpty ? existingReview.first : null,
+              classId: event.classId,
+            ),
+          );
+        },
+      );
+    } catch (e) {
+      emit(ClassReviewLoaded(review: null, classId: event.classId));
     }
   }
 }

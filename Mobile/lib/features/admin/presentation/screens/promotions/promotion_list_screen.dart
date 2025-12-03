@@ -76,6 +76,7 @@ class _PromotionListScreenContentState
         },
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'promotion_list_fab',
         onPressed: () async {
           final result = await Navigator.pushNamed(
             context,
@@ -138,7 +139,7 @@ class _PromotionListScreenContentState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Code badge - full width with status on the right
+              
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(

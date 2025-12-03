@@ -184,9 +184,10 @@ class ProfileLoaded extends TeacherState {
 
 class ProfileUpdated extends TeacherState {
   final String message;
-  const ProfileUpdated(this.message);
+  final TeacherProfile? profile;
+  const ProfileUpdated(this.message, {this.profile});
   @override
-  List<Object> get props => [message];
+  List<Object?> get props => [message, profile];
 }
 
 

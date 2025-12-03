@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import '../../../../../core/theme/app_colors.dart';
 
 class ProgressCircle extends StatelessWidget {
-  final double progress; // 0.0 to 1.0
+  final double progress; 
   final String label;
   final Color color;
   final bool isDark;
@@ -76,7 +76,7 @@ class _ProgressCirclePainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2 - 8;
 
-    // Background circle
+    
     final backgroundPaint = Paint()
       ..color = (isDark ? Colors.grey[800]! : Colors.grey[200]!)
       ..style = PaintingStyle.stroke
@@ -85,7 +85,7 @@ class _ProgressCirclePainter extends CustomPainter {
 
     canvas.drawCircle(center, radius, backgroundPaint);
 
-    // Progress arc
+    
     final progressPaint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
@@ -95,7 +95,7 @@ class _ProgressCirclePainter extends CustomPainter {
     final sweepAngle = 2 * math.pi * progress;
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
-      -math.pi / 2, // Start from top
+      -math.pi / 2, 
       sweepAngle,
       false,
       progressPaint,

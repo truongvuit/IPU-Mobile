@@ -11,6 +11,8 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/skeleton_widget.dart';
 import '../../../../core/widgets/custom_image.dart';
 
+import '../../domain/entities/student_profile.dart';
+
 class ProfileScreen extends StatefulWidget {
   final bool isTab;
   final VoidCallback? onMenuPressed;
@@ -23,18 +25,83 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _hasLoadedData = false;
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  
+  StudentProfile? _cachedProfile;
 
   @override
   void initState() {
     super.initState();
-    _loadDataIfNeeded();
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadDataIfNeeded();
+    });
   }
 
   void _loadDataIfNeeded() {
+    if (!mounted || _hasLoadedData) return;
+
     final state = context.read<StudentBloc>().state;
+
     
-    if (state is! ProfileLoaded && state is! StudentLoading) {
-      context.read<StudentBloc>().add(LoadProfile());
+    if (state is DashboardLoaded && state.profile != null) {
+      _cachedProfile = state.profile;
+      _hasLoadedData = true;
+      setState(() {});
+      return;
+    }
+
+    if (state is ProfileLoaded) {
+      _cachedProfile = state.profile;
+      _hasLoadedData = true;
+      setState(() {});
+      return;
+    }
+
+    if (state is ProfileUpdated) {
+      _cachedProfile = state.profile;
+      _hasLoadedData = true;
+      setState(() {});
+      return;
+    }
+
+    
+    _hasLoadedData = true;
+    _isLoading = true;
+    context.read<StudentBloc>().add(LoadProfile());
+  }
+
+  void _updateCachedProfile(StudentState state) {
+    if (state is DashboardLoaded && state.profile != null) {
+      setState(() {
+        _cachedProfile = state.profile;
+        _isLoading = false;
+        _errorMessage = null;
+      });
+    } else if (state is ProfileLoaded) {
+      setState(() {
+        _cachedProfile = state.profile;
+        _isLoading = false;
+        _errorMessage = null;
+      });
+    } else if (state is ProfileUpdated) {
+      setState(() {
+        _cachedProfile = state.profile;
+        _isLoading = false;
+        _errorMessage = null;
+      });
+    } else if (state is StudentLoading) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    } else if (state is StudentError) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = state.message;
+      });
     }
   }
 
@@ -52,14 +119,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           : const Color(0xFFF9FAFB),
       body: Column(
         children: [
-          
           StudentAppBar(
             title: 'Thông tin cá nhân',
             showBackButton: !widget.isTab,
             showMenuButton: widget.isTab,
             onMenuPressed: widget.onMenuPressed,
             onBackPressed: () {
-              
               Navigator.pushNamedAndRemoveUntil(
                 context,
                 AppRouter.studentDashboard,
@@ -69,135 +134,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
 
           Expanded(
-            child: BlocBuilder<StudentBloc, StudentState>(
-              buildWhen: (previous, current) {
-                
+            child: BlocListener<StudentBloc, StudentState>(
+              listenWhen: (previous, current) {
                 return current is ProfileLoaded ||
                     current is ProfileUpdated ||
                     current is StudentLoading ||
                     current is StudentError ||
                     current is DashboardLoaded;
               },
-              builder: (context, state) {
-                
-                if (state is StudentInitial ||
-                    (state is! ProfileLoaded &&
-                        state is! ProfileUpdated &&
-                        state is! DashboardLoaded &&
-                        state is! StudentLoading &&
-                        !_hasLoadedData)) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted && !_hasLoadedData) {
-                      _hasLoadedData = true;
-                      context.read<StudentBloc>().add(LoadProfile());
-                    }
-                  });
-                }
-
-                if (state is StudentLoading) {
-                  return Padding(
-                    padding: EdgeInsets.all(AppSizes.paddingMedium),
-                    child: Column(
-                      children: [
-                        SkeletonWidget.circular(size: 120.w),
-                        SizedBox(height: AppSizes.paddingMedium),
-                        SkeletonWidget.rectangular(height: 24.h, width: 200.w),
-                        SizedBox(height: AppSizes.paddingSmall),
-                        SkeletonWidget.rectangular(height: 16.h, width: 150.w),
-                        SizedBox(height: AppSizes.paddingLarge),
-                        SkeletonWidget.rectangular(height: 200.h),
-                      ],
-                    ),
-                  );
-                }
-
-                if (state is StudentError) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 64,
-                          color: AppColors.error,
-                        ),
-                        SizedBox(height: 16.h),
-                        Text(
-                          state.message,
-                          style: TextStyle(
-                            color: isDark
-                                ? Colors.white
-                                : AppColors.textPrimary,
-                            fontFamily: 'Lexend',
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: 16.h),
-                        ElevatedButton(
-                          onPressed: () {
-                            context.read<StudentBloc>().add(LoadProfile());
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                          ),
-                          child: const Text(
-                            'Thử lại',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                
-                if (state is DashboardLoaded && state.profile != null) {
-                  final profile = state.profile!;
-                  return _buildProfileContent(
-                    profile,
-                    isDark,
-                    isDesktop,
-                    isTablet,
-                  );
-                }
-
-                
-                if (state is ProfileUpdated) {
-                  final profile = state.profile;
-                  return _buildProfileContent(
-                    profile,
-                    isDark,
-                    isDesktop,
-                    isTablet,
-                  );
-                }
-
-                if (state is ProfileLoaded) {
-                  final profile = state.profile;
-                  return _buildProfileContent(
-                    profile,
-                    isDark,
-                    isDesktop,
-                    isTablet,
-                  );
-                }
-
-                
-                return Padding(
-                  padding: EdgeInsets.all(AppSizes.paddingMedium),
-                  child: Column(
-                    children: [
-                      SkeletonWidget.circular(size: 120.w),
-                      SizedBox(height: AppSizes.paddingMedium),
-                      SkeletonWidget.rectangular(height: 24.h, width: 200.w),
-                      SizedBox(height: AppSizes.paddingSmall),
-                      SkeletonWidget.rectangular(height: 16.h, width: 150.w),
-                      SizedBox(height: AppSizes.paddingLarge),
-                      SkeletonWidget.rectangular(height: 200.h),
-                    ],
-                  ),
-                );
+              listener: (context, state) {
+                _updateCachedProfile(state);
               },
+              child: _buildContent(isDark, isDesktop, isTablet),
             ),
           ),
         ],
@@ -205,8 +153,78 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Widget _buildContent(bool isDark, bool isDesktop, bool isTablet) {
+    
+    if (_errorMessage != null && _cachedProfile == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 64, color: AppColors.error),
+            SizedBox(height: 16.h),
+            Text(
+              _errorMessage!,
+              style: TextStyle(
+                color: isDark ? Colors.white : AppColors.textPrimary,
+                fontFamily: 'Lexend',
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 16.h),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _isLoading = true;
+                  _errorMessage = null;
+                });
+                context.read<StudentBloc>().add(LoadProfile());
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
+              child: const Text(
+                'Thử lại',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    
+    if (_isLoading && _cachedProfile == null) {
+      return _buildLoadingSkeleton();
+    }
+
+    
+    if (_cachedProfile != null) {
+      return _buildProfileContent(_cachedProfile!, isDark, isDesktop, isTablet);
+    }
+
+    
+    return _buildLoadingSkeleton();
+  }
+
+  Widget _buildLoadingSkeleton() {
+    return Padding(
+      padding: EdgeInsets.all(AppSizes.paddingMedium),
+      child: Column(
+        children: [
+          SkeletonWidget.circular(size: 120.w),
+          SizedBox(height: AppSizes.paddingMedium),
+          SkeletonWidget.rectangular(height: 24.h, width: 200.w),
+          SizedBox(height: AppSizes.paddingSmall),
+          SkeletonWidget.rectangular(height: 16.h, width: 150.w),
+          SizedBox(height: AppSizes.paddingLarge),
+          SkeletonWidget.rectangular(height: 200.h),
+        ],
+      ),
+    );
+  }
+
   Widget _buildProfileContent(
-    dynamic profile,
+    StudentProfile profile,
     bool isDark,
     bool isDesktop,
     bool isTablet,
@@ -218,7 +236,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         children: [
           SizedBox(height: 24.h),
-          
+
           Container(
             width: isDesktop ? 140.w : 120.w,
             height: isDesktop ? 140.h : 120.h,
@@ -256,10 +274,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           SizedBox(height: 24.h),
-          
+
           _buildStatsSection(profile, isDark, isDesktop),
           SizedBox(height: 24.h),
-          
+
           Padding(
             padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
             child: SizedBox(
@@ -287,7 +305,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           SizedBox(height: 24),
-          
+
           _buildInfoSection(
             'Thông tin liên hệ',
             [

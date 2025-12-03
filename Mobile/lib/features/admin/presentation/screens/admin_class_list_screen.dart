@@ -57,7 +57,7 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
     });
 
     _scrollController.addListener(_onScroll);
-    // Load được quản lý bởi HomeAdminScreen._loadDataForTab
+    
   }
 
   void _onScroll() {
@@ -131,6 +131,12 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
         ),
       ),
       body: BlocBuilder<AdminBloc, AdminState>(
+        buildWhen: (previous, current) {
+          
+          return current is AdminLoading ||
+              current is AdminError ||
+              current is ClassListLoaded;
+        },
         builder: (context, state) {
           if (state is AdminLoading) {
             return _buildLoadingSkeleton();
@@ -144,7 +150,14 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
             return _buildClassList(state, isDark, theme);
           }
 
-          return const SizedBox.shrink();
+          
+          final bloc = context.read<AdminBloc>();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              bloc.add(const LoadClassList());
+            }
+          });
+          return _buildLoadingSkeleton();
         },
       ),
     );
@@ -239,18 +252,7 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
                       final classItem = displayClasses[index];
                       return AdminClassCardCompact(
                         classItem: classItem,
-                        onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            AppRouter.adminClassDetail,
-                            arguments: classItem.id,
-                          ).then((_) {
-                            // Reload danh sách khi quay về từ chi tiết
-                            if (mounted) {
-                              context.read<AdminBloc>().add(const LoadClassList());
-                            }
-                          });
-                        },
+                        onTap: () => _navigateToClassDetail(classItem.id),
                       );
                     },
                   ),
@@ -258,6 +260,20 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
         ),
       ],
     );
+  }
+
+  void _navigateToClassDetail(String classId) {
+    final bloc = context.read<AdminBloc>();
+    Navigator.pushNamed(
+      context,
+      AppRouter.adminClassDetail,
+      arguments: classId,
+    ).then((_) {
+      
+      if (mounted) {
+        bloc.add(const LoadClassList());
+      }
+    });
   }
 
   Widget _buildSearchAndFilterRow(

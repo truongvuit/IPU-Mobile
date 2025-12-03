@@ -47,7 +47,7 @@ class _QuickRegistrationPromotionScreenState
       }
     }
     
-    // Load promotions với selectedCourseIds để lọc theo khóa đã chọn
+    
     context.read<RegistrationBloc>().add(LoadPromotions(
       courseId: courseId,
       selectedCourseIds: _selectedCourseIds,
@@ -131,7 +131,7 @@ class _QuickRegistrationPromotionScreenState
           List<dynamic> promotions = [];
           List<dynamic> allPromotions = [];
           if (state is PromotionsLoaded) {
-            // validPromotions đã được lọc theo selectedCourseIds
+            
             promotions = state.validPromotions;
             allPromotions = state.promotions;
           }

@@ -74,7 +74,6 @@ class _AdminClassStudentListScreenState
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            
             Center(
               child: Container(
                 width: 40.w,
@@ -87,7 +86,6 @@ class _AdminClassStudentListScreenState
               ),
             ),
 
-            
             Row(
               children: [
                 Container(
@@ -141,7 +139,6 @@ class _AdminClassStudentListScreenState
             ),
             SizedBox(height: 20.h),
 
-            
             _buildInfoRow(
               context,
               Icons.phone_outlined,
@@ -150,7 +147,6 @@ class _AdminClassStudentListScreenState
             ),
             SizedBox(height: 12.h),
 
-            
             Row(
               children: [
                 Expanded(
@@ -189,7 +185,6 @@ class _AdminClassStudentListScreenState
 
             SizedBox(height: 24.h),
 
-            
             Row(
               children: [
                 Expanded(
@@ -370,7 +365,6 @@ class _AdminClassStudentListScreenState
           return NestedScrollView(
             headerSliverBuilder: (context, innerBoxIsScrolled) {
               return [
-                
                 SliverAppBar(
                   pinned: true,
                   floating: false,
@@ -409,7 +403,6 @@ class _AdminClassStudentListScreenState
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  
                                   Row(
                                     children: [
                                       Expanded(
@@ -452,7 +445,6 @@ class _AdminClassStudentListScreenState
                                   ),
                                   SizedBox(height: 8.h),
 
-                                  
                                   Row(
                                     children: [
                                       Icon(
@@ -544,14 +536,11 @@ class _AdminClassStudentListScreenState
             body: TabBarView(
               controller: _tabController,
               children: [
-                
                 _buildOverviewTab(context, students),
 
-                
                 _buildStudentsTab(context, state, students, studentCount),
 
-                
-                _buildAnalyticsTab(context),
+                _buildAnalyticsTab(context, students),
               ],
             ),
           );
@@ -563,15 +552,13 @@ class _AdminClassStudentListScreenState
   Widget _buildOverviewTab(BuildContext context, List<ClassStudent> students) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final goodAttendance =
-        students.where((s) => s.attendanceRate >= 80).length;
+    final goodAttendance = students.where((s) => s.attendanceRate >= 80).length;
 
     return SingleChildScrollView(
       padding: EdgeInsets.all(16.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          
           Row(
             children: [
               Expanded(
@@ -597,7 +584,6 @@ class _AdminClassStudentListScreenState
           ),
           SizedBox(height: 24.h),
 
-          
           Text(
             'Chuyên cần trung bình',
             style: TextStyle(
@@ -792,14 +778,12 @@ class _AdminClassStudentListScreenState
       },
       child: CustomScrollView(
         slivers: [
-          
           SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.all(16.w),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  
                   Text(
                     'Danh sách học viên ($studentCount)',
                     style: TextStyle(
@@ -810,7 +794,6 @@ class _AdminClassStudentListScreenState
                   ),
                   SizedBox(height: 12.h),
 
-                  
                   Container(
                     decoration: BoxDecoration(
                       color: isDark ? AppColors.gray800 : AppColors.gray100,
@@ -868,7 +851,6 @@ class _AdminClassStudentListScreenState
             ),
           ),
 
-          
           if (filteredStudents.isEmpty)
             SliverFillRemaining(
               child: Center(
@@ -928,43 +910,709 @@ class _AdminClassStudentListScreenState
               ),
             ),
 
-          
           SliverToBoxAdapter(child: SizedBox(height: 24.h)),
         ],
       ),
     );
   }
 
-  Widget _buildAnalyticsTab(BuildContext context) {
+  Widget _buildAnalyticsTab(BuildContext context, List<ClassStudent> students) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Center(
+    if (students.isEmpty) {
+      return Center(
+        child: EmptyStateWidget(
+          icon: Icons.analytics_outlined,
+          message: 'Chưa có dữ liệu để phân tích',
+        ),
+      );
+    }
+
+    
+    final excellentCount = students.where((s) => s.attendanceRate >= 90).length;
+    final goodCount = students
+        .where((s) => s.attendanceRate >= 75 && s.attendanceRate < 90)
+        .length;
+    final averageCount = students
+        .where((s) => s.attendanceRate >= 50 && s.attendanceRate < 75)
+        .length;
+    final poorCount = students.where((s) => s.attendanceRate < 50).length;
+
+    final avgAttendance =
+        students.map((s) => s.attendanceRate).reduce((a, b) => a + b) /
+        students.length;
+
+    
+    final studentsWithScores = students
+        .where((s) => s.averageScore != null)
+        .toList();
+    final hasScoreData = studentsWithScores.isNotEmpty;
+
+    double avgScore = 0;
+    if (hasScoreData) {
+      avgScore =
+          studentsWithScores
+              .map((s) => s.averageScore!)
+              .reduce((a, b) => a + b) /
+          studentsWithScores.length;
+    }
+
+    
+    final studentsNeedingAttention =
+        students.where((s) => s.attendanceRate < 70).toList()
+          ..sort((a, b) => a.attendanceRate.compareTo(b.attendanceRate));
+
+    
+    final topPerformers = hasScoreData
+        ? (List<ClassStudent>.from(studentsWithScores)..sort(
+                (a, b) => (b.averageScore ?? 0).compareTo(a.averageScore ?? 0),
+              ))
+              .take(5)
+              .toList()
+        : (List<ClassStudent>.from(students)
+                ..sort((a, b) => b.attendanceRate.compareTo(a.attendanceRate)))
+              .take(5)
+              .toList();
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(16.w),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.analytics_outlined,
-            size: 64.sp,
-            color: isDark ? AppColors.gray500 : AppColors.gray400,
+          
+          Row(
+            children: [
+              Expanded(
+                child: _buildAnalyticsSummaryCard(
+                  context,
+                  'Chuyên cần TB',
+                  '${avgAttendance.toStringAsFixed(1)}%',
+                  Icons.calendar_today_outlined,
+                  _getAttendanceColor(avgAttendance),
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: _buildAnalyticsSummaryCard(
+                  context,
+                  hasScoreData ? 'Điểm TB' : 'Tổng học viên',
+                  hasScoreData
+                      ? avgScore.toStringAsFixed(1)
+                      : students.length.toString(),
+                  hasScoreData ? Icons.star_outline : Icons.people_outline,
+                  hasScoreData ? AppColors.warning : AppColors.primary,
+                ),
+              ),
+            ],
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: 20.h),
+
+          
+          _buildSectionHeader(
+            context,
+            'Phân bố chuyên cần',
+            Icons.pie_chart_outline,
+          ),
+          SizedBox(height: 12.h),
+          _buildAttendanceDistribution(
+            context,
+            excellentCount,
+            goodCount,
+            averageCount,
+            poorCount,
+            students.length,
+          ),
+          SizedBox(height: 24.h),
+
+          
+          _buildSectionHeader(context, 'Biểu đồ chuyên cần', Icons.bar_chart),
+          SizedBox(height: 12.h),
+          _buildAttendanceChartBars(
+            context,
+            excellentCount,
+            goodCount,
+            averageCount,
+            poorCount,
+            students.length,
+          ),
+          SizedBox(height: 24.h),
+
+          
+          if (studentsNeedingAttention.isNotEmpty) ...[
+            _buildSectionHeader(
+              context,
+              'Cần lưu ý (${studentsNeedingAttention.length})',
+              Icons.warning_amber_outlined,
+              color: AppColors.warning,
+            ),
+            SizedBox(height: 12.h),
+            _buildStudentsList(
+              context,
+              studentsNeedingAttention.take(5).toList(),
+              showWarning: true,
+            ),
+            SizedBox(height: 24.h),
+          ],
+
+          
+          _buildSectionHeader(
+            context,
+            hasScoreData ? 'Điểm cao nhất' : 'Chuyên cần tốt nhất',
+            Icons.emoji_events_outlined,
+            color: AppColors.warning,
+          ),
+          SizedBox(height: 12.h),
+          _buildTopPerformersList(context, topPerformers, hasScoreData),
+          SizedBox(height: 24.h),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnalyticsSummaryCard(
+    BuildContext context,
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            color.withValues(alpha: 0.15),
+            color.withValues(alpha: 0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: EdgeInsets.all(8.w),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+            child: Icon(icon, color: color, size: 20.sp),
+          ),
+          SizedBox(height: 12.h),
           Text(
-            'Phân tích đang phát triển',
+            value,
             style: TextStyle(
-              fontSize: 16.sp,
-              color: isDark ? AppColors.gray400 : AppColors.gray500,
+              fontSize: 26.sp,
+              fontWeight: FontWeight.bold,
+              color: color,
             ),
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: 4.h),
           Text(
-            'Chức năng này sẽ sớm được cập nhật',
+            label,
             style: TextStyle(
-              fontSize: 14.sp,
-              color: isDark ? AppColors.gray500 : AppColors.gray400,
+              fontSize: 12.sp,
+              color: isDark ? AppColors.gray400 : AppColors.gray600,
             ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildSectionHeader(
+    BuildContext context,
+    String title,
+    IconData icon, {
+    Color? color,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: 20.sp,
+          color: color ?? (isDark ? AppColors.gray400 : AppColors.gray600),
+        ),
+        SizedBox(width: 8.w),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w600,
+            color: isDark ? Colors.white : Colors.black87,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAttendanceDistribution(
+    BuildContext context,
+    int excellent,
+    int good,
+    int average,
+    int poor,
+    int total,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: isDark ? AppColors.gray700 : AppColors.gray200,
+        ),
+      ),
+      child: Column(
+        children: [
+          _buildDistributionRow(
+            context,
+            'Xuất sắc (≥90%)',
+            excellent,
+            total,
+            AppColors.success,
+          ),
+          SizedBox(height: 12.h),
+          _buildDistributionRow(
+            context,
+            'Khá (75-89%)',
+            good,
+            total,
+            AppColors.info,
+          ),
+          SizedBox(height: 12.h),
+          _buildDistributionRow(
+            context,
+            'Trung bình (50-74%)',
+            average,
+            total,
+            AppColors.warning,
+          ),
+          SizedBox(height: 12.h),
+          _buildDistributionRow(
+            context,
+            'Yếu (<50%)',
+            poor,
+            total,
+            AppColors.error,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDistributionRow(
+    BuildContext context,
+    String label,
+    int count,
+    int total,
+    Color color,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final percentage = total > 0 ? (count / total * 100) : 0.0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 12.w,
+                  height: 12.w,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(3.r),
+                  ),
+                ),
+                SizedBox(width: 8.w),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: isDark ? AppColors.gray300 : AppColors.gray700,
+                  ),
+                ),
+              ],
+            ),
+            Text(
+              '$count (${percentage.toStringAsFixed(0)}%)',
+              style: TextStyle(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 6.h),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4.r),
+          child: LinearProgressIndicator(
+            value: total > 0 ? count / total : 0,
+            backgroundColor: isDark ? AppColors.gray700 : AppColors.gray200,
+            valueColor: AlwaysStoppedAnimation(color),
+            minHeight: 6.h,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAttendanceChartBars(
+    BuildContext context,
+    int excellent,
+    int good,
+    int average,
+    int poor,
+    int total,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final maxCount = [
+      excellent,
+      good,
+      average,
+      poor,
+    ].reduce((a, b) => a > b ? a : b);
+
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: isDark ? AppColors.gray700 : AppColors.gray200,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          _buildChartBar(
+            context,
+            'Xuất sắc',
+            excellent,
+            maxCount,
+            AppColors.success,
+          ),
+          _buildChartBar(context, 'Khá', good, maxCount, AppColors.info),
+          _buildChartBar(context, 'TB', average, maxCount, AppColors.warning),
+          _buildChartBar(context, 'Yếu', poor, maxCount, AppColors.error),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChartBar(
+    BuildContext context,
+    String label,
+    int count,
+    int maxCount,
+    Color color,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final barHeight = maxCount > 0 ? (count / maxCount * 100.h) : 0.0;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          count.toString(),
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        SizedBox(height: 8.h),
+        Container(
+          width: 40.w,
+          height: barHeight.clamp(10.h, 100.h),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [color, color.withValues(alpha: 0.7)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+            borderRadius: BorderRadius.circular(6.r),
+          ),
+        ),
+        SizedBox(height: 8.h),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11.sp,
+            color: isDark ? AppColors.gray400 : AppColors.gray600,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStudentsList(
+    BuildContext context,
+    List<ClassStudent> students, {
+    bool showWarning = false,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: showWarning
+              ? AppColors.warning.withValues(alpha: 0.3)
+              : (isDark ? AppColors.gray700 : AppColors.gray200),
+        ),
+      ),
+      child: ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: students.length,
+        separatorBuilder: (context, index) => Divider(
+          height: 1,
+          color: isDark ? AppColors.gray700 : AppColors.gray200,
+        ),
+        itemBuilder: (context, index) {
+          final student = students[index];
+          return ListTile(
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 16.w,
+              vertical: 4.h,
+            ),
+            leading: CircleAvatar(
+              radius: 20.r,
+              backgroundColor: AppColors.warning.withValues(alpha: 0.1),
+              child: student.avatarUrl != null && student.avatarUrl!.isNotEmpty
+                  ? ClipOval(
+                      child: CachedNetworkImage(
+                        imageUrl: student.avatarUrl!,
+                        width: 40.w,
+                        height: 40.w,
+                        fit: BoxFit.cover,
+                        errorWidget: (_, __, ___) => Text(
+                          student.initials,
+                          style: TextStyle(
+                            color: AppColors.warning,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14.sp,
+                          ),
+                        ),
+                      ),
+                    )
+                  : Text(
+                      student.initials,
+                      style: TextStyle(
+                        color: AppColors.warning,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14.sp,
+                      ),
+                    ),
+            ),
+            title: Text(
+              student.fullName,
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w500,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+            ),
+            subtitle: Text(
+              student.displayCode,
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: isDark ? AppColors.gray400 : AppColors.gray500,
+              ),
+            ),
+            trailing: Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+              decoration: BoxDecoration(
+                color: _getAttendanceColor(
+                  student.attendanceRate,
+                ).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Text(
+                student.attendanceText,
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                  color: _getAttendanceColor(student.attendanceRate),
+                ),
+              ),
+            ),
+            onTap: () => _showStudentQuickInfo(context, student),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildTopPerformersList(
+    BuildContext context,
+    List<ClassStudent> students,
+    bool showScore,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: isDark ? AppColors.gray700 : AppColors.gray200,
+        ),
+      ),
+      child: ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: students.length,
+        separatorBuilder: (context, index) => Divider(
+          height: 1,
+          color: isDark ? AppColors.gray700 : AppColors.gray200,
+        ),
+        itemBuilder: (context, index) {
+          final student = students[index];
+          final rank = index + 1;
+
+          return ListTile(
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 16.w,
+              vertical: 4.h,
+            ),
+            leading: Stack(
+              children: [
+                CircleAvatar(
+                  radius: 20.r,
+                  backgroundColor: _getRankColor(rank).withValues(alpha: 0.1),
+                  child:
+                      student.avatarUrl != null && student.avatarUrl!.isNotEmpty
+                      ? ClipOval(
+                          child: CachedNetworkImage(
+                            imageUrl: student.avatarUrl!,
+                            width: 40.w,
+                            height: 40.w,
+                            fit: BoxFit.cover,
+                            errorWidget: (_, __, ___) => Text(
+                              student.initials,
+                              style: TextStyle(
+                                color: _getRankColor(rank),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14.sp,
+                              ),
+                            ),
+                          ),
+                        )
+                      : Text(
+                          student.initials,
+                          style: TextStyle(
+                            color: _getRankColor(rank),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14.sp,
+                          ),
+                        ),
+                ),
+                if (rank <= 3)
+                  Positioned(
+                    right: -2,
+                    bottom: -2,
+                    child: Container(
+                      padding: EdgeInsets.all(4.w),
+                      decoration: BoxDecoration(
+                        color: _getRankColor(rank),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDark ? AppColors.surfaceDark : Colors.white,
+                          width: 2,
+                        ),
+                      ),
+                      child: Text(
+                        rank.toString(),
+                        style: TextStyle(
+                          fontSize: 8.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            title: Text(
+              student.fullName,
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w500,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+            ),
+            subtitle: Text(
+              student.displayCode,
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: isDark ? AppColors.gray400 : AppColors.gray500,
+              ),
+            ),
+            trailing: Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+              decoration: BoxDecoration(
+                color: showScore
+                    ? AppColors.warning.withValues(alpha: 0.1)
+                    : AppColors.success.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    showScore ? Icons.star : Icons.check_circle,
+                    size: 14.sp,
+                    color: showScore ? AppColors.warning : AppColors.success,
+                  ),
+                  SizedBox(width: 4.w),
+                  Text(
+                    showScore
+                        ? student.averageScore!.toStringAsFixed(1)
+                        : student.attendanceText,
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
+                      color: showScore ? AppColors.warning : AppColors.success,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            onTap: () => _showStudentQuickInfo(context, student),
+          );
+        },
+      ),
+    );
+  }
+
+  Color _getRankColor(int rank) {
+    switch (rank) {
+      case 1:
+        return const Color(0xFFFFD700); 
+      case 2:
+        return const Color(0xFFC0C0C0); 
+      case 3:
+        return const Color(0xFFCD7F32); 
+      default:
+        return AppColors.primary;
+    }
   }
 }

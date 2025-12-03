@@ -21,7 +21,7 @@ abstract class TeacherRepository {
     String classId,
     DateTime date,
   );
-  /// Lấy điểm danh theo sessionId - dùng cho API backend
+  
   Future<Either<String, AttendanceSession>> getAttendanceBySessionId(String sessionId);
   Future<Either<String, void>> recordAttendance(
     String classId,

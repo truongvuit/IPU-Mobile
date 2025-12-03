@@ -126,13 +126,13 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
-          // Header
+          
           SliverToBoxAdapter(child: _buildHeader(state, isDark)),
           
-          // Week selector
+          
           SliverToBoxAdapter(child: _buildWeekSelector(isDark)),
           
-          // Schedule title
+          
           SliverToBoxAdapter(
             child: _buildSectionTitle(
               _isSameDate(selectedDate, DateTime.now())
@@ -142,7 +142,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             ),
           ),
           
-          // Schedule list
+          
           if (schedules.isEmpty)
             SliverToBoxAdapter(child: _buildEmptySchedule(isDark))
           else
@@ -156,7 +156,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
               ),
             ),
           
-          // Classes section
+          
           SliverToBoxAdapter(child: _buildClassesSectionHeader(isDark)),
           
           if (state.recentClasses.isEmpty)
@@ -365,7 +365,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         ),
         child: Row(
           children: [
-            // Time
+            
             Container(
               width: 52.w,
               padding: EdgeInsets.symmetric(vertical: 6.h),
@@ -391,7 +391,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
               ),
             ),
             SizedBox(width: 10.w),
-            // Info
+            
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

@@ -27,12 +27,6 @@ class StudentHomeTab extends StatefulWidget {
 class _StudentHomeTabState extends State<StudentHomeTab> {
   int _currentCarouselIndex = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    context.read<StudentBloc>().add(const LoadDashboard());
-  }
-
   Widget _buildHeader(bool isDark, bool isDesktop) {
     return BlocBuilder<StudentBloc, StudentState>(
       builder: (context, state) {
@@ -69,10 +63,7 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
                   ),
                 ],
               ),
-              StreakIndicator(
-                streakDays: activeCourses, 
-                isDark: isDark,
-              ),
+              StreakIndicator(streakDays: activeCourses, isDark: isDark),
             ],
           ),
         );
@@ -89,12 +80,12 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
           todaySchedules = state.todaySchedules;
         }
 
-        // Nếu không có lịch học hôm nay
+        
         if (todaySchedules.isEmpty) {
           return const SizedBox.shrink();
         }
 
-        // Lấy buổi học sắp tới (hoặc buổi học đầu tiên trong ngày)
+        
         final now = DateTime.now();
         Schedule? nextSchedule;
         for (var s in todaySchedules) {
@@ -103,14 +94,20 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
             break;
           }
         }
-        // Nếu tất cả đã kết thúc, không hiển thị
+        
         if (nextSchedule == null) {
           return const SizedBox.shrink();
         }
 
-        // Format time
-        final startHour = nextSchedule.startTime.hour.toString().padLeft(2, '0');
-        final startMin = nextSchedule.startTime.minute.toString().padLeft(2, '0');
+        
+        final startHour = nextSchedule.startTime.hour.toString().padLeft(
+          2,
+          '0',
+        );
+        final startMin = nextSchedule.startTime.minute.toString().padLeft(
+          2,
+          '0',
+        );
         final endHour = nextSchedule.endTime.hour.toString().padLeft(2, '0');
         final endMin = nextSchedule.endTime.minute.toString().padLeft(2, '0');
         final timeSlot = '$startHour:$startMin - $endHour:$endMin';
@@ -131,7 +128,7 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
               SizedBox(height: 12.h),
               TodayFocusCard(
                 className: nextSchedule.courseName ?? nextSchedule.className,
-                timeSlot: timeSlot, 
+                timeSlot: timeSlot,
                 room: nextSchedule.room,
                 isOnline: nextSchedule.isOnline,
                 isDark: isDark,
@@ -153,7 +150,6 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
   Widget _buildLearningProgress(bool isDark, bool isDesktop) {
     return BlocBuilder<StudentBloc, StudentState>(
       builder: (context, state) {
-        
         double courseProgress = 0.0;
         double attendanceProgress = 0.0;
         double assignmentProgress = 0.0;
@@ -168,7 +164,6 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
         }
 
         if (classes.isNotEmpty) {
-          
           double totalAttendance = 0.0;
           double totalProgress = 0.0;
           for (var c in classes) {
@@ -177,7 +172,7 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
           }
           attendanceProgress = totalAttendance / classes.length / 100;
           courseProgress = totalProgress / classes.length / 100;
-          
+
           assignmentProgress = (courseProgress + attendanceProgress) / 2;
         }
 
@@ -228,7 +223,6 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
   Widget _buildPerformanceSnapshot(bool isDark, bool isDesktop) {
     return BlocBuilder<StudentBloc, StudentState>(
       builder: (context, state) {
-        
         double gpa = 0.0;
         int activeCourses = 0;
         int totalCredits = 0;
@@ -252,7 +246,6 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
           totalCredits = profile.totalCredits;
         }
 
-        
         for (var c in classes) {
           if (c.isOnline) {
             onlineCount++;
@@ -271,7 +264,6 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
           classSubtitle = 'Chưa đăng ký lớp nào';
         }
 
-        
         int studyHours = totalCredits > 0 ? (totalCredits * 2) : 0;
 
         return Padding(
@@ -298,12 +290,16 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
                           child: PerformanceCard(
                             title: 'Điểm trung bình',
                             value: gpa > 0 ? gpa.toStringAsFixed(1) : '--',
-                            subtitle: gpa > 0 ? 'Điểm GPA hiện tại' : 'Chưa có điểm',
+                            subtitle: gpa > 0
+                                ? 'Điểm GPA hiện tại'
+                                : 'Chưa có điểm',
                             icon: Icons.trending_up,
                             color: Colors.green,
                             isDark: isDark,
                             onTap: () => Navigator.pushNamed(
-                                context, AppRouter.studentGrades),
+                              context,
+                              AppRouter.studentGrades,
+                            ),
                           ),
                         ),
                       ),
@@ -319,7 +315,9 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
                             color: Colors.blue,
                             isDark: isDark,
                             onTap: () => Navigator.pushNamed(
-                                context, AppRouter.studentClasses),
+                              context,
+                              AppRouter.studentClasses,
+                            ),
                           ),
                         ),
                       ),
@@ -368,33 +366,54 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
             ),
             BlocBuilder<StudentBloc, StudentState>(
               builder: (context, state) {
+                final bloc = context.read<StudentBloc>();
+                String displayName = '';
+                bool isLoading =
+                    state is StudentLoading || state is StudentInitial;
+
+                
                 if (state is DashboardLoaded && state.profile != null) {
-                  return Text(
-                    state.profile!.fullName,
-                    style: TextStyle(
-                      fontSize: isDesktop ? 14.sp : 12.sp,
-                      fontWeight: FontWeight.w500,
+                  displayName = state.profile!.fullName;
+                } else if (state is StudentLoaded && state.profile != null) {
+                  displayName = state.profile!.fullName;
+                } else if (state is ProfileLoaded) {
+                  displayName = state.profile.fullName;
+                } else if (state is ProfileUpdated) {
+                  displayName = state.profile.fullName;
+                } else if (bloc.cachedProfile != null) {
+                  
+                  displayName = bloc.cachedProfile!.fullName;
+                }
+
+                if (isLoading && displayName.isEmpty) {
+                  return Container(
+                    height: 14.h,
+                    width: 100.w,
+                    margin: EdgeInsets.only(top: 2.h),
+                    decoration: BoxDecoration(
                       color: isDark
-                          ? const Color(0xFF94A3B8)
-                          : const Color(0xFF64748B),
-                      fontFamily: 'Lexend',
+                          ? const Color(0xFF374151)
+                          : const Color(0xFFE5E7EB),
+                      borderRadius: BorderRadius.circular(4.r),
                     ),
                   );
                 }
-                if (state is StudentLoaded && state.profile != null) {
-                  return Text(
-                    state.profile!.fullName,
-                    style: TextStyle(
-                      fontSize: isDesktop ? 14.sp : 12.sp,
-                      fontWeight: FontWeight.w500,
-                      color: isDark
-                          ? const Color(0xFF94A3B8)
-                          : const Color(0xFF64748B),
-                      fontFamily: 'Lexend',
-                    ),
-                  );
+
+                if (displayName.isEmpty) {
+                  return const SizedBox.shrink();
                 }
-                return const SizedBox.shrink();
+
+                return Text(
+                  displayName,
+                  style: TextStyle(
+                    fontSize: isDesktop ? 14.sp : 12.sp,
+                    fontWeight: FontWeight.w500,
+                    color: isDark
+                        ? const Color(0xFF94A3B8)
+                        : const Color(0xFF64748B),
+                    fontFamily: 'Lexend',
+                  ),
+                );
               },
             ),
           ],
@@ -430,7 +449,7 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
               SizedBox(height: 24.h),
               _buildUpcomingClassesCarousel(isDark, isDesktop),
               SizedBox(height: 24.h),
-              
+
               SizedBox(height: 100.h),
             ],
           ),
@@ -607,48 +626,51 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.all(20.w),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 12.w,
-                            vertical: 6.h,
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 10.w,
+                              vertical: 4.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(20.r),
+                            ),
+                            child: Text(
+                              classItem.isOnline
+                                  ? '🌐 Online'
+                                  : '📍 ${classItem.room}',
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                                fontFamily: 'Lexend',
+                              ),
+                            ),
                           ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(20.r),
-                          ),
-                          child: Text(
-                            classItem.isOnline
-                                ? '🌐 Online'
-                                : '📍 ${classItem.room}',
+                          SizedBox(height: 8.h),
+                          Text(
+                            classItem.courseName,
                             style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w600,
+                              fontSize: isDesktop ? 16.sp : 14.sp,
+                              fontWeight: FontWeight.w700,
                               color: Colors.white,
                               fontFamily: 'Lexend',
                             ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        SizedBox(height: 12.h),
-                        Text(
-                          classItem.courseName,
-                          style: TextStyle(
-                            fontSize: isDesktop ? 18.sp : 16.sp,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            fontFamily: 'Lexend',
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     Row(
                       children: [

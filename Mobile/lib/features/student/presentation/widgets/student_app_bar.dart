@@ -38,7 +38,10 @@ class StudentAppBar extends StatelessWidget implements PreferredSizeWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: AppSizes.p8),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSizes.p16,
+        vertical: AppSizes.p8,
+      ),
       decoration: BoxDecoration(
         color: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
       ),
@@ -46,7 +49,7 @@ class StudentAppBar extends StatelessWidget implements PreferredSizeWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // Left side (Back button or Avatar or Menu)
+            
             Align(
               alignment: Alignment.centerLeft,
               child: Row(
@@ -73,7 +76,7 @@ class StudentAppBar extends StatelessWidget implements PreferredSizeWidget {
                   else if (avatarUrl != null || greeting != null)
                     Row(
                       children: [
-                        // Avatar
+                        
                         if (avatarUrl != null)
                           GestureDetector(
                             onTap: onAvatarTap,
@@ -103,7 +106,7 @@ class StudentAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ),
 
-            // Center Title
+            
             if (title != null)
               Text(
                 title!,
@@ -116,7 +119,7 @@ class StudentAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
               ),
 
-            // Right side (Notification)
+            
             if (onNotificationTap != null)
               Align(
                 alignment: Alignment.centerRight,
@@ -125,9 +128,7 @@ class StudentAppBar extends StatelessWidget implements PreferredSizeWidget {
                     IconButton(
                       icon: Icon(
                         Icons.notifications_outlined,
-                        color: isDark
-                            ? AppColors.gray300
-                            : AppColors.slate600,
+                        color: isDark ? AppColors.gray300 : AppColors.slate600,
                         size: AppSizes.iconMedium,
                       ),
                       onPressed: onNotificationTap,

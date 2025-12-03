@@ -30,21 +30,28 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
   bool _hasChanges = false;
   AttendanceSession? _currentSession;
 
-  /// Check if session is completed (past the session date/time)
+  
   bool get isSessionCompleted {
+    
+    if (widget.args.viewOnly) return true;
+    
     final sessionDate = widget.args.sessionDate;
     if (sessionDate == null) return false;
-    // Session is completed if it's in the past (more than 3 hours ago to allow late attendance)
+    
     return DateTime.now().isAfter(sessionDate.add(const Duration(hours: 3)));
   }
 
   @override
   void initState() {
     super.initState();
-    _loadAttendance();
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadAttendance();
+    });
   }
 
   void _loadAttendance() {
+    
     if (!widget.args.hasSessionId) {
       return;
     }
@@ -68,6 +75,21 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
   }
 
   void _toggleAttendance(String studentId) {
+    
+    if (isSessionCompleted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Không thể điểm danh. Buổi học đã kết thúc.',
+            style: TextStyle(fontFamily: 'Lexend'),
+          ),
+          backgroundColor: AppColors.warning,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    
     setState(() {
       final currentStatus = _localAttendance[studentId] ?? 'absent';
       _localAttendance[studentId] = currentStatus == 'present'
@@ -107,6 +129,10 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    
+    
+    
+    
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final theme = Theme.of(context);
 
@@ -171,7 +197,8 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
                     return _buildAttendanceContent(session, isDark, theme);
                   }
 
-                  return const SizedBox.shrink();
+                  
+                  return _buildLoadingState();
                 },
               ),
             ),
@@ -261,12 +288,35 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Điểm danh',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18.sp,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      'Điểm danh',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18.sp,
+                      ),
+                    ),
+                    if (isSessionCompleted) ...[
+                      SizedBox(width: 8.w),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                        decoration: BoxDecoration(
+                          color: AppColors.warning.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Text(
+                          'Chỉ xem',
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.warning,
+                            fontFamily: 'Lexend',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 SizedBox(height: 4.h),
                 Text(
@@ -564,7 +614,7 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
     bool isDark,
     ThemeData theme,
   ) {
-    // Use local state instead of record.status
+    
     final isPresent = _getStatus(record.studentId) == 'present';
     final studentName =
         record.studentName ??
@@ -604,7 +654,7 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
             ),
           ),
 
-          // Checkbox - update local state only
+          
           InkWell(
             onTap: () => _toggleAttendance(record.studentId),
             borderRadius: BorderRadius.circular(6.r),

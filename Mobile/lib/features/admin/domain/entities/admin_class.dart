@@ -1,3 +1,5 @@
+import 'class_session.dart';
+
 enum ClassStatus {
   ongoing,
   upcoming,
@@ -21,6 +23,8 @@ class AdminClass {
   final int maxStudents;
   final String? imageUrl;
   final double tuitionFee;
+  final int totalSessions;
+  final List<ClassSession> sessions;
 
   const AdminClass({
     required this.id,
@@ -39,6 +43,8 @@ class AdminClass {
     required this.maxStudents,
     this.imageUrl,
     this.tuitionFee = 0,
+    this.totalSessions = 0,
+    this.sessions = const [],
   });
 
   static final empty = AdminClass(
@@ -73,6 +79,26 @@ class AdminClass {
 
   double get enrollmentPercentage =>
       maxStudents > 0 ? (totalStudents / maxStudents) * 100 : 0;
+
+  
+  int get completedSessionsCount =>
+      sessions.where((s) => s.status == SessionStatus.completed).length;
+
+  
+  int get canceledSessionsCount =>
+      sessions.where((s) => s.status == SessionStatus.canceled).length;
+
+  
+  int get remainingSessionsCount =>
+      sessions.where((s) => s.status == SessionStatus.notCompleted).length;
+
+  
+  double get completionPercentage =>
+      sessions.isNotEmpty ? (completedSessionsCount / sessions.length) * 100 : 0;
+
+  
+  String get sessionStatsText => '${completedSessionsCount}/${sessions.length} buổi';
+
   factory AdminClass.fromJson(Map<String, dynamic> json) {
     return AdminClass(
       id: json['id'] ?? '',

@@ -21,7 +21,7 @@ class PromotionModel extends Promotion {
   });
 
   factory PromotionModel.fromJson(Map<String, dynamic> json) {
-    // Parse promotion type
+    
     PromotionType promotionType = PromotionType.single;
     if (json['promotionType'] != null) {
       promotionType = PromotionType.values.firstWhere(
@@ -29,7 +29,7 @@ class PromotionModel extends Promotion {
         orElse: () => PromotionType.single,
       );
     }
-    // Nếu requireAllCourses = true, tự động set thành combo
+    
     final requireAllCourses = json['requireAllCourses'] as bool? ?? false;
     if (requireAllCourses) {
       promotionType = PromotionType.combo;

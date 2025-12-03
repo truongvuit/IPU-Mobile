@@ -28,7 +28,9 @@ class _ReviewHistoryScreenState extends State<ReviewHistoryScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF111827) : const Color(0xFFF9FAFB),
+      backgroundColor: isDark
+          ? const Color(0xFF111827)
+          : const Color(0xFFF9FAFB),
       body: Column(
         children: [
           const StudentAppBar(title: 'Lịch sử đánh giá', showBackButton: true),
@@ -36,7 +38,9 @@ class _ReviewHistoryScreenState extends State<ReviewHistoryScreen> {
             child: BlocBuilder<StudentBloc, StudentState>(
               builder: (context, state) {
                 if (state is StudentLoading) {
-                  return Center(child: CircularProgressIndicator(color: AppColors.primary));
+                  return Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  );
                 }
 
                 if (state is ReviewHistoryLoaded) {
@@ -44,7 +48,9 @@ class _ReviewHistoryScreenState extends State<ReviewHistoryScreen> {
                   if (reviews.isEmpty) return _buildEmptyState(isDark);
                   return RefreshIndicator(
                     onRefresh: () async {
-                      context.read<StudentBloc>().add(const LoadReviewHistory());
+                      context.read<StudentBloc>().add(
+                        const LoadReviewHistory(),
+                      );
                     },
                     child: ListView.builder(
                       padding: EdgeInsets.all(16.w),
@@ -62,16 +68,27 @@ class _ReviewHistoryScreenState extends State<ReviewHistoryScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.error_outline, size: 64.sp, color: AppColors.error),
+                        Icon(
+                          Icons.error_outline,
+                          size: 64.sp,
+                          color: AppColors.error,
+                        ),
                         SizedBox(height: 16.h),
                         Text(state.message, textAlign: TextAlign.center),
                         SizedBox(height: 16.h),
                         ElevatedButton(
                           onPressed: () {
-                            context.read<StudentBloc>().add(const LoadReviewHistory());
+                            context.read<StudentBloc>().add(
+                              const LoadReviewHistory(),
+                            );
                           },
-                          style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                          child: const Text('Thử lại', style: TextStyle(color: Colors.white)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                          ),
+                          child: const Text(
+                            'Thử lại',
+                            style: TextStyle(color: Colors.white),
+                          ),
                         ),
                       ],
                     ),
@@ -112,7 +129,7 @@ class _ReviewHistoryScreenState extends State<ReviewHistoryScreen> {
 
   Widget _buildReviewCardFromEntity(Review review, bool isDark) {
     final dateFormat = DateFormat('dd/MM/yyyy');
-    
+
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
       padding: EdgeInsets.all(16.w),
@@ -153,7 +170,7 @@ class _ReviewHistoryScreenState extends State<ReviewHistoryScreen> {
             ],
           ),
           SizedBox(height: 8.h),
-          // Overall Rating
+          
           Row(
             children: [
               ...List.generate(5, (index) {
@@ -174,8 +191,9 @@ class _ReviewHistoryScreenState extends State<ReviewHistoryScreen> {
               ),
             ],
           ),
-          // Detail ratings
-          if (review.teacherRating != null || review.facilityRating != null) ...[
+          
+          if (review.teacherRating != null ||
+              review.facilityRating != null) ...[
             SizedBox(height: 8.h),
             Wrap(
               spacing: 16.w,
@@ -183,7 +201,11 @@ class _ReviewHistoryScreenState extends State<ReviewHistoryScreen> {
                 if (review.teacherRating != null)
                   _buildMiniRating('Giảng viên', review.teacherRating!, isDark),
                 if (review.facilityRating != null)
-                  _buildMiniRating('Cơ sở vật chất', review.facilityRating!, isDark),
+                  _buildMiniRating(
+                    'Cơ sở vật chất',
+                    review.facilityRating!,
+                    isDark,
+                  ),
               ],
             ),
           ],

@@ -60,9 +60,9 @@ class SearchStudents extends TeacherEvent {
 
 
 class LoadAttendance extends TeacherEvent {
-  /// Session ID để gọi API điểm danh
+  
   final String sessionId;
-  /// Class ID để lấy danh sách sinh viên nếu cần
+  
   final String classId;
   
   const LoadAttendance({

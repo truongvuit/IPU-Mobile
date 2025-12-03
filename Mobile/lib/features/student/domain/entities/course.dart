@@ -1,16 +1,15 @@
 import 'package:equatable/equatable.dart';
 
-
 class Course extends Equatable {
   final String id;
   final String name;
   final String description;
   final String imageUrl;
-  final String category; 
+  final String category;
   final double price;
-  final int duration; 
+  final int duration;
   final int totalStudents;
-  final String level; 
+  final String level;
   final String? teacherName;
   final bool isEnrolled;
   final DateTime? startDate;
@@ -34,20 +33,20 @@ class Course extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        description,
-        imageUrl,
-        category,
-        price,
-        duration,
-        totalStudents,
-        level,
-        teacherName,
-        isEnrolled,
-        startDate,
-        endDate,
-      ];
+    id,
+    name,
+    description,
+    imageUrl,
+    category,
+    price,
+    duration,
+    totalStudents,
+    level,
+    teacherName,
+    isEnrolled,
+    startDate,
+    endDate,
+  ];
 
   Course copyWith({
     String? id,

@@ -19,11 +19,7 @@ class ScheduleScreen extends StatefulWidget {
   final bool isTab;
   final VoidCallback? onMenuPressed;
 
-  const ScheduleScreen({
-    super.key,
-    this.isTab = false,
-    this.onMenuPressed,
-  });
+  const ScheduleScreen({super.key, this.isTab = false, this.onMenuPressed});
 
   @override
   State<ScheduleScreen> createState() => _ScheduleScreenState();
@@ -38,13 +34,24 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   @override
   void initState() {
     super.initState();
-    _loadDataIfNeeded();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadDataIfNeeded();
+    });
   }
 
   void _loadDataIfNeeded() {
-    final state = context.read<StudentBloc>().state;
+    if (!mounted || _hasLoadedData) return;
     
-    if (state is! ScheduleLoaded && state is! StudentLoading) {
+    final state = context.read<StudentBloc>().state;
+
+    
+    if (state is ScheduleLoaded) {
+      _hasLoadedData = true;
+      return;
+    }
+    
+    if (state is! StudentLoading) {
+      _hasLoadedData = true;
       context.read<StudentBloc>().add(LoadSchedule(_selectedDate));
     }
   }
@@ -57,7 +64,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
   void _navigateMonth(int offset) {
     setState(() {
-      _selectedDate = DateTime(_selectedDate.year, _selectedDate.month + offset);
+      _selectedDate = DateTime(
+        _selectedDate.year,
+        _selectedDate.month + offset,
+      );
     });
 
     _monthNavDebounce?.cancel();
@@ -67,7 +77,15 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   }
 
   String _getDateString(DateTime date) {
-    const weekdays = ['Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy', 'Chủ nhật'];
+    const weekdays = [
+      'Thứ hai',
+      'Thứ ba',
+      'Thứ tư',
+      'Thứ năm',
+      'Thứ sáu',
+      'Thứ bảy',
+      'Chủ nhật',
+    ];
     final weekday = weekdays[date.weekday - 1];
     return '$weekday, ${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
   }
@@ -82,7 +100,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     final isDesktop = MediaQuery.of(context).size.width >= 1024;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF111827) : const Color(0xFFF9FAFB),
+      backgroundColor: isDark
+          ? const Color(0xFF111827)
+          : const Color(0xFFF9FAFB),
       body: Column(
         children: [
           StudentAppBar(
@@ -91,7 +111,6 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             showMenuButton: widget.isTab,
             onMenuPressed: widget.onMenuPressed,
             onBackPressed: () {
-              
               Navigator.pushNamedAndRemoveUntil(
                 context,
                 AppRouter.studentDashboard,
@@ -101,12 +120,20 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           ),
 
           Padding(
-            padding: EdgeInsets.fromLTRB(AppSizes.paddingMedium, AppSizes.paddingSmall, AppSizes.paddingMedium, 0),
+            padding: EdgeInsets.fromLTRB(
+              AppSizes.paddingMedium,
+              AppSizes.paddingSmall,
+              AppSizes.paddingMedium,
+              0,
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  icon: Icon(Icons.chevron_left, size: isDesktop ? 28.sp : 24.sp),
+                  icon: Icon(
+                    Icons.chevron_left,
+                    size: isDesktop ? 28.sp : 24.sp,
+                  ),
                   onPressed: () => _navigateMonth(-1),
                   padding: EdgeInsets.all(8.w),
                 ),
@@ -120,7 +147,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.chevron_right, size: isDesktop ? 28.sp : 24.sp),
+                  icon: Icon(
+                    Icons.chevron_right,
+                    size: isDesktop ? 28.sp : 24.sp,
+                  ),
                   onPressed: () => _navigateMonth(1),
                   padding: EdgeInsets.all(8.w),
                 ),
@@ -129,22 +159,39 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           ),
 
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium, vertical: AppSizes.paddingSmall),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSizes.paddingMedium,
+              vertical: AppSizes.paddingSmall,
+            ),
             child: Container(
               height: 44.h,
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1F2937) : const Color(0xFFF3F4F6),
+                color: isDark
+                    ? const Color(0xFF1F2937)
+                    : const Color(0xFFF3F4F6),
                 borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
               ),
               padding: EdgeInsets.all(4.w),
               child: Row(
                 children: [
                   Expanded(
-                    child: _buildModeButton('Lịch', Icons.calendar_month, 'calendar', isDark, isDesktop),
+                    child: _buildModeButton(
+                      'Lịch',
+                      Icons.calendar_month,
+                      'calendar',
+                      isDark,
+                      isDesktop,
+                    ),
                   ),
                   SizedBox(width: 4.w),
                   Expanded(
-                    child: _buildModeButton('Danh sách', Icons.list, 'list', isDark, isDesktop),
+                    child: _buildModeButton(
+                      'Danh sách',
+                      Icons.list,
+                      'list',
+                      isDark,
+                      isDesktop,
+                    ),
                   ),
                 ],
               ),
@@ -154,19 +201,22 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           Expanded(
             child: BlocBuilder<StudentBloc, StudentState>(
               buildWhen: (previous, current) {
-                
-                return current is ScheduleLoaded || 
-                       current is WeekScheduleLoaded ||
-                       current is StudentLoading || 
-                       current is StudentError;
+                return current is ScheduleLoaded ||
+                    current is WeekScheduleLoaded ||
+                    current is StudentLoading ||
+                    current is StudentError;
               },
               builder: (context, state) {
-                
-                if (state is StudentInitial || (state is! ScheduleLoaded && state is! StudentLoading && !_hasLoadedData)) {
+                if (state is StudentInitial ||
+                    (state is! ScheduleLoaded &&
+                        state is! StudentLoading &&
+                        !_hasLoadedData)) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (mounted && !_hasLoadedData) {
                       _hasLoadedData = true;
-                      context.read<StudentBloc>().add(LoadSchedule(_selectedDate));
+                      context.read<StudentBloc>().add(
+                        LoadSchedule(_selectedDate),
+                      );
                     }
                   });
                 }
@@ -200,19 +250,26 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 16.sp,
-                              color: isDark ? Colors.white : AppColors.textPrimary,
+                              color: isDark
+                                  ? Colors.white
+                                  : AppColors.textPrimary,
                               fontFamily: 'Lexend',
                             ),
                           ),
                           SizedBox(height: 16.h),
                           ElevatedButton(
                             onPressed: () {
-                              context.read<StudentBloc>().add(LoadSchedule(_selectedDate));
+                              context.read<StudentBloc>().add(
+                                LoadSchedule(_selectedDate),
+                              );
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
                             ),
-                            child: const Text('Thử lại', style: TextStyle(color: Colors.white)),
+                            child: const Text(
+                              'Thử lại',
+                              style: TextStyle(color: Colors.white),
+                            ),
                           ),
                         ],
                       ),
@@ -233,7 +290,6 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       : _buildListView(state.schedules, isDark, isDesktop);
                 }
 
-                
                 return ListView.builder(
                   padding: EdgeInsets.all(AppSizes.paddingMedium),
                   itemCount: 5,
@@ -250,7 +306,13 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
-  Widget _buildModeButton(String label, IconData icon, String mode, bool isDark, bool isDesktop) {
+  Widget _buildModeButton(
+    String label,
+    IconData icon,
+    String mode,
+    bool isDark,
+    bool isDesktop,
+  ) {
     final isSelected = _viewMode == mode;
     return InkWell(
       onTap: () => setState(() => _viewMode = mode),
@@ -262,7 +324,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               : Colors.transparent,
           borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
           boxShadow: isSelected
-              ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)]
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 4,
+                  ),
+                ]
               : null,
         ),
         alignment: Alignment.center,
@@ -274,7 +341,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               size: isDesktop ? 20.sp : 18.sp,
               color: isSelected
                   ? AppColors.primary
-                  : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280)),
+                  : (isDark
+                        ? const Color(0xFF9CA3AF)
+                        : const Color(0xFF6B7280)),
             ),
             SizedBox(width: 6.w),
             Text(
@@ -284,7 +353,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                 color: isSelected
                     ? (isDark ? Colors.white : AppColors.textPrimary)
-                    : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280)),
+                    : (isDark
+                          ? const Color(0xFF9CA3AF)
+                          : const Color(0xFF6B7280)),
                 fontFamily: 'Lexend',
               ),
             ),
@@ -294,10 +365,22 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
-  Widget _buildCalendarView(List<Schedule> schedules, bool isDark, bool isDesktop) {
+  Widget _buildCalendarView(
+    List<Schedule> schedules,
+    bool isDark,
+    bool isDesktop,
+  ) {
     final daysInWeek = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
-    final firstDayOfMonth = DateTime(_selectedDate.year, _selectedDate.month, 1);
-    final lastDayOfMonth = DateTime(_selectedDate.year, _selectedDate.month + 1, 0);
+    final firstDayOfMonth = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      1,
+    );
+    final lastDayOfMonth = DateTime(
+      _selectedDate.year,
+      _selectedDate.month + 1,
+      0,
+    );
     final startWeekday = firstDayOfMonth.weekday;
     final daysInMonth = lastDayOfMonth.day;
 
@@ -320,14 +403,16 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
+                    color: isDark
+                        ? const Color(0xFF9CA3AF)
+                        : const Color(0xFF6B7280),
                     fontFamily: 'Lexend',
                   ),
                 ),
               );
             },
           ),
-          
+
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -342,17 +427,25 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               if (index < startWeekday - 1) {
                 return const SizedBox.shrink();
               }
-              
+
               final day = index - (startWeekday - 2);
-              final date = DateTime(_selectedDate.year, _selectedDate.month, day);
-              final hasSchedule = schedules.any((s) =>
-                  s.startTime.year == date.year &&
-                  s.startTime.month == date.month &&
-                  s.startTime.day == date.day);
-              final isSelected = _selectedDate.day == day &&
+              final date = DateTime(
+                _selectedDate.year,
+                _selectedDate.month,
+                day,
+              );
+              final hasSchedule = schedules.any(
+                (s) =>
+                    s.startTime.year == date.year &&
+                    s.startTime.month == date.month &&
+                    s.startTime.day == date.day,
+              );
+              final isSelected =
+                  _selectedDate.day == day &&
                   _selectedDate.month == date.month &&
                   _selectedDate.year == date.year;
-              final isToday = DateTime.now().year == date.year &&
+              final isToday =
+                  DateTime.now().year == date.year &&
                   DateTime.now().month == date.month &&
                   DateTime.now().day == date.day;
 
@@ -369,8 +462,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     color: isSelected
                         ? AppColors.primary
                         : (isToday
-                            ? AppColors.primary.withValues(alpha: 0.1)
-                            : (isDark ? const Color(0xFF1F2937) : Colors.white)),
+                              ? AppColors.primary.withValues(alpha: 0.1)
+                              : (isDark
+                                    ? const Color(0xFF1F2937)
+                                    : Colors.white)),
                     borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
                     border: isToday && !isSelected
                         ? Border.all(color: AppColors.primary, width: 1.5)
@@ -384,7 +479,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                         '$day',
                         style: TextStyle(
                           fontSize: 14.sp,
-                          fontWeight: isSelected || isToday ? FontWeight.w600 : FontWeight.w500,
+                          fontWeight: isSelected || isToday
+                              ? FontWeight.w600
+                              : FontWeight.w500,
                           color: isSelected
                               ? Colors.white
                               : (isDark ? Colors.white : AppColors.textPrimary),
@@ -397,7 +494,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                           width: 4.w,
                           height: 4.w,
                           decoration: BoxDecoration(
-                            color: isSelected ? Colors.white : AppColors.primary,
+                            color: isSelected
+                                ? Colors.white
+                                : AppColors.primary,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -407,7 +506,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               );
             },
           ),
-          
+
           SizedBox(height: AppSizes.paddingMedium),
           _buildSchedulesForDate(schedules, isDark, isDesktop),
         ],
@@ -416,10 +515,14 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   }
 
   Widget _buildListView(List<Schedule> schedules, bool isDark, bool isDesktop) {
-    final schedulesForDate = schedules.where((s) =>
-        s.startTime.year == _selectedDate.year &&
-        s.startTime.month == _selectedDate.month &&
-        s.startTime.day == _selectedDate.day).toList();
+    final schedulesForDate = schedules
+        .where(
+          (s) =>
+              s.startTime.year == _selectedDate.year &&
+              s.startTime.month == _selectedDate.month &&
+              s.startTime.day == _selectedDate.day,
+        )
+        .toList();
 
     return RefreshIndicator(
       color: AppColors.primary,
@@ -445,7 +548,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     'Không có lịch học trong ngày này',
                     style: TextStyle(
                       fontSize: 14.sp,
-                      color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
+                      color: isDark
+                          ? const Color(0xFF9CA3AF)
+                          : const Color(0xFF6B7280),
                       fontFamily: 'Lexend',
                     ),
                   ),
@@ -453,7 +558,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               ],
             )
           : ListView(
-              padding: EdgeInsets.fromLTRB(AppSizes.paddingMedium, AppSizes.paddingSmall, AppSizes.paddingMedium, 100.h),
+              padding: EdgeInsets.fromLTRB(
+                AppSizes.paddingMedium,
+                AppSizes.paddingSmall,
+                AppSizes.paddingMedium,
+                100.h,
+              ),
               children: [
                 Padding(
                   padding: EdgeInsets.only(bottom: AppSizes.paddingSmall),
@@ -467,23 +577,33 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     ),
                   ),
                 ),
-                ...schedulesForDate.map((schedule) => Padding(
-                      padding: EdgeInsets.only(bottom: AppSizes.paddingSmall),
-                      child: ScheduleItem(
-                        schedule: schedule,
-                        onTap: () => _showScheduleDetail(schedule),
-                      ),
-                    )),
+                ...schedulesForDate.map(
+                  (schedule) => Padding(
+                    padding: EdgeInsets.only(bottom: AppSizes.paddingSmall),
+                    child: ScheduleItem(
+                      schedule: schedule,
+                      onTap: () => _showScheduleDetail(schedule),
+                    ),
+                  ),
+                ),
               ],
             ),
     );
   }
 
-  Widget _buildSchedulesForDate(List<Schedule> schedules, bool isDark, bool isDesktop) {
-    final schedulesForDate = schedules.where((s) =>
-        s.startTime.year == _selectedDate.year &&
-        s.startTime.month == _selectedDate.month &&
-        s.startTime.day == _selectedDate.day).toList();
+  Widget _buildSchedulesForDate(
+    List<Schedule> schedules,
+    bool isDark,
+    bool isDesktop,
+  ) {
+    final schedulesForDate = schedules
+        .where(
+          (s) =>
+              s.startTime.year == _selectedDate.year &&
+              s.startTime.month == _selectedDate.month &&
+              s.startTime.day == _selectedDate.day,
+        )
+        .toList();
 
     if (schedulesForDate.isEmpty) {
       return Padding(
@@ -502,13 +622,17 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     }
 
     return Column(
-      children: schedulesForDate.map((schedule) => Padding(
-        padding: EdgeInsets.only(bottom: AppSizes.paddingSmall),
-        child: ScheduleItem(
-          schedule: schedule,
-          onTap: () => _showScheduleDetail(schedule),
-        ),
-      )).toList(),
+      children: schedulesForDate
+          .map(
+            (schedule) => Padding(
+              padding: EdgeInsets.only(bottom: AppSizes.paddingSmall),
+              child: ScheduleItem(
+                schedule: schedule,
+                onTap: () => _showScheduleDetail(schedule),
+              ),
+            ),
+          )
+          .toList(),
     );
   }
 }

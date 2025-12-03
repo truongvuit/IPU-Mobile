@@ -6,22 +6,18 @@ class CourseCard extends StatelessWidget {
   final Course course;
   final VoidCallback? onTap;
 
-  const CourseCard({
-    super.key,
-    required this.course,
-    this.onTap,
-  });
+  const CourseCard({super.key, required this.course, this.onTap});
 
   Color _getCategoryColor(String category) {
     switch (category.toLowerCase()) {
       case 'ielts':
         return const Color(0xFF135BEC);
       case 'toeic':
-        return const Color(0xFFF97316); // orange-500
+        return const Color(0xFFF97316); 
       case 'giao tiếp':
-        return const Color(0xFF10B981); // green-500
+        return const Color(0xFF10B981); 
       default:
-        return const Color(0xFF6366F1); // indigo-500
+        return const Color(0xFF6366F1); 
     }
   }
 
@@ -49,7 +45,7 @@ class CourseCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Course Image
+            
             ClipRRect(
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(12),
@@ -73,13 +69,13 @@ class CourseCard extends StatelessWidget {
               ),
             ),
 
-            // Course Info
+            
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Course Name
+                  
                   Text(
                     course.name,
                     maxLines: 2,
@@ -94,14 +90,16 @@ class CourseCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
 
-                  // Category Tag
+                  
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: _getCategoryColor(course.category).withValues(alpha: 0.1),
+                      color: _getCategoryColor(
+                        course.category,
+                      ).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -116,11 +114,11 @@ class CourseCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
 
-                  // Price and Action Button
+                  
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Price
+                      
                       Row(
                         children: [
                           Icon(
@@ -145,7 +143,7 @@ class CourseCard extends StatelessWidget {
                         ],
                       ),
 
-                      // View Detail Button
+                      
                       TextButton(
                         onPressed: onTap,
                         style: TextButton.styleFrom(
@@ -156,9 +154,7 @@ class CourseCard extends StatelessWidget {
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
-                            side: const BorderSide(
-                              color: Color(0xFF135BEC),
-                            ),
+                            side: const BorderSide(color: Color(0xFF135BEC)),
                           ),
                         ),
                         child: const Text(
@@ -181,4 +177,3 @@ class CourseCard extends StatelessWidget {
     );
   }
 }
-

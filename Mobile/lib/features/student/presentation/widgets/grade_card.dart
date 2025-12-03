@@ -22,7 +22,7 @@ class GradeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Calculate status color
+    
     Color statusColor;
     Color statusBgColor;
     if (averageScore != null) {
@@ -61,7 +61,7 @@ class GradeCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
+            
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -108,12 +108,12 @@ class GradeCard extends StatelessWidget {
               ),
             ),
 
-            // Scores Grid
+            
             Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  // Midterm
+                  
                   Expanded(
                     child: _buildScoreItem(
                       context,
@@ -124,7 +124,7 @@ class GradeCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
 
-                  // Final
+                  
                   Expanded(
                     child: _buildScoreItem(
                       context,
@@ -135,7 +135,7 @@ class GradeCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
 
-                  // Average
+                  
                   Expanded(
                     child: _buildScoreItem(
                       context,
@@ -149,7 +149,7 @@ class GradeCard extends StatelessWidget {
               ),
             ),
 
-            // Progress bar (based on average)
+            
             if (averageScore != null)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -216,9 +216,7 @@ class GradeCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: isDark
-                  ? const Color(0xFF9CA3AF)
-                  : const Color(0xFF64748B),
+              color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF64748B),
               fontFamily: 'Lexend',
             ),
           ),
@@ -247,4 +245,3 @@ class GradeCard extends StatelessWidget {
     return 'Yếu';
   }
 }
-

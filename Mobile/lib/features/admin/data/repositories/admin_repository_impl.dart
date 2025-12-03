@@ -5,6 +5,7 @@ import '../../domain/entities/admin_class.dart';
 import '../../domain/entities/admin_student.dart';
 import '../../domain/entities/admin_teacher.dart';
 import '../../domain/entities/class_student.dart';
+import '../../domain/entities/class_session.dart';
 import '../../domain/entities/promotion.dart';
 import '../../domain/entities/admin_feedback.dart';
 import '../../domain/repositories/admin_repository.dart';
@@ -128,6 +129,23 @@ class AdminRepositoryImpl implements AdminRepository {
   }
 
   @override
+  Future<void> createTeacher({
+    required String name,
+    required String phoneNumber,
+    String? email,
+    DateTime? dateOfBirth,
+    String? imageUrl,
+  }) {
+    return dataSource.createTeacher(
+      name: name,
+      phoneNumber: phoneNumber,
+      email: email,
+      dateOfBirth: dateOfBirth,
+      imageUrl: imageUrl,
+    );
+  }
+
+  @override
   Future<List<Promotion>> getActivePromotions() {
     return dataSource.getActivePromotions();
   }
@@ -193,5 +211,23 @@ class AdminRepositoryImpl implements AdminRepository {
   @override
   Future<List<AdminFeedback>> getClassFeedbacks(String classId) {
     return dataSource.getClassFeedbacks(classId);
+  }
+
+  @override
+  Future<ClassSession> updateSession({
+    required int sessionId,
+    required String status,
+    String? note,
+  }) {
+    return dataSource.updateSession(
+      sessionId: sessionId,
+      status: status,
+      note: note,
+    );
+  }
+
+  @override
+  Future<SessionAttendanceInfo> getSessionAttendance(int sessionId) {
+    return dataSource.getSessionAttendance(sessionId);
   }
 }

@@ -11,14 +11,10 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/custom_image.dart';
 
-
 class CourseDetailScreen extends StatefulWidget {
   final String courseId;
 
-  const CourseDetailScreen({
-    super.key,
-    required this.courseId,
-  });
+  const CourseDetailScreen({super.key, required this.courseId});
 
   @override
   State<CourseDetailScreen> createState() => _CourseDetailScreenState();
@@ -33,21 +29,21 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     context.read<StudentBloc>().add(LoadCourseDetail(widget.courseId));
   }
 
-  
   Future<void> _openRegistrationWebsite(String courseId) async {
-    final url = Uri.parse('${AppConstants.courseRegistrationWebUrl}/$courseId/register');
-    
+    final url = Uri.parse(
+      '${AppConstants.courseRegistrationWebUrl}/$courseId/register',
+    );
+
     try {
       if (await canLaunchUrl(url)) {
-        await launchUrl(
-          url,
-          mode: LaunchMode.externalApplication,
-        );
+        await launchUrl(url, mode: LaunchMode.externalApplication);
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Không thể mở trang đăng ký. Vui lòng thử lại sau.'),
+              content: Text(
+                'Không thể mở trang đăng ký. Vui lòng thử lại sau.',
+              ),
               backgroundColor: AppColors.error,
             ),
           );
@@ -56,10 +52,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Lỗi: $e'),
-            backgroundColor: AppColors.error,
-          ),
+          SnackBar(content: Text('Lỗi: $e'), backgroundColor: AppColors.error),
         );
       }
     }
@@ -72,7 +65,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: isDark ? const Color(0xFF101622) : const Color(0xFFF6F6F8),
+      backgroundColor: isDark
+          ? const Color(0xFF101622)
+          : const Color(0xFFF6F6F8),
       body: BlocListener<StudentBloc, StudentState>(
         listener: (context, state) {
           if (state is StudentError) {
@@ -87,15 +82,14 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final isDesktop = constraints.maxWidth >= 1024;
-            final isTablet = constraints.maxWidth >= 600 && constraints.maxWidth < 1024;
+            final isTablet =
+                constraints.maxWidth >= 600 && constraints.maxWidth < 1024;
 
             return BlocBuilder<StudentBloc, StudentState>(
               builder: (context, state) {
                 if (state is StudentLoading) {
                   return const Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.primary,
-                    ),
+                    child: CircularProgressIndicator(color: AppColors.primary),
                   );
                 }
 
@@ -117,7 +111,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: isDesktop ? 18.sp : 16.sp,
-                              color: isDark ? Colors.white : AppColors.textPrimary,
+                              color: isDark
+                                  ? Colors.white
+                                  : AppColors.textPrimary,
                               fontFamily: 'Lexend',
                             ),
                           ),
@@ -134,11 +130,12 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     children: [
                       CustomScrollView(
                         slivers: [
-                          
                           SliverAppBar(
                             expandedHeight: isDesktop ? 320.h : 256.h,
                             pinned: true,
-                            backgroundColor: isDark ? const Color(0xFF101622) : const Color(0xFFF6F6F8),
+                            backgroundColor: isDark
+                                ? const Color(0xFF101622)
+                                : const Color(0xFFF6F6F8),
                             leading: IconButton(
                               icon: Container(
                                 padding: EdgeInsets.all(8.w),
@@ -193,7 +190,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                             ),
                           ),
 
-                          
                           SliverToBoxAdapter(
                             child: Padding(
                               padding: EdgeInsets.only(
@@ -204,27 +200,32 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  
                                   Padding(
-                                    padding: EdgeInsets.all(isDesktop ? 24.w : 16.w),
+                                    padding: EdgeInsets.all(
+                                      isDesktop ? 24.w : 16.w,
+                                    ),
                                     child: Text(
                                       course.name,
                                       style: TextStyle(
                                         fontSize: isDesktop ? 36.sp : 28.sp,
                                         fontWeight: FontWeight.w700,
-                                        color: isDark ? Colors.white : AppColors.textPrimary,
+                                        color: isDark
+                                            ? Colors.white
+                                            : AppColors.textPrimary,
                                         fontFamily: 'Lexend',
                                       ),
                                     ),
                                   ),
 
-                                  
                                   Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24.w : 16.w),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: isDesktop ? 24.w : 16.w,
+                                    ),
                                     child: GridView.count(
                                       crossAxisCount: isDesktop ? 4 : 2,
                                       shrinkWrap: true,
-                                      physics: const NeverScrollableScrollPhysics(),
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
                                       mainAxisSpacing: 12.w,
                                       crossAxisSpacing: 12.w,
                                       childAspectRatio: isDesktop ? 1.2 : 1.5,
@@ -243,7 +244,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                         ),
                                         _buildInfoCard(
                                           icon: Icons.payments,
-                                          title: currencyFormat.format(course.price),
+                                          title: currencyFormat.format(
+                                            course.price,
+                                          ),
                                           subtitle: 'Học phí',
                                           isDark: isDark,
                                         ),
@@ -259,20 +262,26 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
                                   SizedBox(height: 16.h),
 
-                                  
                                   Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24.w : 16.w),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: isDesktop ? 24.w : 16.w,
+                                    ),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           course.description,
                                           maxLines: _isExpanded ? null : 3,
-                                          overflow: _isExpanded ? null : TextOverflow.ellipsis,
+                                          overflow: _isExpanded
+                                              ? null
+                                              : TextOverflow.ellipsis,
                                           style: TextStyle(
                                             fontSize: isDesktop ? 18.sp : 16.sp,
                                             height: 1.5,
-                                            color: isDark ? AppColors.textSecondary : AppColors.textSecondary,
+                                            color: isDark
+                                                ? AppColors.textSecondary
+                                                : AppColors.textSecondary,
                                             fontFamily: 'Lexend',
                                           ),
                                         ),
@@ -283,12 +292,16 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                             });
                                           },
                                           child: Text(
-                                            _isExpanded ? 'Thu gọn' : 'Xem thêm',
+                                            _isExpanded
+                                                ? 'Thu gọn'
+                                                : 'Xem thêm',
                                             style: TextStyle(
                                               color: AppColors.primary,
                                               fontWeight: FontWeight.w600,
                                               fontFamily: 'Lexend',
-                                              fontSize: isDesktop ? 16.sp : 14.sp,
+                                              fontSize: isDesktop
+                                                  ? 16.sp
+                                                  : 14.sp,
                                             ),
                                           ),
                                         ),
@@ -298,18 +311,22 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
                                   SizedBox(height: 16.h),
 
-                                  
                                   Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24.w : 16.w),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: isDesktop ? 24.w : 16.w,
+                                    ),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           'Mục tiêu học tập',
                                           style: TextStyle(
                                             fontSize: isDesktop ? 24.sp : 20.sp,
                                             fontWeight: FontWeight.w700,
-                                            color: isDark ? Colors.white : AppColors.textPrimary,
+                                            color: isDark
+                                                ? Colors.white
+                                                : AppColors.textPrimary,
                                             fontFamily: 'Lexend',
                                           ),
                                         ),
@@ -335,18 +352,22 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
                                   SizedBox(height: 16.h),
 
-                                  
                                   Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24.w : 16.w),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: isDesktop ? 24.w : 16.w,
+                                    ),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           'Giảng viên',
                                           style: TextStyle(
                                             fontSize: isDesktop ? 24.sp : 20.sp,
                                             fontWeight: FontWeight.w700,
-                                            color: isDark ? Colors.white : AppColors.textPrimary,
+                                            color: isDark
+                                                ? Colors.white
+                                                : AppColors.textPrimary,
                                             fontFamily: 'Lexend',
                                           ),
                                         ),
@@ -358,7 +379,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                               height: 48,
                                               decoration: BoxDecoration(
                                                 shape: BoxShape.circle,
-                                                color: AppColors.primary.withValues(alpha: 0.2),
+                                                color: AppColors.primary
+                                                    .withValues(alpha: 0.2),
                                               ),
                                               child: const Icon(
                                                 Icons.person,
@@ -367,11 +389,14 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                             ),
                                             const SizedBox(width: 12),
                                             Text(
-                                              course.teacherName ?? 'Chưa có thông tin',
+                                              course.teacherName ??
+                                                  'Chưa có thông tin',
                                               style: TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w600,
-                                                color: isDark ? Colors.white : AppColors.textPrimary,
+                                                color: isDark
+                                                    ? Colors.white
+                                                    : AppColors.textPrimary,
                                                 fontFamily: 'Lexend',
                                               ),
                                             ),
@@ -387,7 +412,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                         ],
                       ),
 
-                      
                       Positioned(
                         left: 0,
                         right: 0,
@@ -397,15 +421,20 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                           decoration: BoxDecoration(
                             color: isDark
                                 ? const Color(0xFF101622).withValues(alpha: 0.8)
-                                : const Color(0xFFF6F6F8).withValues(alpha: 0.8),
+                                : const Color(
+                                    0xFFF6F6F8,
+                                  ).withValues(alpha: 0.8),
                             border: Border(
                               top: BorderSide(
-                                color: isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB),
+                                color: isDark
+                                    ? const Color(0xFF374151)
+                                    : const Color(0xFFE5E7EB),
                               ),
                             ),
                           ),
                           child: ElevatedButton.icon(
-                            onPressed: () => _openRegistrationWebsite(widget.courseId),
+                            onPressed: () =>
+                                _openRegistrationWebsite(widget.courseId),
                             icon: const Icon(Icons.open_in_new, size: 20),
                             label: const Text(
                               'Đăng ký khóa học',
@@ -420,7 +449,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                               foregroundColor: Colors.white,
                               minimumSize: const Size(double.infinity, 48),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+                                borderRadius: BorderRadius.circular(
+                                  AppSizes.radiusMedium,
+                                ),
                               ),
                             ),
                           ),
@@ -457,11 +488,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            color: AppColors.primary,
-            size: 24,
-          ),
+          Icon(icon, color: AppColors.primary, size: 24),
           const Spacer(),
           Text(
             title,
@@ -503,7 +530,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               text,
               style: TextStyle(
                 fontSize: isDesktop ? 16.sp : 14.sp,
-                color: isDark ? AppColors.textSecondary : AppColors.textSecondary,
+                color: isDark
+                    ? AppColors.textSecondary
+                    : AppColors.textSecondary,
                 fontFamily: 'Lexend',
               ),
             ),
@@ -513,5 +542,3 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     );
   }
 }
-
-

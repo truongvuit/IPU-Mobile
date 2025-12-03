@@ -28,7 +28,7 @@ class _QuickRegistrationClassSelectionScreenState
   final _searchController = TextEditingController();
   Set<String> _selectedClassIds = {};
 
-  // Filter fields
+  
   String? _selectedCourseId;
   String? _selectedTeacherId;
   String? _selectedSchedule;
@@ -68,7 +68,7 @@ class _QuickRegistrationClassSelectionScreenState
       return true;
     }).toList();
 
-    // Apply filter chips
+    
     if (_selectedCourseId != null && _selectedCourseId!.isNotEmpty) {
       filtered = filtered.where((c) => c.courseId == _selectedCourseId).toList();
     }
@@ -79,13 +79,13 @@ class _QuickRegistrationClassSelectionScreenState
       filtered = filtered.where((c) => c.schedule == _selectedSchedule).toList();
     }
 
-    // Filter theo tab
+    
     switch (_tabController.index) {
-      case 0: // Tất cả
+      case 0: 
         return filtered.where((c) => c.status != ClassStatus.completed).toList();
-      case 1: // Sắp mở
+      case 1: 
         return filtered.where((c) => c.status == ClassStatus.upcoming).toList();
-      case 2: // Đang học
+      case 2: 
         return filtered.where((c) => c.status == ClassStatus.ongoing).toList();
       default:
         return filtered;
@@ -387,7 +387,7 @@ class _QuickRegistrationClassSelectionScreenState
                     ),
                   ),
 
-                // Search + Filter row
+                
                 Container(
                   padding: EdgeInsets.all(AppSizes.paddingMedium),
                   color: isDark ? AppColors.surfaceDark : AppColors.surface,
@@ -431,7 +431,7 @@ class _QuickRegistrationClassSelectionScreenState
                   ),
                 ),
 
-                // Active filter chips
+                
                 if (_activeFiltersCount > 0)
                   Container(
                     height: 40.h,
@@ -483,7 +483,7 @@ class _QuickRegistrationClassSelectionScreenState
                     ),
                   ),
 
-                // Class list
+                
                 Expanded(
                   child: filteredClasses.isEmpty
                       ? const Center(child: EmptyStateWidget(icon: Icons.class_, message: 'Không tìm thấy lớp học'))
@@ -500,7 +500,7 @@ class _QuickRegistrationClassSelectionScreenState
                         ),
                 ),
 
-                // Confirm button
+                
                 Container(
                   padding: EdgeInsets.all(AppSizes.paddingMedium),
                   decoration: BoxDecoration(color: isDark ? AppColors.surfaceDark : AppColors.surface, boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, -2))]),

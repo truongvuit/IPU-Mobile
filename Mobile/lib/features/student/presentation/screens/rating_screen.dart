@@ -5,19 +5,19 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../core/routing/app_router.dart';
 import '../widgets/student_app_bar.dart';
 import '../bloc/student_bloc.dart';
 import '../bloc/student_event.dart';
 import '../bloc/student_state.dart';
-
+import '../../domain/entities/review.dart';
 
 class RatingScreen extends StatefulWidget {
-  final String courseId;
+  final String classId;
 
-  const RatingScreen({super.key, required this.courseId});
+  const RatingScreen({super.key, required this.classId});
 
   @override
   State<RatingScreen> createState() => _RatingScreenState();
@@ -31,6 +31,8 @@ class _RatingScreenState extends State<RatingScreen> {
   final Set<String> _selectedTags = {};
   final List<File> _selectedImages = [];
   Timer? _debounce;
+  Review? _existingReview;
+  bool _isViewMode = false; 
 
   final List<String> _availableTags = [
     '📚 Nội dung phong phú',
@@ -42,6 +44,30 @@ class _RatingScreenState extends State<RatingScreen> {
     '📖 Tài liệu chất lượng',
     '🎓 Học được nhiều',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    
+    context.read<StudentBloc>().add(LoadClassReview(widget.classId));
+  }
+
+  void _populateExistingReview(Review review) {
+    setState(() {
+      _existingReview = review;
+      _overallRating = review.overallRating;
+      _teacherRating = review.teacherRating ?? 0;
+      _facilityRating = review.facilityRating ?? 0;
+      _commentController.text = review.comment ?? '';
+      _isViewMode = true;
+    });
+  }
+
+  void _switchToEditMode() {
+    setState(() {
+      _isViewMode = false;
+    });
+  }
 
   @override
   void dispose() {
@@ -73,7 +99,7 @@ class _RatingScreenState extends State<RatingScreen> {
     _debounce = Timer(const Duration(milliseconds: 500), () {
       context.read<StudentBloc>().add(
         SubmitRating(
-          classId: widget.courseId,
+          classId: widget.classId,
           overallRating: _overallRating,
           teacherRating: _teacherRating > 0 ? _teacherRating : null,
           facilityRating: _facilityRating > 0 ? _facilityRating : null,
@@ -91,318 +117,481 @@ class _RatingScreenState extends State<RatingScreen> {
       backgroundColor: isDark
           ? const Color(0xFF111827)
           : const Color(0xFFF9FAFB),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final isDesktop = constraints.maxWidth >= 1024;
-
-          return Column(
-            children: [
-              StudentAppBar(
-                title: 'Đánh giá khóa học',
-                showBackButton: true,
-                onBackPressed: () {
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    AppRouter.studentDashboard,
-                    (route) => false,
-                  );
-                },
+      body: BlocConsumer<StudentBloc, StudentState>(
+        listener: (context, state) {
+          if (state is ClassReviewLoaded && state.review != null) {
+            _populateExistingReview(state.review!);
+          } else if (state is RatingSubmitted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Cảm ơn bạn đã đánh giá!'),
+                backgroundColor: AppColors.success,
               ),
-              Expanded(
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxWidth: isDesktop ? 700 : double.infinity,
-                    ),
-                    child: SingleChildScrollView(
-                      padding: EdgeInsets.only(
-                        left: isDesktop ? 32.w : 24.w,
-                        right: isDesktop ? 32.w : 24.w,
-                        top: isDesktop ? 32.w : 24.w,
-                        bottom: MediaQuery.of(context).viewInsets.bottom + 20.h,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          
-                          _buildRatingSection(
-                            'Đánh giá tổng quan',
-                            _overallRating,
-                            (rating) => setState(() => _overallRating = rating),
-                            isDark,
-                            isDesktop,
-                          ),
-                          SizedBox(height: 24.h),
+            );
+            if (context.mounted) {
+              Navigator.pop(context);
+            }
+          } else if (state is StudentError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          }
+        },
+        builder: (context, state) {
+          if (state is StudentLoading && _existingReview == null) {
+            return Column(
+              children: [
+                StudentAppBar(
+                  title: 'Đánh giá khóa học',
+                  showBackButton: true,
+                  onBackPressed: () => Navigator.pop(context),
+                ),
+                const Expanded(
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              ],
+            );
+          }
 
-                          
-                          Text(
-                            'Đánh giá chi tiết',
-                            style: TextStyle(
-                              fontSize: isDesktop ? 18.sp : 16.sp,
-                              fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : Colors.black87,
-                            ),
-                          ),
-                          SizedBox(height: 16.h),
-                          _buildDetailedRating(
-                            'Cơ sở vật chất',
-                            Icons.business,
-                            _facilityRating,
-                            (rating) =>
-                                setState(() => _facilityRating = rating),
-                            isDark,
-                            isDesktop,
-                          ),
-                          SizedBox(height: 12.h),
-                          _buildDetailedRating(
-                            'Giảng viên',
-                            Icons.person,
-                            _teacherRating,
-                            (rating) => setState(() => _teacherRating = rating),
-                            isDark,
-                            isDesktop,
-                          ),
-                          SizedBox(height: 24.h),
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final isDesktop = constraints.maxWidth >= 1024;
 
-                          
-                          Text(
-                            'Điểm nổi bật',
-                            style: TextStyle(
-                              fontSize: isDesktop ? 18.sp : 16.sp,
-                              fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : Colors.black87,
-                            ),
+              return Column(
+                children: [
+                  StudentAppBar(
+                    title: _isViewMode
+                        ? 'Đánh giá của bạn'
+                        : 'Đánh giá khóa học',
+                    showBackButton: true,
+                    onBackPressed: () => Navigator.pop(context),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: isDesktop ? 700 : double.infinity,
+                        ),
+                        child: SingleChildScrollView(
+                          padding: EdgeInsets.only(
+                            left: isDesktop ? 32.w : 24.w,
+                            right: isDesktop ? 32.w : 24.w,
+                            top: isDesktop ? 32.w : 24.w,
+                            bottom:
+                                MediaQuery.of(context).viewInsets.bottom + 20.h,
                           ),
-                          SizedBox(height: 12.h),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: _availableTags.map((tag) {
-                              final isSelected = _selectedTags.contains(tag);
-                              return FilterChip(
-                                label: Text(tag),
-                                selected: isSelected,
-                                onSelected: (selected) {
-                                  setState(() {
-                                    if (selected) {
-                                      _selectedTags.add(tag);
-                                    } else {
-                                      _selectedTags.remove(tag);
-                                    }
-                                  });
-                                },
-                                backgroundColor: isDark
-                                    ? const Color(0xFF1F2937)
-                                    : Colors.white,
-                                selectedColor: AppColors.primary.withOpacity(
-                                  0.2,
-                                ),
-                                checkmarkColor: AppColors.primary,
-                                labelStyle: TextStyle(
-                                  color: isSelected
-                                      ? AppColors.primary
-                                      : (isDark
-                                            ? Colors.white
-                                            : Colors.black87),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                          SizedBox(height: 24.h),
-
-                          
-                          TextField(
-                            controller: _commentController,
-                            maxLines: 5,
-                            style: TextStyle(
-                              color: isDark
-                                  ? Colors.white
-                                  : AppColors.textPrimary,
-                              fontFamily: 'Lexend',
-                            ),
-                            decoration: InputDecoration(
-                              hintText:
-                                  'Chia sẻ trải nghiệm của bạn (tùy chọn)',
-                              hintStyle: TextStyle(
-                                color: isDark
-                                    ? AppColors.textSecondary
-                                    : AppColors.textSecondary,
-                                fontFamily: 'Lexend',
-                                fontSize: isDesktop ? 16.sp : 14.sp,
-                              ),
-                              filled: true,
-                              fillColor: isDark
-                                  ? const Color(0xFF1F2937)
-                                  : Colors.white,
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 16.w,
-                                vertical: 16.h,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppSizes.radiusMedium,
-                                ),
-                                borderSide: BorderSide.none,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 16.h),
-
-                          
-                          Text(
-                            'Thêm ảnh (tùy chọn)',
-                            style: TextStyle(
-                              fontSize: isDesktop ? 16.sp : 14.sp,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white : Colors.black87,
-                            ),
-                          ),
-                          SizedBox(height: 8.h),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              ..._selectedImages.map(
-                                (image) => Stack(
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Image.file(
-                                        image,
-                                        width: 80,
-                                        height: 80,
-                                        fit: BoxFit.cover,
+                              
+                              if (_isViewMode && _existingReview != null) ...[
+                                _buildExistingReviewInfo(isDark, isDesktop),
+                                SizedBox(height: 24.h),
+                              ],
+
+                              _buildRatingSection(
+                                'Đánh giá tổng quan',
+                                _overallRating,
+                                _isViewMode
+                                    ? null
+                                    : (rating) => setState(
+                                        () => _overallRating = rating,
                                       ),
-                                    ),
-                                    Positioned(
-                                      top: 4,
-                                      right: 4,
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            _selectedImages.remove(image);
-                                          });
-                                        },
-                                        child: Container(
-                                          padding: const EdgeInsets.all(4),
-                                          decoration: const BoxDecoration(
-                                            color: Colors.red,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: const Icon(
-                                            Icons.close,
-                                            size: 16,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                isDark,
+                                isDesktop,
+                              ),
+                              SizedBox(height: 24.h),
+
+                              Text(
+                                'Đánh giá chi tiết',
+                                style: TextStyle(
+                                  fontSize: isDesktop ? 18.sp : 16.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark ? Colors.white : Colors.black87,
                                 ),
                               ),
-                              if (_selectedImages.length < 3)
-                                GestureDetector(
-                                  onTap: _pickImage,
-                                  child: Container(
-                                    width: 80,
-                                    height: 80,
-                                    decoration: BoxDecoration(
-                                      color: isDark
-                                          ? const Color(0xFF1F2937)
-                                          : Colors.grey[200],
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: isDark
-                                            ? Colors.grey[700]!
-                                            : Colors.grey[400]!,
-                                        style: BorderStyle.solid,
+                              SizedBox(height: 16.h),
+                              _buildDetailedRating(
+                                'Cơ sở vật chất',
+                                Icons.business,
+                                _facilityRating,
+                                _isViewMode
+                                    ? null
+                                    : (rating) => setState(
+                                        () => _facilityRating = rating,
                                       ),
-                                    ),
-                                    child: Icon(
-                                      Icons.add_photo_alternate,
-                                      color: isDark
-                                          ? Colors.grey[600]
-                                          : Colors.grey[600],
-                                    ),
+                                isDark,
+                                isDesktop,
+                              ),
+                              SizedBox(height: 12.h),
+                              _buildDetailedRating(
+                                'Giảng viên',
+                                Icons.person,
+                                _teacherRating,
+                                _isViewMode
+                                    ? null
+                                    : (rating) => setState(
+                                        () => _teacherRating = rating,
+                                      ),
+                                isDark,
+                                isDesktop,
+                              ),
+                              SizedBox(height: 24.h),
+
+                              if (!_isViewMode) ...[
+                                Text(
+                                  'Điểm nổi bật',
+                                  style: TextStyle(
+                                    fontSize: isDesktop ? 18.sp : 16.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark
+                                        ? Colors.white
+                                        : Colors.black87,
                                   ),
                                 ),
-                            ],
-                          ),
-                          SizedBox(height: 32.h),
+                                SizedBox(height: 12.h),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: _availableTags.map((tag) {
+                                    final isSelected = _selectedTags.contains(
+                                      tag,
+                                    );
+                                    return FilterChip(
+                                      label: Text(tag),
+                                      selected: isSelected,
+                                      onSelected: (selected) {
+                                        setState(() {
+                                          if (selected) {
+                                            _selectedTags.add(tag);
+                                          } else {
+                                            _selectedTags.remove(tag);
+                                          }
+                                        });
+                                      },
+                                      backgroundColor: isDark
+                                          ? const Color(0xFF1F2937)
+                                          : Colors.white,
+                                      selectedColor: AppColors.primary
+                                          .withValues(alpha: 0.2),
+                                      checkmarkColor: AppColors.primary,
+                                      labelStyle: TextStyle(
+                                        color: isSelected
+                                            ? AppColors.primary
+                                            : (isDark
+                                                  ? Colors.white
+                                                  : Colors.black87),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                                SizedBox(height: 24.h),
+                              ],
 
-                          
-                          BlocConsumer<StudentBloc, StudentState>(
-                            listener: (context, state) {
-                              if (state is RatingSubmitted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Cảm ơn bạn đã đánh giá!'),
-                                    backgroundColor: AppColors.success,
-                                  ),
-                                );
-                                if (context.mounted) {
-                                  Navigator.pop(context);
-                                }
-                              } else if (state is StudentError) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(state.message),
-                                    backgroundColor: AppColors.error,
-                                  ),
-                                );
-                              }
-                            },
-                            builder: (context, state) {
-                              final isLoading = state is StudentLoading;
-                              return SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton(
-                                  onPressed: (_overallRating > 0 && !isLoading)
-                                      ? _submitRating
-                                      : null,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primary,
-                                    foregroundColor: Colors.white,
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: isDesktop ? 20.h : 16.h,
+                              
+                              Text(
+                                _isViewMode ? 'Nhận xét của bạn' : 'Nhận xét',
+                                style: TextStyle(
+                                  fontSize: isDesktop ? 16.sp : 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.white : Colors.black87,
+                                ),
+                              ),
+                              SizedBox(height: 8.h),
+                              if (_isViewMode)
+                                Container(
+                                  width: double.infinity,
+                                  padding: EdgeInsets.all(16.w),
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? const Color(0xFF1F2937)
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(
+                                      AppSizes.radiusMedium,
                                     ),
-                                    shape: RoundedRectangleBorder(
+                                  ),
+                                  child: Text(
+                                    _commentController.text.isEmpty
+                                        ? 'Không có nhận xét'
+                                        : _commentController.text,
+                                    style: TextStyle(
+                                      color: isDark
+                                          ? Colors.white
+                                          : AppColors.textPrimary,
+                                      fontFamily: 'Lexend',
+                                      fontSize: 14.sp,
+                                    ),
+                                  ),
+                                )
+                              else
+                                TextField(
+                                  controller: _commentController,
+                                  maxLines: 5,
+                                  style: TextStyle(
+                                    color: isDark
+                                        ? Colors.white
+                                        : AppColors.textPrimary,
+                                    fontFamily: 'Lexend',
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText:
+                                        'Chia sẻ trải nghiệm của bạn (tùy chọn)',
+                                    hintStyle: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontFamily: 'Lexend',
+                                      fontSize: isDesktop ? 16.sp : 14.sp,
+                                    ),
+                                    filled: true,
+                                    fillColor: isDark
+                                        ? const Color(0xFF1F2937)
+                                        : Colors.white,
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 16.w,
+                                      vertical: 16.h,
+                                    ),
+                                    border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
                                         AppSizes.radiusMedium,
                                       ),
+                                      borderSide: BorderSide.none,
                                     ),
                                   ),
-                                  child: isLoading
-                                      ? SizedBox(
-                                          height: 24.h,
-                                          width: 24.h,
-                                          child:
-                                              const CircularProgressIndicator(
-                                                color: Colors.white,
-                                                strokeWidth: 2,
+                                ),
+                              SizedBox(height: 16.h),
+
+                              if (!_isViewMode) ...[
+                                Text(
+                                  'Thêm ảnh (tùy chọn)',
+                                  style: TextStyle(
+                                    fontSize: isDesktop ? 16.sp : 14.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark
+                                        ? Colors.white
+                                        : Colors.black87,
+                                  ),
+                                ),
+                                SizedBox(height: 8.h),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    ..._selectedImages.map(
+                                      (image) => Stack(
+                                        children: [
+                                          ClipRRect(
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                            child: Image.file(
+                                              image,
+                                              width: 80,
+                                              height: 80,
+                                              fit: BoxFit.cover,
+                                            ),
+                                          ),
+                                          Positioned(
+                                            top: 4,
+                                            right: 4,
+                                            child: GestureDetector(
+                                              onTap: () {
+                                                setState(() {
+                                                  _selectedImages.remove(image);
+                                                });
+                                              },
+                                              child: Container(
+                                                padding: const EdgeInsets.all(
+                                                  4,
+                                                ),
+                                                decoration: const BoxDecoration(
+                                                  color: Colors.red,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: const Icon(
+                                                  Icons.close,
+                                                  size: 16,
+                                                  color: Colors.white,
+                                                ),
                                               ),
-                                        )
-                                      : Text(
-                                          'Gửi đánh giá',
-                                          style: TextStyle(
-                                            fontFamily: 'Lexend',
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: isDesktop ? 18.sp : 16.sp,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    if (_selectedImages.length < 3)
+                                      GestureDetector(
+                                        onTap: _pickImage,
+                                        child: Container(
+                                          width: 80,
+                                          height: 80,
+                                          decoration: BoxDecoration(
+                                            color: isDark
+                                                ? const Color(0xFF1F2937)
+                                                : Colors.grey[200],
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                            border: Border.all(
+                                              color: isDark
+                                                  ? Colors.grey[700]!
+                                                  : Colors.grey[400]!,
+                                              style: BorderStyle.solid,
+                                            ),
+                                          ),
+                                          child: Icon(
+                                            Icons.add_photo_alternate,
+                                            color: Colors.grey[600],
                                           ),
                                         ),
+                                      ),
+                                  ],
                                 ),
-                              );
-                            },
+                                SizedBox(height: 32.h),
+                              ],
+
+                              
+                              if (!_isViewMode)
+                                BlocBuilder<StudentBloc, StudentState>(
+                                  builder: (context, btnState) {
+                                    final isLoading =
+                                        btnState is StudentLoading;
+                                    return SizedBox(
+                                      width: double.infinity,
+                                      child: ElevatedButton(
+                                        onPressed:
+                                            (_overallRating > 0 && !isLoading)
+                                            ? _submitRating
+                                            : null,
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: AppColors.primary,
+                                          foregroundColor: Colors.white,
+                                          padding: EdgeInsets.symmetric(
+                                            vertical: isDesktop ? 20.h : 16.h,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              AppSizes.radiusMedium,
+                                            ),
+                                          ),
+                                        ),
+                                        child: isLoading
+                                            ? SizedBox(
+                                                height: 24.h,
+                                                width: 24.h,
+                                                child:
+                                                    const CircularProgressIndicator(
+                                                      color: Colors.white,
+                                                      strokeWidth: 2,
+                                                    ),
+                                              )
+                                            : Text(
+                                                _existingReview != null
+                                                    ? 'Cập nhật đánh giá'
+                                                    : 'Gửi đánh giá',
+                                                style: TextStyle(
+                                                  fontFamily: 'Lexend',
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: isDesktop
+                                                      ? 18.sp
+                                                      : 16.sp,
+                                                ),
+                                              ),
+                                      ),
+                                    );
+                                  },
+                                ),
+
+                              
+                              if (_isViewMode)
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: OutlinedButton(
+                                    onPressed: _switchToEditMode,
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: AppColors.primary,
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: isDesktop ? 20.h : 16.h,
+                                      ),
+                                      side: const BorderSide(
+                                        color: AppColors.primary,
+                                        width: 2,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          AppSizes.radiusMedium,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'Chỉnh sửa đánh giá',
+                                      style: TextStyle(
+                                        fontFamily: 'Lexend',
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: isDesktop ? 18.sp : 16.sp,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                              SizedBox(height: 32.h),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           );
         },
+      ),
+    );
+  }
+
+  
+  Widget _buildExistingReviewInfo(bool isDark, bool isDesktop) {
+    final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: AppColors.success.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+        border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.check_circle, color: AppColors.success, size: 24.sp),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Bạn đã đánh giá lớp học này',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.success,
+                    fontFamily: 'Lexend',
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  'Ngày đánh giá: ${dateFormat.format(_existingReview!.createdAt)}',
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: isDark ? Colors.white70 : AppColors.textSecondary,
+                    fontFamily: 'Lexend',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -410,10 +599,11 @@ class _RatingScreenState extends State<RatingScreen> {
   Widget _buildRatingSection(
     String title,
     int rating,
-    Function(int) onRatingChanged,
+    Function(int)? onRatingChanged,
     bool isDark,
     bool isDesktop,
   ) {
+    final bool isReadOnly = onRatingChanged == null;
     return Column(
       children: [
         Text(
@@ -430,17 +620,23 @@ class _RatingScreenState extends State<RatingScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(5, (index) {
-            return IconButton(
-              iconSize: isDesktop ? 56.sp : 48.sp,
-              icon: Icon(
-                index < rating ? Icons.star : Icons.star_border,
-                color: AppColors.warning,
-              ),
-              onPressed: () {
-                HapticFeedback.lightImpact();
-                onRatingChanged(index + 1);
-              },
-            );
+            return isReadOnly
+                ? Icon(
+                    index < rating ? Icons.star : Icons.star_border,
+                    color: AppColors.warning,
+                    size: isDesktop ? 56.sp : 48.sp,
+                  )
+                : IconButton(
+                    iconSize: isDesktop ? 56.sp : 48.sp,
+                    icon: Icon(
+                      index < rating ? Icons.star : Icons.star_border,
+                      color: AppColors.warning,
+                    ),
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      onRatingChanged(index + 1);
+                    },
+                  );
           }),
         ),
       ],
@@ -451,10 +647,11 @@ class _RatingScreenState extends State<RatingScreen> {
     String label,
     IconData icon,
     int rating,
-    Function(int) onRatingChanged,
+    Function(int)? onRatingChanged,
     bool isDark,
     bool isDesktop,
   ) {
+    final bool isReadOnly = onRatingChanged == null;
     return Container(
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
@@ -476,19 +673,28 @@ class _RatingScreenState extends State<RatingScreen> {
           ),
           Row(
             children: List.generate(5, (index) {
-              return IconButton(
-                iconSize: 24.sp,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                icon: Icon(
-                  index < rating ? Icons.star : Icons.star_border,
-                  color: AppColors.warning,
-                ),
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  onRatingChanged(index + 1);
-                },
-              );
+              return isReadOnly
+                  ? Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 2.w),
+                      child: Icon(
+                        index < rating ? Icons.star : Icons.star_border,
+                        color: AppColors.warning,
+                        size: 24.sp,
+                      ),
+                    )
+                  : IconButton(
+                      iconSize: 24.sp,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: Icon(
+                        index < rating ? Icons.star : Icons.star_border,
+                        color: AppColors.warning,
+                      ),
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        onRatingChanged(index + 1);
+                      },
+                    );
             }),
           ),
         ],

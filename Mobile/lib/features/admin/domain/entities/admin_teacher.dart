@@ -6,8 +6,10 @@ class AdminTeacher extends Equatable {
   final String? email;
   final String? phoneNumber;
   final String? avatarUrl;
+  final DateTime? dateOfBirth;
   final List<String> subjects;
   final double rating;
+  final int totalReviews;
   final int totalClasses;
   final int totalStudents;
   final double attendanceRate;
@@ -15,8 +17,10 @@ class AdminTeacher extends Equatable {
   final String status;
   final String? experience;
   final String? qualifications;
+  final List<TeacherQualification> qualificationsList;
   final List<TeacherReview> recentReviews;
   final List<TeacherSchedule> todaySchedule;
+  final TeacherAccountInfo? accountInfo;
 
   const AdminTeacher({
     required this.id,
@@ -24,8 +28,10 @@ class AdminTeacher extends Equatable {
     this.email,
     this.phoneNumber,
     this.avatarUrl,
+    this.dateOfBirth,
     this.subjects = const [],
     this.rating = 0.0,
+    this.totalReviews = 0,
     this.totalClasses = 0,
     this.totalStudents = 0,
     this.attendanceRate = 0.0,
@@ -33,8 +39,10 @@ class AdminTeacher extends Equatable {
     this.status = 'active',
     this.experience,
     this.qualifications,
+    this.qualificationsList = const [],
     this.recentReviews = const [],
     this.todaySchedule = const [],
+    this.accountInfo,
   });
 
   String get statusText {
@@ -50,6 +58,16 @@ class AdminTeacher extends Equatable {
     }
   }
 
+  
+  String get qualificationsText {
+    if (qualificationsList.isEmpty) {
+      return qualifications ?? 'Chưa cập nhật';
+    }
+    return qualificationsList
+        .map((q) => '${q.degreeName}${q.level != null ? " (${q.level})" : ""}')
+        .join(', ');
+  }
+
   @override
   List<Object?> get props => [
     id,
@@ -57,8 +75,10 @@ class AdminTeacher extends Equatable {
     email,
     phoneNumber,
     avatarUrl,
+    dateOfBirth,
     subjects,
     rating,
+    totalReviews,
     totalClasses,
     totalStudents,
     attendanceRate,
@@ -66,8 +86,10 @@ class AdminTeacher extends Equatable {
     status,
     experience,
     qualifications,
+    qualificationsList,
     recentReviews,
     todaySchedule,
+    accountInfo,
   ];
 
   AdminTeacher copyWith({
@@ -76,8 +98,10 @@ class AdminTeacher extends Equatable {
     String? email,
     String? phoneNumber,
     String? avatarUrl,
+    DateTime? dateOfBirth,
     List<String>? subjects,
     double? rating,
+    int? totalReviews,
     int? totalClasses,
     int? totalStudents,
     double? attendanceRate,
@@ -85,8 +109,10 @@ class AdminTeacher extends Equatable {
     String? status,
     String? experience,
     String? qualifications,
+    List<TeacherQualification>? qualificationsList,
     List<TeacherReview>? recentReviews,
     List<TeacherSchedule>? todaySchedule,
+    TeacherAccountInfo? accountInfo,
   }) {
     return AdminTeacher(
       id: id ?? this.id,
@@ -94,8 +120,10 @@ class AdminTeacher extends Equatable {
       email: email ?? this.email,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       subjects: subjects ?? this.subjects,
       rating: rating ?? this.rating,
+      totalReviews: totalReviews ?? this.totalReviews,
       totalClasses: totalClasses ?? this.totalClasses,
       totalStudents: totalStudents ?? this.totalStudents,
       attendanceRate: attendanceRate ?? this.attendanceRate,
@@ -103,31 +131,52 @@ class AdminTeacher extends Equatable {
       status: status ?? this.status,
       experience: experience ?? this.experience,
       qualifications: qualifications ?? this.qualifications,
+      qualificationsList: qualificationsList ?? this.qualificationsList,
       recentReviews: recentReviews ?? this.recentReviews,
       todaySchedule: todaySchedule ?? this.todaySchedule,
+      accountInfo: accountInfo ?? this.accountInfo,
     );
   }
 
   factory AdminTeacher.fromJson(Map<String, dynamic> json) {
+    
+    List<TeacherQualification> qualList = [];
+    if (json['qualifications'] is List) {
+      qualList = (json['qualifications'] as List)
+          .map((e) => TeacherQualification.fromJson(e))
+          .toList();
+    }
+
+    
+    TeacherAccountInfo? accountInfo;
+    if (json['accountInfo'] != null) {
+      accountInfo = TeacherAccountInfo.fromJson(json['accountInfo']);
+    }
+
     return AdminTeacher(
-      id: json['id'] ?? '',
-      fullName: json['fullName'] ?? '',
+      id: (json['lecturerId'] ?? json['id'] ?? '').toString(),
+      fullName: json['fullName'] ?? json['hoten'] ?? '',
       email: json['email'],
-      phoneNumber: json['phoneNumber'],
-      avatarUrl: json['avatarUrl'],
+      phoneNumber: json['phoneNumber'] ?? json['sdt'],
+      avatarUrl: json['imagePath'] ?? json['avatarUrl'] ?? json['hinhanh'],
+      dateOfBirth: json['dateOfBirth'] != null
+          ? DateTime.tryParse(json['dateOfBirth'])
+          : null,
       subjects:
           (json['subjects'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           [],
       rating: (json['rating'] ?? 0.0).toDouble(),
+      totalReviews: json['totalReviews'] ?? 0,
       totalClasses: json['totalClasses'] ?? 0,
       totalStudents: json['totalStudents'] ?? 0,
       attendanceRate: (json['attendanceRate'] ?? 0.0).toDouble(),
-      activeClasses: json['activeClasses'] ?? 0,
+      activeClasses: json['activeClasses'] ?? json['totalClasses'] ?? 0,
       status: json['status'] ?? 'active',
       experience: json['experience'],
-      qualifications: json['qualifications'],
+      qualifications: json['qualifications'] is String ? json['qualifications'] : null,
+      qualificationsList: qualList,
       recentReviews:
           (json['recentReviews'] as List<dynamic>?)
               ?.map((e) => TeacherReview.fromJson(e))
@@ -138,11 +187,71 @@ class AdminTeacher extends Equatable {
               ?.map((e) => TeacherSchedule.fromJson(e))
               .toList() ??
           [],
+      accountInfo: accountInfo,
     );
   }
 }
 
-/// Teacher Review (Đánh giá)
+
+class TeacherQualification extends Equatable {
+  final int? degreeId;
+  final String? degreeName;
+  final String? level;
+
+  const TeacherQualification({
+    this.degreeId,
+    this.degreeName,
+    this.level,
+  });
+
+  @override
+  List<Object?> get props => [degreeId, degreeName, level];
+
+  factory TeacherQualification.fromJson(Map<String, dynamic> json) {
+    return TeacherQualification(
+      degreeId: json['degreeId'],
+      degreeName: json['degreeName'],
+      level: json['level'],
+    );
+  }
+}
+
+
+class TeacherAccountInfo extends Equatable {
+  final int? userId;
+  final String? username;
+  final String? password;
+  final String? role;
+  final DateTime? createdAt;
+  final bool isVerified;
+
+  const TeacherAccountInfo({
+    this.userId,
+    this.username,
+    this.password,
+    this.role,
+    this.createdAt,
+    this.isVerified = false,
+  });
+
+  @override
+  List<Object?> get props => [userId, username, password, role, createdAt, isVerified];
+
+  factory TeacherAccountInfo.fromJson(Map<String, dynamic> json) {
+    return TeacherAccountInfo(
+      userId: json['userId'],
+      username: json['username'],
+      password: json['password'],
+      role: json['role'],
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'])
+          : null,
+      isVerified: json['isVerified'] ?? false,
+    );
+  }
+}
+
+
 class TeacherReview extends Equatable {
   final String id;
   final String studentName;
@@ -184,14 +293,14 @@ class TeacherReview extends Equatable {
   }
 }
 
-/// Teacher Schedule (Lịch dạy)
+
 class TeacherSchedule extends Equatable {
   final String id;
   final String className;
   final String? classRoom;
   final DateTime startTime;
   final DateTime endTime;
-  final String? subject; // IELTS, TOEIC, etc.
+  final String? subject; 
   final int studentCount;
 
   const TeacherSchedule({

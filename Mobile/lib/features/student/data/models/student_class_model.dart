@@ -15,6 +15,7 @@ class StudentClassModel extends StudentClass {
     required super.currentStudents,
     super.schedule,
     super.meetingUrl,
+    super.teacherEmail,
     super.teacherSpecialization,
     super.teacherCertificates,
     super.courseType,
@@ -73,6 +74,10 @@ class StudentClassModel extends StudentClass {
           json['soHocVienHienTai'] ??
           0,
       schedule: scheduleList,
+      teacherEmail:
+          json['instructorEmail'] ??
+          json['lecturerEmail'] ??
+          json['emailGiangVien'],
       teacherSpecialization: json['teacherSpecialization'],
       teacherCertificates: json['teacherCertificates'],
       courseType: json['courseType'],
@@ -99,6 +104,7 @@ class StudentClassModel extends StudentClass {
       'isOnline': isOnline,
       'currentStudents': currentStudents,
       'schedule': schedule.map((e) => e.toIso8601String()).toList(),
+      'instructorEmail': teacherEmail,
       'teacherSpecialization': teacherSpecialization,
       'teacherCertificates': teacherCertificates,
       'courseType': courseType,
@@ -130,6 +136,7 @@ class StudentClassModel extends StudentClass {
       currentStudents: studentClass.currentStudents,
       schedule: studentClass.schedule,
       meetingUrl: studentClass.meetingUrl,
+      teacherEmail: studentClass.teacherEmail,
       teacherSpecialization: studentClass.teacherSpecialization,
       teacherCertificates: studentClass.teacherCertificates,
       courseType: studentClass.courseType,
@@ -157,6 +164,7 @@ class StudentClassModel extends StudentClass {
     int? currentStudents,
     List<DateTime>? schedule,
     String? meetingUrl,
+    String? teacherEmail,
     String? teacherSpecialization,
     String? teacherCertificates,
     String? courseType,
@@ -181,6 +189,7 @@ class StudentClassModel extends StudentClass {
       currentStudents: currentStudents ?? this.currentStudents,
       schedule: schedule ?? this.schedule,
       meetingUrl: meetingUrl ?? this.meetingUrl,
+      teacherEmail: teacherEmail ?? this.teacherEmail,
       teacherSpecialization:
           teacherSpecialization ?? this.teacherSpecialization,
       teacherCertificates: teacherCertificates ?? this.teacherCertificates,

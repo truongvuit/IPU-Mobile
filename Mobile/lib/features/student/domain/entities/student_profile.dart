@@ -33,20 +33,20 @@ class StudentProfile extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        studentCode,
-        fullName,
-        avatarUrl,
-        dateOfBirth,
-        gender,
-        email,
-        phoneNumber,
-        address,
-        currentClass,
-        gpa,
-        totalCredits,
-        activeCourses,
-      ];
+    id,
+    studentCode,
+    fullName,
+    avatarUrl,
+    dateOfBirth,
+    gender,
+    email,
+    phoneNumber,
+    address,
+    currentClass,
+    gpa,
+    totalCredits,
+    activeCourses,
+  ];
 
   StudentProfile copyWith({
     String? id,

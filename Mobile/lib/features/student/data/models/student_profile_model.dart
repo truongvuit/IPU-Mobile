@@ -43,16 +43,16 @@ class StudentProfileModel extends StudentProfile {
     );
   }
 
-  /// Convert to JSON for API update request
-  /// Backend StudentInfo expects: name, phoneNumber, address, image, jobs, dateOfBirth, gender
+  
+  
   Map<String, dynamic> toJson() {
     return {
       'name': fullName,
       'phoneNumber': phoneNumber,
       'address': address,
       'image': avatarUrl,
-      'jobs': currentClass, // Backend uses jobs field for occupation/class
-      'dateOfBirth': dateOfBirth?.toIso8601String().split('T')[0], // YYYY-MM-DD
+      'jobs': currentClass, 
+      'dateOfBirth': dateOfBirth?.toIso8601String().split('T')[0], 
       'gender': gender == 'Nam' || gender == 'true' ? true : false,
     };
   }

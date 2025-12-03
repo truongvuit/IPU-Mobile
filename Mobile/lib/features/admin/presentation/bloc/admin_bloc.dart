@@ -11,11 +11,14 @@ import '../../domain/entities/admin_activity.dart';
 class AdminBloc extends Bloc<AdminEvent, AdminState> {
   final AdminRepository _repository;
 
+  
+  bool _isLoadingDashboard = false;
+
   AdminRepository get adminRepository => _repository;
 
-  AdminBloc({required AdminRepository repository}) 
-      : _repository = repository,
-        super(const AdminInitial()) {
+  AdminBloc({required AdminRepository repository})
+    : _repository = repository,
+      super(const AdminInitial()) {
     on<LoadAdminDashboard>(_onLoadAdminDashboard);
     on<RefreshAdminDashboard>(_onRefreshAdminDashboard);
     on<LoadAdminProfile>(_onLoadAdminProfile);
@@ -39,6 +42,11 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     LoadAdminDashboard event,
     Emitter<AdminState> emit,
   ) async {
+    
+    if (_isLoadingDashboard) return;
+    if (state is AdminDashboardLoaded) return;
+
+    _isLoadingDashboard = true;
     emit(const AdminLoading());
 
     try {
@@ -102,6 +110,8 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
           recentActivities: [],
         ),
       );
+    } finally {
+      _isLoadingDashboard = false;
     }
   }
 
@@ -323,7 +333,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
         address: updates['address'] as String?,
         occupation: updates['occupation'] as String?,
         educationLevel: updates['educationLevel'] as String?,
-        dateOfBirth: updates['dateOfBirth'] != null 
+        dateOfBirth: updates['dateOfBirth'] != null
             ? DateTime.tryParse(updates['dateOfBirth'] as String)
             : null,
         password: updates['password'] as String?,

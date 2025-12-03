@@ -5,8 +5,10 @@ import '../../domain/entities/admin_class.dart';
 import '../../domain/entities/admin_student.dart';
 import '../../domain/entities/admin_teacher.dart';
 import '../../domain/entities/class_student.dart';
+import '../../domain/entities/class_session.dart';
 import '../../domain/entities/promotion.dart';
 import '../../domain/entities/admin_feedback.dart';
+import '../../data/datasources/admin_api_datasource.dart';
 
 abstract class AdminRepository {
   Future<AdminProfile> getAdminProfile(String userId);
@@ -58,6 +60,14 @@ abstract class AdminRepository {
 
   Future<AdminTeacher> getTeacherById(String teacherId);
 
+  Future<void> createTeacher({
+    required String name,
+    required String phoneNumber,
+    String? email,
+    DateTime? dateOfBirth,
+    String? imageUrl,
+  });
+
   Future<List<Promotion>> getActivePromotions();
 
   Future<List<Promotion>> getPromotionsByCourse(String courseId);
@@ -86,4 +96,13 @@ abstract class AdminRepository {
   Future<List<Map<String, dynamic>>> getRooms();
 
   Future<List<AdminFeedback>> getClassFeedbacks(String classId);
+
+  
+  Future<ClassSession> updateSession({
+    required int sessionId,
+    required String status,
+    String? note,
+  });
+
+  Future<SessionAttendanceInfo> getSessionAttendance(int sessionId);
 }

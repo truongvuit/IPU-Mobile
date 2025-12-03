@@ -31,19 +31,19 @@ class Review extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        classId,
-        className,
-        courseId,
-        courseName,
-        courseImage,
-        teacherRating,
-        facilityRating,
-        overallRating,
-        averageRating,
-        comment,
-        createdAt,
-      ];
+    id,
+    classId,
+    className,
+    courseId,
+    courseName,
+    courseImage,
+    teacherRating,
+    facilityRating,
+    overallRating,
+    averageRating,
+    comment,
+    createdAt,
+  ];
 
   Review copyWith({
     int? id,

@@ -27,7 +27,7 @@ class ClassStudentListItem extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Avatar
+            
             Container(
               width: 48.w,
               height: 48.w,
@@ -54,7 +54,7 @@ class ClassStudentListItem extends StatelessWidget {
             ),
             SizedBox(width: AppSizes.p12),
 
-            // Student info
+            
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,7 +81,7 @@ class ClassStudentListItem extends StatelessWidget {
               ),
             ),
 
-            // Attendance badge
+            
             Container(
               padding: EdgeInsets.symmetric(
                 horizontal: 12.w,

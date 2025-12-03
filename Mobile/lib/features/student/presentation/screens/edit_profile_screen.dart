@@ -51,12 +51,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+      backgroundColor: isDark
+          ? AppColors.backgroundDark
+          : AppColors.backgroundLight,
       appBar: AppBar(
         backgroundColor: isDark ? AppColors.gray900 : Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: isDark ? Colors.white : AppColors.textPrimary),
+          icon: Icon(
+            Icons.arrow_back,
+            color: isDark ? Colors.white : AppColors.textPrimary,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
@@ -105,13 +110,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             left: AppSizes.paddingMedium,
             right: AppSizes.paddingMedium,
             top: AppSizes.paddingMedium,
-            bottom: MediaQuery.of(context).viewInsets.bottom + AppSizes.paddingMedium,
+            bottom:
+                MediaQuery.of(context).viewInsets.bottom +
+                AppSizes.paddingMedium,
           ),
           child: Form(
             key: _formKey,
             child: Column(
               children: [
-                
                 Center(
                   child: Stack(
                     children: [
@@ -120,7 +126,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         height: 120.h,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.primary, width: 2),
+                          border: Border.all(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
                         ),
                         child: ClipOval(
                           child: _pickedImage != null
@@ -131,16 +140,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   fit: BoxFit.cover,
                                 )
                               : (_avatarUrl != null
-                                  ? Image.network(
-                                      _avatarUrl!,
-                                      width: 120.w,
-                                      height: 120.h,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) {
-                                        return Icon(Icons.person, size: 60.sp, color: AppColors.primary);
-                                      },
-                                    )
-                                  : Icon(Icons.person, size: 60.sp, color: AppColors.primary)),
+                                    ? Image.network(
+                                        _avatarUrl!,
+                                        width: 120.w,
+                                        height: 120.h,
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                              return Icon(
+                                                Icons.person,
+                                                size: 60.sp,
+                                                color: AppColors.primary,
+                                              );
+                                            },
+                                      )
+                                    : Icon(
+                                        Icons.person,
+                                        size: 60.sp,
+                                        color: AppColors.primary,
+                                      )),
                         ),
                       ),
                       Positioned(
@@ -156,7 +174,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           ),
                           child: IconButton(
                             padding: EdgeInsets.zero,
-                            icon: Icon(Icons.camera_alt, size: 20.sp, color: Colors.white),
+                            icon: Icon(
+                              Icons.camera_alt,
+                              size: 20.sp,
+                              color: Colors.white,
+                            ),
                             onPressed: _pickImage,
                           ),
                         ),
@@ -166,13 +188,42 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
                 SizedBox(height: 24.h),
 
-                _buildTextField(_nameController, 'Họ và tên', Icons.person, isDark, isDesktop, validator: InputValidators.name),
+                _buildTextField(
+                  _nameController,
+                  'Họ và tên',
+                  Icons.person,
+                  isDark,
+                  isDesktop,
+                  validator: InputValidators.name,
+                ),
                 SizedBox(height: AppSizes.paddingMedium),
-                _buildTextField(_emailController, 'Email', Icons.email, isDark, isDesktop, enabled: false, validator: InputValidators.email),
+                _buildTextField(
+                  _emailController,
+                  'Email',
+                  Icons.email,
+                  isDark,
+                  isDesktop,
+                  enabled: false,
+                  validator: InputValidators.email,
+                ),
                 SizedBox(height: AppSizes.paddingMedium),
-                _buildTextField(_phoneController, 'Số điện thoại', Icons.phone, isDark, isDesktop, validator: InputValidators.phone),
+                _buildTextField(
+                  _phoneController,
+                  'Số điện thoại',
+                  Icons.phone,
+                  isDark,
+                  isDesktop,
+                  validator: InputValidators.phone,
+                ),
                 SizedBox(height: AppSizes.paddingMedium),
-                _buildTextField(_addressController, 'Địa chỉ', Icons.location_on, isDark, isDesktop, validator: InputValidators.address),
+                _buildTextField(
+                  _addressController,
+                  'Địa chỉ',
+                  Icons.location_on,
+                  isDark,
+                  isDesktop,
+                  validator: InputValidators.address,
+                ),
                 SizedBox(height: AppSizes.paddingMedium),
                 _buildDateField(isDark, isDesktop),
                 SizedBox(height: AppSizes.paddingExtraLarge),
@@ -189,7 +240,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+                            borderRadius: BorderRadius.circular(
+                              AppSizes.radiusMedium,
+                            ),
                           ),
                         ),
                         child: isLoading
@@ -243,7 +296,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           fontFamily: 'Lexend',
           fontSize: isDesktop ? 16.sp : 14.sp,
         ),
-        prefixIcon: Icon(icon, color: AppColors.primary, size: isDesktop ? 28.w : 24.w),
+        prefixIcon: Icon(
+          icon,
+          color: AppColors.primary,
+          size: isDesktop ? 28.w : 24.w,
+        ),
         filled: true,
         fillColor: isDark ? const Color(0xFF1F2937) : Colors.white,
         contentPadding: EdgeInsets.symmetric(
@@ -279,7 +336,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             fontFamily: 'Lexend',
             fontSize: isDesktop ? 16.sp : 14.sp,
           ),
-          prefixIcon: Icon(Icons.cake, color: AppColors.primary, size: isDesktop ? 28.w : 24.w),
+          prefixIcon: Icon(
+            Icons.cake,
+            color: AppColors.primary,
+            size: isDesktop ? 28.w : 24.w,
+          ),
           filled: true,
           fillColor: isDark ? const Color(0xFF1F2937) : Colors.white,
           contentPadding: EdgeInsets.symmetric(
@@ -308,13 +369,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void _saveProfile() {
     if (_formKey.currentState!.validate()) {
       context.read<StudentBloc>().add(
-            UpdateProfile(
-              _nameController.text,
-              _phoneController.text,
-              _addressController.text,
-              avatarPath: _pickedImage?.path,
-            ),
-          );
+        UpdateProfile(
+          _nameController.text,
+          _phoneController.text,
+          _addressController.text,
+          avatarPath: _pickedImage?.path,
+        ),
+      );
     }
   }
 

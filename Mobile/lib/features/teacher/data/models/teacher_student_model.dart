@@ -14,6 +14,24 @@ class TeacherStudentModel extends ClassStudent {
     required super.enrollmentDate,
   });
 
+  
+  static int _parseInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value) ?? 0;
+    if (value is double) return value.toInt();
+    return 0;
+  }
+
+  
+  static double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
+  }
+
   factory TeacherStudentModel.fromJson(Map<String, dynamic> json) {
     return TeacherStudentModel(
       id: (json['studentId'] ?? json['id'] ?? 0).toString(),
@@ -22,11 +40,12 @@ class TeacherStudentModel extends ClassStudent {
       email: json['email'],
       phoneNumber: json['phoneNumber'] ?? json['soDienThoai'],
       avatarUrl: json['imagePath'] ?? json['avatar'] ?? json['hinhAnh'],
-      averageScore: json['averageScore']?.toDouble(),
-      totalAbsences: json['totalAbsences'] ?? json['soNgayVang'] ?? 0,
-      totalPresences: json['totalPresences'] ?? json['soNgayCoMat'] ?? 0,
-      enrollmentDate: json['enrollmentDate'] != null 
-          ? DateTime.tryParse(json['enrollmentDate'].toString()) ?? DateTime.now()
+      averageScore: _parseDouble(json['averageScore']),
+      totalAbsences: _parseInt(json['totalAbsences'] ?? json['soNgayVang']),
+      totalPresences: _parseInt(json['totalPresences'] ?? json['soNgayCoMat']),
+      enrollmentDate: json['enrollmentDate'] != null
+          ? DateTime.tryParse(json['enrollmentDate'].toString()) ??
+                DateTime.now()
           : DateTime.now(),
     );
   }

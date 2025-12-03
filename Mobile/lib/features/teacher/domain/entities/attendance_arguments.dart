@@ -4,6 +4,7 @@ class AttendanceArguments {
   final String? className;
   final DateTime? sessionDate;
   final String? room;
+  final bool viewOnly;
 
   const AttendanceArguments({
     required this.sessionId,
@@ -11,6 +12,7 @@ class AttendanceArguments {
     this.className,
     this.sessionDate,
     this.room,
+    this.viewOnly = false,
   });
   
   factory AttendanceArguments.fromSchedule({
@@ -19,6 +21,7 @@ class AttendanceArguments {
     String? className,
     DateTime? sessionDate,
     String? room,
+    bool viewOnly = false,
   }) {
     return AttendanceArguments(
       sessionId: sessionId,
@@ -26,6 +29,7 @@ class AttendanceArguments {
       className: className,
       sessionDate: sessionDate,
       room: room,
+      viewOnly: viewOnly,
     );
   }
   

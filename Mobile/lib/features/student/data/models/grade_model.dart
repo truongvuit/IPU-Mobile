@@ -1,7 +1,7 @@
 import '../../domain/entities/grade.dart';
 
-/// GradeModel extends Grade entity
-/// Matches backend GradeResponse structure
+
+
 class GradeModel extends Grade {
   const GradeModel({
     super.gradeId,
@@ -36,7 +36,7 @@ class GradeModel extends Grade {
       grade: json['grade'] as String?,
       status: json['status'] as String?,
       comment: json['comment'] as String?,
-      lastGradedAt: json['lastGradedAt'] != null 
+      lastGradedAt: json['lastGradedAt'] != null
           ? DateTime.tryParse(json['lastGradedAt'].toString())
           : null,
       gradedByName: json['gradedByName'] as String?,

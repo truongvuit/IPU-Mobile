@@ -9,8 +9,8 @@ import '../../domain/entities/promotion.dart';
 class PromotionCard extends StatelessWidget {
   final Promotion promotion;
   final bool isSelected;
-  final bool isApplicable; // Có thể áp dụng với các khóa đã chọn không
-  final List<String> selectedCourseIds; // Danh sách khóa đã chọn
+  final bool isApplicable; 
+  final List<String> selectedCourseIds; 
   final VoidCallback? onTap;
 
   const PromotionCard({
@@ -39,7 +39,7 @@ class PromotionCard extends StatelessWidget {
     return 'Đến ${formatter.format(promotion.endDate)}';
   }
   
-  /// Tính số khóa còn thiếu cho combo
+  
   List<String> get _missingCourses {
     if (!_isCombo || promotion.applicableCourseIds == null) return [];
     return promotion.applicableCourseIds!
@@ -47,7 +47,7 @@ class PromotionCard extends StatelessWidget {
         .toList();
   }
   
-  /// Lấy tên các khóa còn thiếu
+  
   List<String> get _missingCourseNames {
     if (!_isCombo || promotion.applicableCourseNames == null || promotion.applicableCourseIds == null) {
       return _missingCourses;
@@ -90,7 +90,7 @@ class PromotionCard extends StatelessWidget {
             padding: EdgeInsets.all(AppSizes.p12),
             child: Row(
               children: [
-                // Radio indicator
+                
                 Container(
                   width: AppSizes.p20,
                   height: AppSizes.p20,
@@ -112,12 +112,12 @@ class PromotionCard extends StatelessWidget {
                 ),
                 SizedBox(width: AppSizes.p12),
 
-                // Promotion info
+                
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Combo badge + Promotion code
+                      
                       Row(
                         children: [
                           if (_isCombo) ...[
@@ -155,7 +155,7 @@ class PromotionCard extends StatelessWidget {
                       ),
                       SizedBox(height: AppSizes.p4),
 
-                      // Description
+                      
                       Text(
                         promotion.description,
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -167,7 +167,7 @@ class PromotionCard extends StatelessWidget {
                       ),
                       SizedBox(height: AppSizes.p4),
 
-                      // Expiry date
+                      
                       Row(
                         children: [
                           Icon(
@@ -188,7 +188,7 @@ class PromotionCard extends StatelessWidget {
                         ],
                       ),
 
-                      // Combo requirement info
+                      
                       if (_isCombo && promotion.applicableCourseNames != null) ...[
                         SizedBox(height: AppSizes.p8),
                         Container(
@@ -237,7 +237,7 @@ class PromotionCard extends StatelessWidget {
                         ),
                       ],
 
-                      // Status badges
+                      
                       if (!_isValid) ...[
                         SizedBox(height: AppSizes.p4),
                         Container(

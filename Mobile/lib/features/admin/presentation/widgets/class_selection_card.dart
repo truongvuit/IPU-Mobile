@@ -68,7 +68,7 @@ class ClassSelectionCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Class name and status
+              
               Row(
                 children: [
                   Expanded(
@@ -102,7 +102,7 @@ class ClassSelectionCard extends StatelessWidget {
               ),
               SizedBox(height: AppSizes.p8),
 
-              // Schedule
+              
               Row(
                 children: [
                   Icon(
@@ -122,7 +122,7 @@ class ClassSelectionCard extends StatelessWidget {
               ),
               SizedBox(height: AppSizes.p4),
 
-              // Teacher
+              
               Row(
                 children: [
                   Icon(
@@ -142,7 +142,7 @@ class ClassSelectionCard extends StatelessWidget {
               ),
               SizedBox(height: AppSizes.p8),
 
-              // Student progress
+              
               Row(
                 children: [
                   Expanded(

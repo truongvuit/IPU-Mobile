@@ -33,7 +33,7 @@ class AdminError extends AdminState {
   List<Object?> get props => [message];
 }
 
-// Dashboard States
+
 class AdminDashboardLoaded extends AdminState {
   final AdminProfile profile;
   final AdminDashboardStats stats;
@@ -61,7 +61,7 @@ class AdminDashboardLoaded extends AdminState {
   }
 }
 
-// Profile States
+
 class AdminProfileLoaded extends AdminState {
   final AdminProfile profile;
 
@@ -84,7 +84,7 @@ class AdminProfileUpdated extends AdminState {
   List<Object?> get props => [profile];
 }
 
-// Class Management States
+
 class ClassListLoaded extends AdminState {
   final List<AdminClass> classes;
   final ClassStatus? appliedFilter;
@@ -127,7 +127,7 @@ class ClassUpdated extends AdminState {
   List<Object?> get props => [updatedClass];
 }
 
-// Student Management States
+
 class StudentListLoaded extends AdminState {
   final List<AdminStudent> students;
   final String? searchQuery;
@@ -179,7 +179,7 @@ class StudentUpdated extends AdminState {
   List<Object?> get props => [updatedStudent];
 }
 
-// Teacher Management States
+
 class TeacherListLoaded extends AdminState {
   final List<AdminTeacher> teachers;
   final String? searchQuery;
@@ -199,7 +199,7 @@ class TeacherDetailLoaded extends AdminState {
   List<Object?> get props => [teacher];
 }
 
-// Feedback States
+
 class ClassFeedbacksLoaded extends AdminState {
   final String classId;
   final List<AdminFeedback> feedbacks;

@@ -8,14 +8,12 @@ class AdminAppBar extends StatelessWidget {
   final String greeting;
   final String? avatarUrl;
   final VoidCallback? onAvatarTap;
-  final VoidCallback? onNotificationTap;
 
   const AdminAppBar({
     super.key,
     required this.greeting,
     this.avatarUrl,
     this.onAvatarTap,
-    this.onNotificationTap,
   });
 
   @override
@@ -72,14 +70,6 @@ class AdminAppBar extends StatelessWidget {
                   ),
                 ),
               ],
-            ),
-          ),
-          IconButton(
-            onPressed: onNotificationTap,
-            icon: Icon(
-              Icons.notifications_outlined,
-              size: AppSizes.iconMedium,
-              color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
             ),
           ),
         ],

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/custom_image.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/teacher_bloc.dart';
 import '../bloc/teacher_state.dart';
@@ -20,15 +19,26 @@ class TeacherDrawerWidget extends StatelessWidget {
 
     return BlocBuilder<TeacherBloc, TeacherState>(
       builder: (context, state) {
-        String userName = 'Giảng viên';
-        String userEmail = '';
-        String userAvatar = '';
+        final bloc = context.read<TeacherBloc>();
 
+        String displayName = 'Giảng viên';
+        String? displayAvatar;
+        bool isLoading = state is TeacherLoading || state is TeacherInitial;
+
+        
         if (state is TeacherLoaded) {
-          final profile = state.profile;
-          userName = profile.fullName;
-          userEmail = profile.email ?? '';
-          userAvatar = profile.avatarUrl ?? '';
+          displayName = state.profile.fullName;
+          displayAvatar = state.profile.avatarUrl;
+        } else if (state is ProfileLoaded) {
+          displayName = state.profile.fullName;
+          displayAvatar = state.profile.avatarUrl;
+        } else if (state is ProfileUpdated && state.profile != null) {
+          displayName = state.profile!.fullName;
+          displayAvatar = state.profile!.avatarUrl;
+        } else if (bloc.cachedProfile != null) {
+          
+          displayName = bloc.cachedProfile!.fullName;
+          displayAvatar = bloc.cachedProfile!.avatarUrl;
         }
 
         return Drawer(
@@ -37,55 +47,107 @@ class TeacherDrawerWidget extends StatelessWidget {
             child: SafeArea(
               child: Column(
                 children: [
-                  
                   InkWell(
                     onTap: () {
                       Navigator.pop(context);
                       if (!context.mounted) return;
                       Navigator.pushNamed(context, AppRouter.teacherProfile);
                     },
-                    child: Container(
+                    child: Padding(
                       padding: EdgeInsets.all(16.w),
                       child: Row(
                         children: [
-                          ClipOval(
-                            child: CustomImage(
-                              imageUrl: userAvatar,
-                              width: 64.w,
-                              height: 64.h,
-                              fit: BoxFit.cover,
-                              isAvatar: true,
+                          Container(
+                            width: 64.w,
+                            height: 64.h,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: const Color(
+                                0xFF135BEC,
+                              ).withValues(alpha: 0.2),
                             ),
+                            child:
+                                displayAvatar != null &&
+                                    displayAvatar.isNotEmpty
+                                ? ClipOval(
+                                    child: Image.network(
+                                      displayAvatar,
+                                      width: 64.w,
+                                      height: 64.h,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return ClipOval(
+                                          child: Image.asset(
+                                            'assets/images/avatar-default.png',
+                                            width: 64.w,
+                                            height: 64.h,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        );
+                                      },
+                                      loadingBuilder: (context, child, loadingProgress) {
+                                        if (loadingProgress == null)
+                                          return child;
+                                        return Center(
+                                          child: CircularProgressIndicator(
+                                            value:
+                                                loadingProgress
+                                                        .expectedTotalBytes !=
+                                                    null
+                                                ? loadingProgress
+                                                          .cumulativeBytesLoaded /
+                                                      loadingProgress
+                                                          .expectedTotalBytes!
+                                                : null,
+                                            strokeWidth: 2,
+                                            valueColor:
+                                                const AlwaysStoppedAnimation<
+                                                  Color
+                                                >(Color(0xFF135BEC)),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  )
+                                : ClipOval(
+                                    child: Image.asset(
+                                      'assets/images/avatar-default.png',
+                                      width: 64.w,
+                                      height: 64.h,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
                           ),
                           SizedBox(width: 12.w),
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  userName,
-                                  style: TextStyle(
-                                    fontSize: 18.sp,
-                                    fontWeight: FontWeight.w700,
-                                    color: isDark ? Colors.white : AppColors.slate900,
-                                    fontFamily: 'Lexend',
+                            child: isLoading
+                                ? Container(
+                                    height: 20.h,
+                                    width: 120.w,
+                                    decoration: BoxDecoration(
+                                      color: isDark
+                                          ? const Color(0xFF374151)
+                                          : const Color(0xFFE5E7EB),
+                                      borderRadius: BorderRadius.circular(4.r),
+                                    ),
+                                  )
+                                : Text(
+                                    displayName,
+                                    style: TextStyle(
+                                      fontSize: 18.sp,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark
+                                          ? Colors.white
+                                          : const Color(0xFF0F172A),
+                                      fontFamily: 'Lexend',
+                                    ),
                                   ),
-                                ),
-                                SizedBox(height: 2.h),
-                                Text(
-                                  userEmail,
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    color: isDark ? AppColors.gray400 : AppColors.slate500,
-                                    fontFamily: 'Lexend',
-                                  ),
-                                ),
-                              ],
-                            ),
                           ),
                           Icon(
                             Icons.chevron_right,
-                            color: isDark ? AppColors.gray400 : AppColors.slate500,
+                            color: isDark
+                                ? const Color(0xFF9CA3AF)
+                                : const Color(0xFF64748B),
                             size: 24.sp,
                           ),
                         ],
@@ -93,176 +155,166 @@ class TeacherDrawerWidget extends StatelessWidget {
                     ),
                   ),
 
-                Divider(
-                  height: 1,
-                  color: isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB),
-                ),
-
-                
-                Expanded(
-                  child: ListView(
-                    padding: EdgeInsets.symmetric(vertical: 8.h),
-                    children: [
-                      _buildMenuItem(
-                        context,
-                        Icons.home_outlined,
-                        'Trang chủ',
-                        () => _navigateToTab(0),
-                        isDark,
-                        isSelected: true,
-                      ),
-                      _buildMenuItem(
-                        context,
-                        Icons.school_outlined,
-                        'Quản lý Lớp học',
-                        () => _navigateToTab(2),
-                        isDark,
-                      ),
-                      _buildMenuItem(
-                        context,
-                        Icons.calendar_today_outlined,
-                        'Lịch dạy',
-                        () => _navigateToTab(1),
-                        isDark,
-                      ),
-                      _buildMenuItem(
-                        context,
-                        Icons.checklist_outlined,
-                        'Điểm danh',
-                        () {
-                          Navigator.pop(context);
-                          Navigator.pushNamed(
-                            context,
-                            AppRouter.teacherClasses,
-                            arguments: 'attendance',
-                          );
-                        },
-                        isDark,
-                      ),
-                      _buildMenuItem(
-                        context,
-                        Icons.edit_note_outlined,
-                        'Chấm điểm & Nhận xét',
-                        () {
-                          Navigator.pop(context);
-                          Navigator.pushNamed(
-                            context,
-                            AppRouter.teacherClasses,
-                            arguments: 'grading',
-                          );
-                        },
-                        isDark,
-                      ),
-                      Divider(
-                        height: 1,
-                        color: isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB),
-                      ),
-                      SizedBox(height: 8.h),
-
-                      _buildMenuItem(
-                        context,
-                        Icons.settings_outlined,
-                        'Cài đặt',
-                        () {
-                          Navigator.pop(context);
-                          if (!context.mounted) return;
-                          Navigator.pushNamed(
-                            context,
-                            AppRouter.settings,
-                            arguments: {'userRole': 'teacher'},
-                          );
-                        },
-                        isDark,
-                      ),
-                    ],
+                  Divider(
+                    height: 1,
+                    color: isDark
+                        ? const Color(0xFF374151)
+                        : const Color(0xFFE5E7EB),
                   ),
-                ),
 
-                Divider(
-                  height: 1,
-                  color: isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB),
-                ),
-
-                
-                _buildMenuItem(
-                  context,
-                  Icons.logout,
-                  'Đăng xuất',
-                  () => _showLogoutDialog(context),
-                  isDark,
-                  color: AppColors.error,
-                ),
-
-                SizedBox(height: 8.h),
-
-                
-                Padding(
-                  padding: EdgeInsets.all(16.w),
-                  child: Text(
-                    'Phiên bản 1.0.2',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: isDark
-                          ? AppColors.gray500
-                          : AppColors.gray400,
-                      fontFamily: 'Lexend',
+                  Expanded(
+                    child: ListView(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8.w,
+                        vertical: 8.h,
+                      ),
+                      children: [
+                        _buildNavItem(
+                          context,
+                          icon: Icons.home_outlined,
+                          title: 'Trang chủ',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _navigateToTab(0);
+                          },
+                          isDark: isDark,
+                        ),
+                        _buildNavItem(
+                          context,
+                          icon: Icons.class_outlined,
+                          title: 'Lớp học',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _navigateToTab(2);
+                          },
+                          isDark: isDark,
+                        ),
+                        _buildNavItem(
+                          context,
+                          icon: Icons.calendar_month_outlined,
+                          title: 'Lịch dạy',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _navigateToTab(1);
+                          },
+                          isDark: isDark,
+                        ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8.h),
+                          child: Divider(
+                            height: 1,
+                            color: isDark
+                                ? const Color(0xFF374151)
+                                : const Color(0xFFE5E7EB),
+                          ),
+                        ),
+                        _buildNavItem(
+                          context,
+                          icon: Icons.settings_outlined,
+                          title: 'Cài đặt',
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.pushNamed(
+                              context,
+                              AppRouter.settings,
+                              arguments: {'userRole': 'teacher'},
+                            );
+                          },
+                          isDark: isDark,
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
+
+                  Divider(
+                    height: 1,
+                    color: isDark
+                        ? const Color(0xFF374151)
+                        : const Color(0xFFE5E7EB),
+                  ),
+
+                  
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 8.w,
+                      vertical: 8.h,
+                    ),
+                    child: _buildNavItem(
+                      context,
+                      icon: Icons.logout_outlined,
+                      title: 'Đăng xuất',
+                      onTap: () => _showLogoutDialog(context),
+                      isDark: isDark,
+                      isLogout: true,
+                    ),
+                  ),
+
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 16.h),
+                    child: Text(
+                      'Phiên bản 1.0.2',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: isDark ? AppColors.gray500 : AppColors.gray400,
+                        fontFamily: 'Lexend',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      );
+        );
       },
     );
   }
 
-  
   void _navigateToTab(int tabIndex) {
     if (onTabChange != null) {
       onTabChange!(tabIndex);
     }
   }
 
-  Widget _buildMenuItem(
-    BuildContext context,
-    IconData icon,
-    String title,
-    VoidCallback onTap,
-    bool isDark, {
-    Color? color,
-    bool isSelected = false,
+  Widget _buildNavItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    required bool isDark,
+    bool isLogout = false,
   }) {
-    final itemColor = color ?? (isDark ? Colors.white : AppColors.slate900);
-    final backgroundColor = isSelected
-        ? (AppColors.primary.withValues(alpha: 0.1))
-        : Colors.transparent;
+    final color = isLogout
+        ? AppColors.error
+        : (isDark ? Colors.white : const Color(0xFF0F172A));
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(8.r),
-      ),
-      child: ListTile(
-        leading: Icon(
-          icon,
-          color: isSelected ? AppColors.primary : itemColor,
-          size: 24.sp,
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            color: isSelected ? AppColors.primary : itemColor,
-            fontFamily: 'Lexend',
+      margin: EdgeInsets.symmetric(vertical: 2.h),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12.r)),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12.r),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            child: Row(
+              children: [
+                Icon(icon, color: color, size: 22.sp),
+                SizedBox(width: 14.w),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w500,
+                    color: color,
+                    fontFamily: 'Lexend',
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-        contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-        onTap: onTap,
       ),
     );
   }
@@ -282,20 +334,16 @@ class TeacherDrawerWidget extends StatelessWidget {
             onPressed: () {
               Navigator.pop(context);
               if (!context.mounted) return;
-              
-              
+
               context.read<AuthBloc>().add(const LogoutRequested());
-              
-              
+
               Navigator.pushNamedAndRemoveUntil(
                 context,
                 AppRouter.welcome,
                 (route) => false,
               );
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             child: const Text('Đăng xuất'),
           ),
         ],

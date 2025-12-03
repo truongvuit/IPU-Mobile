@@ -6,12 +6,11 @@ import '../widgets/teacher_drawer.dart';
 import 'teacher_dashboard_screen.dart';
 import 'teacher_schedule_screen.dart';
 import 'teacher_class_list_screen.dart';
+import 'teacher_attendance_list_screen.dart';
 import 'teacher_profile_screen.dart';
 import '../bloc/teacher_bloc.dart';
 import '../bloc/teacher_event.dart';
 import '../bloc/teacher_state.dart';
-
-
 
 class HomeTeacherScreen extends StatefulWidget {
   const HomeTeacherScreen({super.key});
@@ -29,37 +28,39 @@ class _HomeTeacherScreenState extends State<HomeTeacherScreen> {
     GlobalKey<NavigatorState>(),
     GlobalKey<NavigatorState>(),
     GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
   ];
 
   @override
   void initState() {
     super.initState();
-    
+
     context.read<TeacherBloc>().add(LoadTeacherDashboard());
     context.read<TeacherBloc>().add(LoadTeacherProfile());
   }
 
   void onTabTapped(int index) {
     if (_currentIndex == index) {
-      
       _navigatorKeys[index].currentState?.popUntil((route) => route.isFirst);
     } else {
       setState(() {
         _currentIndex = index;
       });
 
-      
       switch (index) {
-        case 0: 
+        case 0:
           context.read<TeacherBloc>().add(LoadTeacherDashboard());
           break;
-        case 1: 
+        case 1:
           context.read<TeacherBloc>().add(LoadWeekSchedule(DateTime.now()));
           break;
-        case 2: 
+        case 2:
           context.read<TeacherBloc>().add(LoadMyClasses());
           break;
-        case 3: 
+        case 3:
+          context.read<TeacherBloc>().add(LoadTodaySchedule());
+          break;
+        case 4:
           context.read<TeacherBloc>().add(LoadTeacherProfile());
           break;
       }
@@ -73,6 +74,9 @@ class _HomeTeacherScreenState extends State<HomeTeacherScreen> {
           const TeacherDashboardScreen(),
           const TeacherScheduleScreen(),
           const TeacherClassListScreen(),
+          TeacherAttendanceListScreen(
+            onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
+          ),
           const TeacherProfileScreen(),
         ][index];
       },
@@ -141,6 +145,7 @@ class _HomeTeacherScreenState extends State<HomeTeacherScreen> {
             _buildOffstageNavigator(1),
             _buildOffstageNavigator(2),
             _buildOffstageNavigator(3),
+            _buildOffstageNavigator(4),
           ],
         ),
         bottomNavigationBar: TeacherBottomNavBar(

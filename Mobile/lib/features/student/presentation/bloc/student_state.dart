@@ -6,7 +6,6 @@ import '../../domain/entities/grade.dart';
 import '../../domain/entities/review.dart';
 import '../../domain/entities/student_profile.dart';
 
-
 abstract class StudentState extends Equatable {
   const StudentState();
 
@@ -14,11 +13,9 @@ abstract class StudentState extends Equatable {
   List<Object?> get props => [];
 }
 
-
 class StudentInitial extends StudentState {
   const StudentInitial();
 }
-
 
 class StudentLoading extends StudentState {
   final String? action;
@@ -28,7 +25,6 @@ class StudentLoading extends StudentState {
   @override
   List<Object?> get props => [action];
 }
-
 
 class StudentLoaded extends StudentState {
   final StudentProfile? profile;
@@ -65,7 +61,6 @@ class StudentLoaded extends StudentState {
   }
 }
 
-
 class DashboardLoaded extends StudentState {
   final List<StudentClass> upcomingClasses;
   final StudentProfile? profile;
@@ -80,7 +75,6 @@ class DashboardLoaded extends StudentState {
   @override
   List<Object?> get props => [upcomingClasses, profile, todaySchedules];
 }
-
 
 class CoursesLoaded extends StudentState {
   final List<Course> courses;
@@ -100,7 +94,6 @@ class CourseDetailLoaded extends StudentState {
   List<Object?> get props => [course];
 }
 
-
 class ClassesLoaded extends StudentState {
   final List<StudentClass> classes;
 
@@ -119,15 +112,11 @@ class ClassDetailLoaded extends StudentState {
   List<Object?> get props => [studentClass];
 }
 
-
 class ScheduleLoaded extends StudentState {
   final List<Schedule> schedules;
   final DateTime selectedDate;
 
-  const ScheduleLoaded({
-    required this.schedules,
-    required this.selectedDate,
-  });
+  const ScheduleLoaded({required this.schedules, required this.selectedDate});
 
   @override
   List<Object?> get props => [schedules, selectedDate];
@@ -137,15 +126,11 @@ class WeekScheduleLoaded extends StudentState {
   final List<Schedule> schedules;
   final DateTime startDate;
 
-  const WeekScheduleLoaded({
-    required this.schedules,
-    required this.startDate,
-  });
+  const WeekScheduleLoaded({required this.schedules, required this.startDate});
 
   @override
   List<Object?> get props => [schedules, startDate];
 }
-
 
 class GradesLoaded extends StudentState {
   final List<Grade> grades;
@@ -160,15 +145,11 @@ class CourseGradesLoaded extends StudentState {
   final List<Grade> grades;
   final String courseId;
 
-  const CourseGradesLoaded({
-    required this.grades,
-    required this.courseId,
-  });
+  const CourseGradesLoaded({required this.grades, required this.courseId});
 
   @override
   List<Object?> get props => [grades, courseId];
 }
-
 
 class ProfileLoaded extends StudentState {
   final StudentProfile profile;
@@ -205,6 +186,16 @@ class ReviewHistoryLoaded extends StudentState {
   List<Object?> get props => [reviews];
 }
 
+
+class ClassReviewLoaded extends StudentState {
+  final Review? review; 
+  final String classId;
+
+  const ClassReviewLoaded({this.review, required this.classId});
+
+  @override
+  List<Object?> get props => [review, classId];
+}
 
 class StudentError extends StudentState {
   final String message;

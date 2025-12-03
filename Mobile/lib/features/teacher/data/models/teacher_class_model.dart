@@ -32,16 +32,14 @@ class TeacherClassModel extends TeacherClass {
           json['courseName'] ??
           json['loaiKhoaHoc'] ??
           'General',
-      
-      totalStudents:
-          json['currentEnrollment'] ??
-          json['totalStudents'] ??
-          json['soHocVien'] ??
-          0,
-      
+
+      totalStudents: _parseInt(
+        json['currentEnrollment'] ?? json['totalStudents'] ?? json['soHocVien'],
+      ),
+
       schedule:
           json['schedulePattern'] ?? json['schedule'] ?? json['lich'] ?? '',
-      
+
       startTime: _parseTime(json['startTime']),
       endTime: _parseTime(json['endTime']),
       room: json['roomName'] ?? json['tenPhong'] ?? '',
@@ -56,10 +54,17 @@ class TeacherClassModel extends TeacherClass {
   }
 
   
+  static int _parseInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value) ?? 0;
+    if (value is double) return value.toInt();
+    return 0;
+  }
+
   static DateTime _parseTime(dynamic time) {
     if (time == null) return DateTime(2024, 1, 1, 8, 0);
     if (time is String) {
-      
       final parts = time.split(':');
       if (parts.length >= 2) {
         return DateTime(
@@ -71,7 +76,7 @@ class TeacherClassModel extends TeacherClass {
           parts.length > 2 ? (int.tryParse(parts[2]) ?? 0) : 0,
         );
       }
-      
+
       try {
         return DateTime.parse(time);
       } catch (_) {
@@ -81,7 +86,6 @@ class TeacherClassModel extends TeacherClass {
     return DateTime(2024, 1, 1, 8, 0);
   }
 
-  
   Map<String, dynamic> toJson() {
     return {
       'classId': id,
