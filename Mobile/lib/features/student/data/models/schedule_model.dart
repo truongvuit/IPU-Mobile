@@ -11,6 +11,10 @@ class ScheduleModel extends Schedule {
     required super.endTime,
     super.isOnline,
     super.meetingLink,
+    super.courseName,
+    super.status,
+    super.note,
+    super.period,
   });
 
   factory ScheduleModel.fromJson(Map<String, dynamic> json) {
@@ -45,6 +49,10 @@ class ScheduleModel extends Schedule {
       endTime: endTime,
       isOnline: json['isOnline'] ?? false,
       meetingLink: json['meetingLink'],
+      courseName: json['courseName'],
+      status: json['status'],
+      note: json['note'],
+      period: json['period'],
     );
   }
 
@@ -59,6 +67,10 @@ class ScheduleModel extends Schedule {
       'endTime': endTime.toIso8601String(),
       'isOnline': isOnline,
       'meetingLink': meetingLink,
+      'courseName': courseName,
+      'status': status,
+      'note': note,
+      'period': period,
     };
   }
 
@@ -73,6 +85,10 @@ class ScheduleModel extends Schedule {
       endTime: schedule.endTime,
       isOnline: schedule.isOnline,
       meetingLink: schedule.meetingLink,
+      courseName: schedule.courseName,
+      status: schedule.status,
+      note: schedule.note,
+      period: schedule.period,
     );
   }
 
@@ -87,6 +103,10 @@ class ScheduleModel extends Schedule {
     DateTime? endTime,
     bool? isOnline,
     String? meetingLink,
+    String? courseName,
+    String? status,
+    String? note,
+    String? period,
   }) {
     return ScheduleModel(
       id: id ?? this.id,
@@ -98,6 +118,10 @@ class ScheduleModel extends Schedule {
       endTime: endTime ?? this.endTime,
       isOnline: isOnline ?? this.isOnline,
       meetingLink: meetingLink ?? this.meetingLink,
+      courseName: courseName ?? this.courseName,
+      status: status ?? this.status,
+      note: note ?? this.note,
+      period: period ?? this.period,
     );
   }
 }

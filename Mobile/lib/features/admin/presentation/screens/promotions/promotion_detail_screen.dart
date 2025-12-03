@@ -185,7 +185,7 @@ class _PromotionDetailContent extends StatelessWidget {
           'Giảm giá',
           promotion.discountType == DiscountType.percentage
               ? '${promotion.discountValue}%'
-              : '${NumberFormat.currency(locale: 'vi_VN', symbol: 'đ').format(promotion.discountValue)}',
+              : NumberFormat.currency(locale: 'vi_VN', symbol: 'đ').format(promotion.discountValue),
         ),
         _buildInfoRow(
           Icons.calendar_today,

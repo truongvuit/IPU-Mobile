@@ -69,14 +69,16 @@ class StudentLoaded extends StudentState {
 class DashboardLoaded extends StudentState {
   final List<StudentClass> upcomingClasses;
   final StudentProfile? profile;
+  final List<Schedule> todaySchedules;
 
   const DashboardLoaded({
     required this.upcomingClasses,
     this.profile,
+    this.todaySchedules = const [],
   });
 
   @override
-  List<Object?> get props => [upcomingClasses, profile];
+  List<Object?> get props => [upcomingClasses, profile, todaySchedules];
 }
 
 

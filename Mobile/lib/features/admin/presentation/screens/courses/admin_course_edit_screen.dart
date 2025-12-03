@@ -413,7 +413,7 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
               _isLoadingCategories
                   ? const LinearProgressIndicator()
                   : DropdownButtonFormField<String>(
-                      value: _categories.any((c) => c['id'] == _selectedCategoryId) 
+                      initialValue: _categories.any((c) => c['id'] == _selectedCategoryId) 
                           ? _selectedCategoryId 
                           : null,
                       isExpanded: true,
@@ -510,7 +510,7 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
                 onChanged: (value) {
                   setState(() => _isActive = value);
                 },
-                activeColor: AppColors.success,
+                activeThumbColor: AppColors.success,
                 contentPadding: EdgeInsets.zero,
               ),
               SizedBox(height: AppSizes.p24),

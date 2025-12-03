@@ -404,10 +404,29 @@ class StudentApiDataSourceImpl implements StudentApiDataSource {
   @override
   Future<List<dynamic>> getGrades() async {
     try {
-      
-      return [];
+      final response = await dioClient.get(ApiEndpoints.studentGrades);
+
+      if (response.statusCode == 200 && response.data['code'] == 1000) {
+        final data = response.data['data'];
+        if (data is List) {
+          return data;
+        }
+        return [];
+      } else {
+        throw ServerException(
+          response.data['message'] ?? 'Get grades failed',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response != null && e.response!.data != null) {
+        throw ServerException(
+          e.response!.data['message'] ?? 'Get grades failed',
+        );
+      }
+      throw ServerException(e.message ?? 'Network error');
     } catch (e) {
-      throw const ServerException('Get grades not implemented yet');
+      if (e is ServerException) rethrow;
+      throw ServerException('Get grades failed: $e');
     }
   }
 

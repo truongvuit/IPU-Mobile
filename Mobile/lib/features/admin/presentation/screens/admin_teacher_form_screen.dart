@@ -143,7 +143,7 @@ class _AdminTeacherFormScreenState extends State<AdminTeacherFormScreen> {
                 children: [
                   
                   DropdownButtonFormField<int>(
-                    value: selectedDegreeId,
+                    initialValue: selectedDegreeId,
                     decoration: InputDecoration(
                       labelText: 'Loại bằng cấp',
                       border: OutlineInputBorder(

@@ -16,9 +16,25 @@ class PromotionModel extends Promotion {
     super.minOrderValue,
     super.applicableCourseIds,
     super.applicableCourseNames,
+    super.promotionType,
+    super.requireAllCourses,
   });
 
   factory PromotionModel.fromJson(Map<String, dynamic> json) {
+    // Parse promotion type
+    PromotionType promotionType = PromotionType.single;
+    if (json['promotionType'] != null) {
+      promotionType = PromotionType.values.firstWhere(
+        (e) => e.toString().split('.').last == json['promotionType'],
+        orElse: () => PromotionType.single,
+      );
+    }
+    // Nếu requireAllCourses = true, tự động set thành combo
+    final requireAllCourses = json['requireAllCourses'] as bool? ?? false;
+    if (requireAllCourses) {
+      promotionType = PromotionType.combo;
+    }
+
     return PromotionModel(
       id: json['id']?.toString() ?? '',
       code: json['code'] as String? ?? '',
@@ -47,6 +63,8 @@ class PromotionModel extends Promotion {
       applicableCourseNames: (json['applicableCourseNames'] as List<dynamic>?)
           ?.map((e) => e.toString())
           .toList(),
+      promotionType: promotionType,
+      requireAllCourses: requireAllCourses,
     );
   }
 
@@ -66,6 +84,8 @@ class PromotionModel extends Promotion {
       'minOrderValue': minOrderValue,
       'applicableCourseIds': applicableCourseIds,
       'applicableCourseNames': applicableCourseNames,
+      'promotionType': promotionType.toString().split('.').last,
+      'requireAllCourses': requireAllCourses,
     };
   }
 
@@ -85,6 +105,8 @@ class PromotionModel extends Promotion {
       minOrderValue: entity.minOrderValue,
       applicableCourseIds: entity.applicableCourseIds,
       applicableCourseNames: entity.applicableCourseNames,
+      promotionType: entity.promotionType,
+      requireAllCourses: entity.requireAllCourses,
     );
   }
 }

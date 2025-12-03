@@ -10,6 +10,12 @@ import '../../domain/repositories/admin_repository.dart';
 
 class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
   final AdminRepository? adminRepository;
+  
+  // Cache dữ liệu filter
+  List<Map<String, dynamic>> _cachedCourses = [];
+  List<Map<String, dynamic>> _cachedTeachers = [];
+  List<String> _cachedSchedules = [];
+  List<AdminClass> _allClasses = [];
 
   RegistrationBloc({this.adminRepository})
     : super(const RegistrationInitial()) {
@@ -21,6 +27,8 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     on<RemoveClass>(_onRemoveClass);
     on<ClearAllClasses>(_onClearAllClasses);
     on<LoadAvailableClasses>(_onLoadAvailableClasses);
+    on<FilterClasses>(_onFilterClasses);
+    on<ClearClassFilter>(_onClearClassFilter);
     on<ApplyPromotion>(_onApplyPromotion);
     on<LoadPromotions>(_onLoadPromotions);
     on<RemovePromotion>(_onRemovePromotion);
@@ -118,13 +126,13 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     Emitter<RegistrationState> emit,
   ) async {
     RegistrationInProgress current;
-    List<AdminClass>? loadedClasses;
+    ClassesLoaded? classesLoadedState;
 
     if (state is RegistrationInProgress) {
       current = state as RegistrationInProgress;
     } else if (state is ClassesLoaded) {
-      current = (state as ClassesLoaded).currentRegistration;
-      loadedClasses = (state as ClassesLoaded).classes;
+      classesLoadedState = state as ClassesLoaded;
+      current = classesLoadedState.currentRegistration;
     } else {
       return;
     }
@@ -162,13 +170,10 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     );
 
     // Nếu đang ở ClassesLoaded, giữ nguyên state đó với currentRegistration mới
-    if (loadedClasses != null) {
-      emit(
-        ClassesLoaded(
-          classes: loadedClasses,
-          currentRegistration: updatedRegistration,
-        ),
-      );
+    if (classesLoadedState != null) {
+      emit(classesLoadedState.copyWith(
+        currentRegistration: updatedRegistration,
+      ));
     } else {
       emit(updatedRegistration);
     }
@@ -179,13 +184,13 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     Emitter<RegistrationState> emit,
   ) async {
     RegistrationInProgress current;
-    List<AdminClass>? loadedClasses;
+    ClassesLoaded? classesLoadedState;
 
     if (state is RegistrationInProgress) {
       current = state as RegistrationInProgress;
     } else if (state is ClassesLoaded) {
-      current = (state as ClassesLoaded).currentRegistration;
-      loadedClasses = (state as ClassesLoaded).classes;
+      classesLoadedState = state as ClassesLoaded;
+      current = classesLoadedState.currentRegistration;
     } else {
       return;
     }
@@ -200,13 +205,10 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     );
 
     // Nếu đang ở ClassesLoaded, giữ nguyên state đó
-    if (loadedClasses != null) {
-      emit(
-        ClassesLoaded(
-          classes: loadedClasses,
-          currentRegistration: updatedRegistration,
-        ),
-      );
+    if (classesLoadedState != null) {
+      emit(classesLoadedState.copyWith(
+        currentRegistration: updatedRegistration,
+      ));
     } else {
       emit(updatedRegistration);
     }
@@ -217,13 +219,13 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     Emitter<RegistrationState> emit,
   ) async {
     RegistrationInProgress current;
-    List<AdminClass>? loadedClasses;
+    ClassesLoaded? classesLoadedState;
 
     if (state is RegistrationInProgress) {
       current = state as RegistrationInProgress;
     } else if (state is ClassesLoaded) {
-      current = (state as ClassesLoaded).currentRegistration;
-      loadedClasses = (state as ClassesLoaded).classes;
+      classesLoadedState = state as ClassesLoaded;
+      current = classesLoadedState.currentRegistration;
     } else {
       return;
     }
@@ -235,13 +237,10 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     );
 
     // Nếu đang ở ClassesLoaded, giữ nguyên state đó
-    if (loadedClasses != null) {
-      emit(
-        ClassesLoaded(
-          classes: loadedClasses,
-          currentRegistration: updatedRegistration,
-        ),
-      );
+    if (classesLoadedState != null) {
+      emit(classesLoadedState.copyWith(
+        currentRegistration: updatedRegistration,
+      ));
     } else {
       emit(updatedRegistration);
     }
@@ -267,11 +266,32 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
 
     try {
       List<AdminClass> classes;
+      List<Map<String, dynamic>> courses = [];
+      List<Map<String, dynamic>> teachers = [];
 
       // Sử dụng API thực nếu có repository
       if (adminRepository != null) {
         try {
-          classes = await adminRepository!.getClasses();
+          // Load classes và filter data song song
+          final results = await Future.wait([
+            adminRepository!.getClasses(),
+            adminRepository!.getCategories(), // Lấy danh sách khóa học
+          ]);
+          
+          classes = results[0] as List<AdminClass>;
+          courses = results[1] as List<Map<String, dynamic>>;
+          
+          // Lấy danh sách giảng viên unique từ classes
+          final teacherSet = <String, Map<String, dynamic>>{};
+          for (final c in classes) {
+            if (c.teacherId != null && !teacherSet.containsKey(c.teacherId)) {
+              teacherSet[c.teacherId!] = {
+                'id': c.teacherId,
+                'name': c.teacherName,
+              };
+            }
+          }
+          teachers = teacherSet.values.toList();
         } catch (e) {
           // Fallback to mock nếu lỗi
           classes = _getMockClasses();
@@ -282,12 +302,118 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
         classes = _getMockClasses();
       }
 
-      emit(ClassesLoaded(classes: classes, currentRegistration: savedState));
+      // Lấy danh sách schedule unique
+      final scheduleSet = <String>{};
+      for (final c in classes) {
+        if (c.schedule.isNotEmpty) {
+          scheduleSet.add(c.schedule);
+        }
+      }
+      final schedules = scheduleSet.toList()..sort();
+
+      // Cache data
+      _allClasses = classes;
+      _cachedCourses = courses;
+      _cachedTeachers = teachers;
+      _cachedSchedules = schedules;
+
+      emit(ClassesLoaded(
+        classes: classes,
+        currentRegistration: savedState,
+        courses: courses,
+        teachers: teachers,
+        schedules: schedules,
+      ));
     } catch (e) {
       emit(
         RegistrationError('Không thể tải danh sách lớp học: ${e.toString()}'),
       );
     }
+  }
+
+  Future<void> _onFilterClasses(
+    FilterClasses event,
+    Emitter<RegistrationState> emit,
+  ) async {
+    if (state is! ClassesLoaded) return;
+    
+    final currentState = state as ClassesLoaded;
+    
+    // Lọc classes dựa trên filter
+    List<AdminClass> filteredClasses = List.from(_allClasses);
+    
+    // Filter theo khóa học
+    if (event.courseId != null && event.courseId!.isNotEmpty) {
+      filteredClasses = filteredClasses
+          .where((c) => c.courseId == event.courseId || 
+                        c.courseName.toLowerCase().contains(
+                          _cachedCourses
+                              .firstWhere(
+                                (course) => course['id'].toString() == event.courseId,
+                                orElse: () => {'name': ''},
+                              )['name']
+                              .toString()
+                              .toLowerCase(),
+                        ))
+          .toList();
+    }
+    
+    // Filter theo giảng viên
+    if (event.teacherId != null && event.teacherId!.isNotEmpty) {
+      filteredClasses = filteredClasses
+          .where((c) => c.teacherId == event.teacherId)
+          .toList();
+    }
+    
+    // Filter theo lịch học
+    if (event.schedule != null && event.schedule!.isNotEmpty) {
+      filteredClasses = filteredClasses
+          .where((c) => c.schedule == event.schedule)
+          .toList();
+    }
+
+    // Tạo filter info
+    String? courseName;
+    String? teacherName;
+    if (event.courseId != null) {
+      final course = _cachedCourses.firstWhere(
+        (c) => c['id'].toString() == event.courseId,
+        orElse: () => {},
+      );
+      courseName = course['name']?.toString();
+    }
+    if (event.teacherId != null) {
+      final teacher = _cachedTeachers.firstWhere(
+        (t) => t['id'].toString() == event.teacherId,
+        orElse: () => {},
+      );
+      teacherName = teacher['name']?.toString();
+    }
+
+    emit(currentState.copyWith(
+      classes: filteredClasses,
+      appliedFilter: ClassFilterInfo(
+        courseId: event.courseId,
+        courseName: courseName,
+        teacherId: event.teacherId,
+        teacherName: teacherName,
+        schedule: event.schedule,
+      ),
+    ));
+  }
+
+  Future<void> _onClearClassFilter(
+    ClearClassFilter event,
+    Emitter<RegistrationState> emit,
+  ) async {
+    if (state is! ClassesLoaded) return;
+    
+    final currentState = state as ClassesLoaded;
+    
+    emit(currentState.copyWith(
+      classes: _allClasses,
+      clearFilter: true,
+    ));
   }
 
   Future<void> _onApplyPromotion(

@@ -27,6 +27,10 @@ class _AdminTeacherDetailScreenState extends State<AdminTeacherDetailScreen> {
   @override
   void initState() {
     super.initState();
+    _loadTeacherDetail();
+  }
+  
+  void _loadTeacherDetail() {
     context.read<AdminBloc>().add(LoadTeacherDetail(widget.teacher.id));
   }
 
@@ -101,7 +105,7 @@ class _AdminTeacherDetailScreenState extends State<AdminTeacherDetailScreen> {
                           builder: (context) =>
                               AdminTeacherFormScreen(teacher: teacher),
                         ),
-                      );
+                      ).then((_) => _loadTeacherDetail());
                     },
                   ),
                   PopupMenuButton<String>(

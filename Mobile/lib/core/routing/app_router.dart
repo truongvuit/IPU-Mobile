@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../di/injector.dart';
 
-// Splash
+
 import '../../features/splash/splash_screen.dart';
 
-// Authentication
+
 import '../../features/authentication/presentation/screens/welcome_screen.dart';
 import '../../features/authentication/presentation/screens/login_screen.dart';
 import '../../features/authentication/presentation/screens/forgot_password_screen.dart';
@@ -14,7 +14,7 @@ import '../../features/authentication/presentation/screens/reset_password_screen
 import '../../features/authentication/presentation/screens/change_password_screen.dart';
 import '../../features/authentication/presentation/bloc/auth_bloc.dart';
 
-// Student
+
 import '../../features/student/presentation/screens/student_dashboard_screen.dart';
 
 import '../../features/student/presentation/screens/class_list_screen.dart';
@@ -30,7 +30,7 @@ import '../../features/student/presentation/screens/review_history_screen.dart';
 import '../../features/student/presentation/screens/learning_path_screen.dart';
 import '../../features/student/presentation/bloc/student_bloc.dart';
 
-// Teacher
+
 import '../../features/teacher/presentation/screens/home_teacher_screen.dart';
 import '../../features/teacher/presentation/screens/teacher_class_list_screen.dart';
 import '../../features/teacher/presentation/screens/teacher_class_detail_screen.dart';
@@ -38,9 +38,10 @@ import '../../features/teacher/presentation/screens/teacher_attendance_screen.da
 import '../../features/teacher/presentation/screens/teacher_schedule_screen.dart';
 import '../../features/teacher/presentation/screens/teacher_profile_screen.dart';
 import '../../features/teacher/presentation/screens/edit_teacher_profile_screen.dart';
+import '../../features/teacher/domain/entities/attendance_arguments.dart';
 import '../../features/teacher/presentation/bloc/teacher_bloc.dart';
 
-// Admin
+
 import '../../features/admin/presentation/screens/home_admin_screen.dart';
 import '../../features/admin/presentation/screens/admin_class_list_screen.dart';
 import '../../features/admin/presentation/screens/admin_class_detail_screen.dart';
@@ -55,30 +56,30 @@ import '../../features/admin/presentation/screens/quick_registration_form_screen
 import '../../features/admin/presentation/screens/quick_registration_class_selection_screen.dart';
 import '../../features/admin/presentation/screens/quick_registration_promotion_screen.dart';
 import '../../features/admin/presentation/screens/quick_registration_payment_screen.dart';
-// Removed: Reports and Classroom screens (not mobile-friendly)
+
 import '../../features/admin/presentation/bloc/admin_bloc.dart';
 import '../../features/admin/presentation/bloc/registration_bloc.dart';
 import '../../features/admin/domain/entities/admin_class.dart';
 import '../../features/admin/domain/entities/admin_teacher.dart';
 import '../../features/admin/domain/entities/admin_student.dart';
-// Removed: admin_course.dart (unused after legacy screen deletion)
-import '../../features/admin/domain/entities/course_detail.dart'; // New entity
-// Removed: admin_course_detail_screen.dart (legacy)
-import '../../features/admin/presentation/screens/courses/admin_course_list_screen.dart'; // New screen
-import '../../features/admin/presentation/screens/courses/admin_course_detail_new_screen.dart'; // New screen
-import '../../features/admin/presentation/screens/courses/admin_course_edit_screen.dart'; // New screen
-import '../../features/admin/presentation/bloc/admin_course_bloc.dart'; // New bloc
+
+import '../../features/admin/domain/entities/course_detail.dart'; 
+
+import '../../features/admin/presentation/screens/courses/admin_course_list_screen.dart'; 
+import '../../features/admin/presentation/screens/courses/admin_course_detail_new_screen.dart'; 
+import '../../features/admin/presentation/screens/courses/admin_course_edit_screen.dart'; 
+import '../../features/admin/presentation/bloc/admin_course_bloc.dart'; 
 import '../../features/admin/presentation/screens/admin_class_feedback_screen.dart';
 import '../../features/admin/presentation/screens/promotions/promotion_list_screen.dart';
 import '../../features/admin/presentation/screens/promotions/promotion_form_screen.dart';
 import '../../features/admin/presentation/screens/promotions/promotion_detail_screen.dart';
 import '../../features/admin/domain/entities/promotion.dart';
 
-// Teacher Grades
+
 import '../../features/teacher/presentation/screens/teacher_grades_list_screen.dart';
 import '../../features/teacher/presentation/bloc/teacher_grades_bloc.dart';
 
-// Settings
+
 import '../../features/settings/presentation/screens/settings_screen.dart';
 
 import '../../features/settings/presentation/screens/policy_screen.dart';
@@ -86,19 +87,19 @@ import '../../features/settings/presentation/screens/terms_screen.dart';
 
 import '../../features/settings/presentation/bloc/settings_bloc.dart';
 
-/// App Router - Quản lý routing cho toàn bộ app
+
 class AppRouter {
-  // Splash
+  
   static const String splash = '/';
 
-  // Authentication Routes
+  
   static const String welcome = '/welcome';
   static const String login = '/login';
   static const String forgotPassword = '/forgot-password';
   static const String verifyCode = '/verify-code';
   static const String resetPassword = '/reset-password';
 
-  // Student Routes
+  
   static const String studentDashboard = '/student/dashboard';
   static const String studentClasses = '/student/classes';
   static const String studentClassDetail = '/student/class-detail';
@@ -113,7 +114,7 @@ class AppRouter {
 
   static const String studentRating = '/student/rating';
 
-  // Teacher Routes
+  
   static const String teacherDashboard = '/teacher/dashboard';
   static const String teacherClasses = '/teacher/classes';
   static const String teacherClassDetail = '/teacher/class-detail';
@@ -123,9 +124,9 @@ class AppRouter {
   static const String teacherProfile = '/teacher/profile';
 
   static const String teacherEditProfile = '/teacher/edit-profile';
-  static const String teacherGradesList = '/teacher/grades'; // New route
+  static const String teacherGradesList = '/teacher/grades'; 
 
-  // Admin Routes
+  
   static const String adminHome = '/admin/home';
   static const String adminClasses = '/admin/classes';
   static const String adminClassDetail = '/admin/class-detail';
@@ -140,19 +141,19 @@ class AppRouter {
   static const String adminQuickRegClassSelection = '/admin/quick-reg-class';
   static const String adminQuickRegPromotion = '/admin/quick-reg-promo';
   static const String adminQuickRegPayment = '/admin/quick-reg-payment';
-  // Removed: Report routes (not mobile-friendly)
-  // Removed: Classroom routes (managed on web)
+  
+  
   static const String adminCourseDetail = '/admin/course-detail';
   static const String adminClassFeedback = '/admin/class-feedback';
   static const String adminPromotions = '/admin/promotions';
   static const String adminPromotionForm = '/admin/promotion-form';
   static const String adminPromotionDetail = '/admin/promotion-detail';
 
-  // Admin Course Routes (New)
+  
   static const String adminCourseList = '/admin/courses';
   static const String adminCourseEdit = '/admin/courses/edit';
 
-  // Settings Routes
+  
   static const String settings = '/settings';
   static const String settingsPolicy = '/settings/policy';
   static const String settingsTerms = '/settings/terms';
@@ -160,14 +161,14 @@ class AppRouter {
 
   static Route<dynamic> onGenerateRoute(RouteSettings routeSettings) {
     switch (routeSettings.name) {
-      // ============ Splash ============
+      
       case splash:
         return MaterialPageRoute(
           builder: (_) => const SplashScreen(),
           settings: routeSettings,
         );
 
-      // ============ Authentication Routes ============
+      
       case welcome:
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
@@ -221,7 +222,7 @@ class AppRouter {
           settings: routeSettings,
         );
 
-      // ============ Student Routes ============
+      
       case studentDashboard:
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
@@ -334,7 +335,7 @@ class AppRouter {
           settings: routeSettings,
         );
 
-      // ============ Teacher Routes ============
+      
       case teacherDashboard:
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
@@ -364,7 +365,7 @@ class AppRouter {
             settings: routeSettings,
           );
         }
-        // Create new BLoC instance for root navigator
+        
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
             create: (_) => getIt<TeacherBloc>(),
@@ -374,11 +375,11 @@ class AppRouter {
         );
 
       case teacherAttendance:
-        final classId = routeSettings.arguments as String;
+        final args = routeSettings.arguments as AttendanceArguments;
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
             create: (_) => getIt<TeacherBloc>(),
-            child: TeacherAttendanceScreen(classId: classId),
+            child: TeacherAttendanceScreen(args: args),
           ),
           settings: routeSettings,
         );
@@ -422,11 +423,11 @@ class AppRouter {
           settings: routeSettings,
         );
 
-      // ============ Admin Routes ============
+      
       case adminHome:
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<AdminBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<AdminBloc>(),
             child: const HomeAdminScreen(),
           ),
           settings: routeSettings,
@@ -434,8 +435,8 @@ class AppRouter {
 
       case adminClasses:
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<AdminBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<AdminBloc>(),
             child: const AdminClassListScreen(),
           ),
           settings: routeSettings,
@@ -444,8 +445,8 @@ class AppRouter {
       case adminClassDetail:
         final classId = routeSettings.arguments as String;
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<AdminBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<AdminBloc>(),
             child: AdminClassDetailScreen(classId: classId),
           ),
           settings: routeSettings,
@@ -454,8 +455,8 @@ class AppRouter {
       case adminEditClass:
         final classInfo = routeSettings.arguments as AdminClass;
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<AdminBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<AdminBloc>(),
             child: AdminEditClassScreen(classInfo: classInfo),
           ),
           settings: routeSettings,
@@ -464,8 +465,8 @@ class AppRouter {
       case adminClassStudents:
         final classId = routeSettings.arguments as String;
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<AdminBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<AdminBloc>(),
             child: AdminClassStudentListScreen(classId: classId),
           ),
           settings: routeSettings,
@@ -474,8 +475,8 @@ class AppRouter {
       case adminStudentDetail:
         final studentId = routeSettings.arguments as String;
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<AdminBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<AdminBloc>(),
             child: AdminStudentDetailScreen(studentId: studentId),
           ),
           settings: routeSettings,
@@ -484,8 +485,8 @@ class AppRouter {
       case adminEditStudent:
         final student = routeSettings.arguments as AdminStudent;
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<AdminBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<AdminBloc>(),
             child: AdminEditStudentScreen(student: student),
           ),
           settings: routeSettings,
@@ -493,8 +494,8 @@ class AppRouter {
 
       case adminTeachers:
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<AdminBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<AdminBloc>(),
             child: const AdminTeacherListScreen(),
           ),
           settings: routeSettings,
@@ -503,8 +504,8 @@ class AppRouter {
       case adminTeacherDetail:
         final teacher = routeSettings.arguments as AdminTeacher;
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<AdminBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<AdminBloc>(),
             child: AdminTeacherDetailScreen(teacher: teacher),
           ),
           settings: routeSettings,
@@ -513,8 +514,8 @@ class AppRouter {
       case adminTeacherForm:
         final teacher = routeSettings.arguments as AdminTeacher?;
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<AdminBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<AdminBloc>(),
             child: AdminTeacherFormScreen(teacher: teacher),
           ),
           settings: routeSettings,
@@ -530,10 +531,10 @@ class AppRouter {
         );
 
       case adminQuickRegClassSelection:
-        // Share BLoC from previous screen (QuickRegistrationFormScreen)
+        
         return MaterialPageRoute(
           builder: (context) {
-            // Try to get existing BLoC from context
+            
             try {
               final bloc = context.read<RegistrationBloc>();
               return BlocProvider.value(
@@ -541,7 +542,7 @@ class AppRouter {
                 child: const QuickRegistrationClassSelectionScreen(),
               );
             } catch (e) {
-              // If no BLoC found, create new one
+              
               return BlocProvider(
                 create: (_) => getIt<RegistrationBloc>(),
                 child: const QuickRegistrationClassSelectionScreen(),
@@ -552,7 +553,7 @@ class AppRouter {
         );
 
       case adminQuickRegPromotion:
-        // Share BLoC from previous screen
+        
         return MaterialPageRoute(
           builder: (context) {
             try {
@@ -572,7 +573,7 @@ class AppRouter {
         );
 
       case adminQuickRegPayment:
-        // Share BLoC from previous screen
+        
         return MaterialPageRoute(
           builder: (context) {
             try {
@@ -591,7 +592,7 @@ class AppRouter {
           settings: routeSettings,
         );
 
-      // Removed: Report and Classroom route handlers
+      
 
       case adminCourseDetail:
         final course = routeSettings.arguments as CourseDetail;
@@ -625,8 +626,8 @@ class AppRouter {
       case adminClassFeedback:
         final classId = routeSettings.arguments as String;
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<AdminBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<AdminBloc>(),
             child: AdminClassFeedbackScreen(classId: classId),
           ),
           settings: routeSettings,
@@ -653,7 +654,7 @@ class AppRouter {
         );
 
       case AppRouter.settings:
-        // Get userRole from arguments, default to 'student'
+        
         final args = routeSettings.arguments as Map<String, dynamic>?;
         final userRole = args?['userRole'] as String? ?? 'student';
         return MaterialPageRoute(

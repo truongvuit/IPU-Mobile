@@ -31,6 +31,10 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
   @override
   void initState() {
     super.initState();
+    _loadStudentDetail();
+  }
+  
+  void _loadStudentDetail() {
     context.read<AdminBloc>().add(LoadStudentDetail(widget.studentId));
   }
 
@@ -444,7 +448,7 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
                                         context,
                                         AppRouter.adminClassDetail,
                                         arguments: classItem.id,
-                                      );
+                                      ).then((_) => _loadStudentDetail());
                                     },
                                     borderRadius: BorderRadius.circular(
                                       AppSizes.radiusSmall,
@@ -504,7 +508,7 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
                                   ),
                                 ),
                               );
-                            }).toList(),
+                            }),
                         ],
                       ),
                     ),

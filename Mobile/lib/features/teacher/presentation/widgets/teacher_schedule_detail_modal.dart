@@ -5,6 +5,7 @@ import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../domain/entities/teacher_schedule.dart';
+import '../../domain/entities/attendance_arguments.dart';
 
 
 class TeacherScheduleDetailModal extends StatelessWidget {
@@ -265,21 +266,31 @@ class TeacherScheduleDetailModal extends StatelessWidget {
                       SizedBox(width: AppSizes.p12),
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            Navigator.of(context, rootNavigator: true).pushNamed(
-                              AppRouter.teacherAttendance,
-                              arguments: schedule.classId, 
-                            );
-                          },
-                          icon: const Icon(Icons.checklist),
-                          label: const Text('Điểm danh'),
+                          onPressed: schedule.isCompleted
+                              ? null
+                              : () {
+                                  Navigator.pop(context);
+                                  Navigator.of(context, rootNavigator: true).pushNamed(
+                                    AppRouter.teacherAttendance,
+                                    arguments: AttendanceArguments.fromSchedule(
+                                      sessionId: schedule.id,
+                                      classId: schedule.classId,
+                                      className: schedule.className,
+                                      sessionDate: schedule.startTime,
+                                      room: schedule.room,
+                                    ),
+                                  );
+                                },
+                          icon: Icon(schedule.isCompleted ? Icons.lock_outline : Icons.checklist),
+                          label: Text(schedule.isCompleted ? 'Đã kết thúc' : 'Điểm danh'),
                           style: ElevatedButton.styleFrom(
                             padding: EdgeInsets.symmetric(
                               vertical: isDesktop ? AppSizes.p16 : AppSizes.p12,
                             ),
-                            backgroundColor: AppColors.primary,
+                            backgroundColor: schedule.isCompleted ? AppColors.gray400 : AppColors.primary,
                             foregroundColor: Colors.white,
+                            disabledBackgroundColor: AppColors.gray300,
+                            disabledForegroundColor: AppColors.gray500,
                           ),
                         ),
                       ),

@@ -20,6 +20,7 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
     on<LoadAttendance>(_onLoadAttendance);
     on<RecordAttendance>(_onRecordAttendance);
     on<SubmitAttendance>(_onSubmitAttendance);
+    on<BatchRecordAttendance>(_onBatchRecordAttendance);
     on<LoadClassScores>(_onLoadClassScores);
     on<LoadStudentScores>(_onLoadStudentScores);
     on<SubmitScore>(_onSubmitScore);
@@ -67,10 +68,28 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
       final classes = classesResult.getOrElse(() => []);
       final profile = profileResult.getOrElse(() => throw Exception('Profile not found'));
       
+      // Sort classes: ongoing first, then upcoming, then completed
+      final sortedClasses = [...classes];
+      sortedClasses.sort((a, b) {
+        int getStatusPriority(String? status) {
+          switch (status?.toLowerCase()) {
+            case 'ongoing':
+              return 0;
+            case 'upcoming':
+              return 1;
+            case 'completed':
+              return 2;
+            default:
+              return 1;
+          }
+        }
+        return getStatusPriority(a.status).compareTo(getStatusPriority(b.status));
+      });
+      
       emit(DashboardLoaded(
         todaySchedule: schedule,
         weekSchedule: weekSchedule,
-        recentClasses: classes.take(3).toList(),
+        recentClasses: sortedClasses.take(3).toList(),
         profile: profile,
       ));
     } catch (e) {
@@ -192,10 +211,8 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
     Emitter<TeacherState> emit,
   ) async {
     emit(TeacherLoading());
-    final result = await repository.getAttendanceSession(
-      event.classId,
-      event.date,
-    );
+    
+    final result = await repository.getAttendanceBySessionId(event.sessionId);
     result.fold(
       (error) => emit(TeacherError(error)),
       (session) => emit(AttendanceLoaded(session)),
@@ -237,6 +254,23 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
     Emitter<TeacherState> emit,
   ) async {
     final result = await repository.submitAttendance(event.sessionId);
+    result.fold(
+      (error) => emit(TeacherError(error)),
+      (_) => emit(const AttendanceSubmitted('Điểm danh đã được lưu thành công')),
+    );
+  }
+
+  Future<void> _onBatchRecordAttendance(
+    BatchRecordAttendance event,
+    Emitter<TeacherState> emit,
+  ) async {
+    emit(const TeacherLoading(action: 'Đang lưu điểm danh...'));
+    
+    final result = await repository.batchRecordAttendance(
+      event.sessionId,
+      event.entries,
+    );
+    
     result.fold(
       (error) => emit(TeacherError(error)),
       (_) => emit(const AttendanceSubmitted('Điểm danh đã được lưu thành công')),

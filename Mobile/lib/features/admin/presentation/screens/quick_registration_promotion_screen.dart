@@ -23,24 +23,35 @@ class _QuickRegistrationPromotionScreenState
     extends State<QuickRegistrationPromotionScreen> {
   final _promoCodeController = TextEditingController();
   String? _selectedPromoCode;
+  List<String> _selectedCourseIds = [];
 
   @override
   void initState() {
     super.initState();
     
-    
     final state = context.read<RegistrationBloc>().state;
     String? courseId;
+    
     if (state is RegistrationInProgress) {
       _selectedPromoCode = state.promotionCode;
       courseId = state.courseId;
+      _selectedCourseIds = state.selectedCourseIds;
+      if (_selectedPromoCode != null) {
+        _promoCodeController.text = _selectedPromoCode!;
+      }
+    } else if (state is ClassesLoaded) {
+      _selectedCourseIds = state.currentRegistration.selectedCourseIds;
+      _selectedPromoCode = state.currentRegistration.promotionCode;
       if (_selectedPromoCode != null) {
         _promoCodeController.text = _selectedPromoCode!;
       }
     }
     
-    
-    context.read<RegistrationBloc>().add(LoadPromotions(courseId: courseId));
+    // Load promotions với selectedCourseIds để lọc theo khóa đã chọn
+    context.read<RegistrationBloc>().add(LoadPromotions(
+      courseId: courseId,
+      selectedCourseIds: _selectedCourseIds,
+    ));
   }
 
   @override
@@ -118,8 +129,11 @@ class _QuickRegistrationPromotionScreenState
           }
 
           List<dynamic> promotions = [];
+          List<dynamic> allPromotions = [];
           if (state is PromotionsLoaded) {
+            // validPromotions đã được lọc theo selectedCourseIds
             promotions = state.validPromotions;
+            allPromotions = state.promotions;
           }
 
           return Column(
@@ -205,7 +219,7 @@ class _QuickRegistrationPromotionScreenState
               ),
 
               Expanded(
-                child: promotions.isEmpty
+                child: allPromotions.isEmpty
                     ? const Center(
                         child: EmptyStateWidget(
                           icon: Icons.local_offer,
@@ -216,15 +230,18 @@ class _QuickRegistrationPromotionScreenState
                         padding: EdgeInsets.symmetric(
                           horizontal: AppSizes.paddingMedium,
                         ),
-                        itemCount: promotions.length,
+                        itemCount: allPromotions.length,
                         itemBuilder: (context, index) {
-                          final promotion = promotions[index];
+                          final promotion = allPromotions[index];
+                          final isApplicable = promotion.canApplyForCourses(_selectedCourseIds);
                           return Padding(
                             padding: EdgeInsets.only(bottom: AppSizes.p12),
                             child: PromotionCard(
                               promotion: promotion,
                               isSelected: _selectedPromoCode == promotion.code,
-                              onTap: () => _selectPromotion(promotion.code),
+                              isApplicable: isApplicable,
+                              selectedCourseIds: _selectedCourseIds,
+                              onTap: isApplicable ? () => _selectPromotion(promotion.code) : null,
                             ),
                           );
                         },

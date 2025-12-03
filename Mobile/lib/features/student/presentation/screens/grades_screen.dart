@@ -51,16 +51,17 @@ class _GradesScreenState extends State<GradesScreen> {
     super.dispose();
   }
 
-  bool _matchesGradeFilter(double averageScore) {
+  bool _matchesGradeFilter(double score) {
+    // Thang điểm 10
     switch (_selectedGradeFilter) {
       case 'excellent':
-        return averageScore >= 90;
+        return score >= 9;
       case 'good':
-        return averageScore >= 80 && averageScore < 90;
+        return score >= 8 && score < 9;
       case 'average':
-        return averageScore >= 65 && averageScore < 80;
+        return score >= 6.5 && score < 8;
       case 'poor':
-        return averageScore < 65;
+        return score < 6.5;
       default:
         return true;
     }
@@ -190,39 +191,24 @@ class _GradesScreenState extends State<GradesScreen> {
                 if (state is CourseGradesLoaded || state is GradesLoaded) {
                   final grades = state is CourseGradesLoaded ? state.grades : (state as GradesLoaded).grades;
                   
-                  // Group grades by course
-                  final Map<String, List<Grade>> groupedGrades = {};
-                  for (var grade in grades) {
-                    if (!groupedGrades.containsKey(grade.courseName)) {
-                      groupedGrades[grade.courseName] = [];
-                    }
-                    groupedGrades[grade.courseName]!.add(grade);
-                  }
-
                   // Filter by search query and grade filter
-                  final filteredCourses = groupedGrades.keys.where((courseName) {
-                    // Search filter
-                    if (!courseName.toLowerCase().contains(_searchQuery)) {
+                  final filteredGrades = grades.where((grade) {
+                    // Search filter by courseName or className
+                    final searchText = '${grade.courseName ?? ''} ${grade.className ?? ''}'.toLowerCase();
+                    if (!searchText.contains(_searchQuery)) {
                       return false;
                     }
 
-                    // Grade filter
+                    // Grade filter by totalScore
                     if (_selectedGradeFilter != 'all') {
-                      final courseGrades = groupedGrades[courseName]!;
-                      double totalScore = 0;
-                      int scoreCount = 0;
-                      for (var grade in courseGrades) {
-                        totalScore += grade.percentage;
-                        scoreCount++;
-                      }
-                      final averageScore = scoreCount > 0 ? totalScore / scoreCount : 0.0;
-                      return _matchesGradeFilter(averageScore);
+                      final score = grade.totalScore ?? 0;
+                      return _matchesGradeFilter(score);
                     }
 
                     return true;
                   }).toList();
 
-                  if (filteredCourses.isEmpty) {
+                  if (filteredGrades.isEmpty) {
                     return EmptyStateWidget(
                       icon: Icons.search_off,
                       message: _searchQuery.isNotEmpty 
@@ -243,11 +229,10 @@ class _GradesScreenState extends State<GradesScreen> {
                         AppSizes.paddingMedium, 
                         100.h
                       ),
-                      itemCount: filteredCourses.length,
+                      itemCount: filteredGrades.length,
                       itemBuilder: (context, index) {
-                        final courseName = filteredCourses[index];
-                        final courseGrades = groupedGrades[courseName]!;
-                        return _buildCourseGradeCard(context, courseName, courseGrades, isDark);
+                        final grade = filteredGrades[index];
+                        return _buildGradeCard(context, grade, isDark);
                       },
                     ),
                   );
@@ -318,28 +303,11 @@ class _GradesScreenState extends State<GradesScreen> {
     );
   }
 
-  Widget _buildCourseGradeCard(BuildContext context, String courseName, List<Grade> grades, bool isDark) {
-    // Extract scores
-    double? midtermScore;
-    double? finalScore;
-    double totalScore = 0;
-    int scoreCount = 0;
-
-    for (var grade in grades) {
-      final type = grade.examType.toLowerCase();
-      if (type.contains('midterm') || type.contains('giữa')) {
-        midtermScore = grade.percentage;
-      } else if (type.contains('final') || type.contains('cuối')) {
-        finalScore = grade.percentage;
-      }
-      
-      totalScore += grade.percentage;
-      scoreCount++;
-    }
-
-    final averageScore = scoreCount > 0 ? totalScore / scoreCount : 0.0;
-    final status = _getGradeStatus(averageScore);
-    final statusColor = _getStatusColor(averageScore);
+  Widget _buildGradeCard(BuildContext context, Grade grade, bool isDark) {
+    final totalScore = grade.totalScore ?? 0;
+    final status = grade.status ?? _getGradeStatus(totalScore);
+    final statusColor = _getStatusColor(totalScore);
+    final letterGrade = grade.grade ?? '';
 
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
@@ -350,21 +318,37 @@ class _GradesScreenState extends State<GradesScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
+          // Header with course name and status
           Padding(
             padding: EdgeInsets.all(16.w),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: Text(
-                    courseName,
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : AppColors.textPrimary,
-                      fontFamily: 'Lexend',
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        grade.courseName ?? 'Chưa xác định',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? Colors.white : AppColors.textPrimary,
+                          fontFamily: 'Lexend',
+                        ),
+                      ),
+                      if (grade.className != null) ...[
+                        SizedBox(height: 4.h),
+                        Text(
+                          grade.className!,
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
+                            fontFamily: 'Lexend',
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
                 Container(
@@ -373,14 +357,31 @@ class _GradesScreenState extends State<GradesScreen> {
                     color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20.r),
                   ),
-                  child: Text(
-                    status,
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w600,
-                      color: statusColor,
-                      fontFamily: 'Lexend',
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (letterGrade.isNotEmpty) ...[
+                        Text(
+                          letterGrade,
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w700,
+                            color: statusColor,
+                            fontFamily: 'Lexend',
+                          ),
+                        ),
+                        SizedBox(width: 6.w),
+                      ],
+                      Text(
+                        status,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                          color: statusColor,
+                          fontFamily: 'Lexend',
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -394,51 +395,99 @@ class _GradesScreenState extends State<GradesScreen> {
             child: Row(
               children: [
                 Expanded(
-                  child: _buildScoreColumn('Giữa kỳ', midtermScore, isDark),
+                  child: _buildScoreColumn('Chuyên cần', grade.attendanceScore, isDark),
                 ),
                 Expanded(
-                  child: _buildScoreColumn('Cuối kỳ', finalScore, isDark),
+                  child: _buildScoreColumn('Giữa kỳ', grade.midtermScore, isDark),
                 ),
                 Expanded(
-                  child: _buildScoreColumn('Trung bình', averageScore, isDark, isAverage: true),
+                  child: _buildScoreColumn('Cuối kỳ', grade.finalScore, isDark),
+                ),
+                Expanded(
+                  child: _buildScoreColumn('Tổng', totalScore, isDark, isAverage: true),
                 ),
               ],
             ),
           ),
 
-          // Footer
-          Padding(
-            padding: EdgeInsets.all(16.w),
-            child: Row(
-              children: [
-                Text(
-                  'Đánh giá: ',
-                  style: TextStyle(
-                    fontSize: 13.sp,
+          // Comment if available
+          if (grade.comment != null && grade.comment!.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.all(16.w),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.comment_outlined,
+                    size: 16.sp,
                     color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
-                    fontFamily: 'Lexend',
                   ),
-                ),
-                Text(
-                  status,
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w500,
-                    color: isDark ? Colors.white : AppColors.textPrimary,
-                    fontFamily: 'Lexend',
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Text(
+                      grade.comment!,
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        fontStyle: FontStyle.italic,
+                        color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
+                        fontFamily: 'Lexend',
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+
+          // Graded by info
+          if (grade.gradedByName != null || grade.lastGradedAt != null)
+            Padding(
+              padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 8.h),
+              child: Row(
+                children: [
+                  if (grade.gradedByName != null) ...[
+                    Icon(
+                      Icons.person_outline,
+                      size: 14.sp,
+                      color: isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF),
+                    ),
+                    SizedBox(width: 4.w),
+                    Text(
+                      grade.gradedByName!,
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF),
+                        fontFamily: 'Lexend',
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                  ],
+                  if (grade.lastGradedAt != null) ...[
+                    Icon(
+                      Icons.access_time,
+                      size: 14.sp,
+                      color: isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF),
+                    ),
+                    SizedBox(width: 4.w),
+                    Text(
+                      _formatDate(grade.lastGradedAt!),
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF),
+                        fontFamily: 'Lexend',
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           
           // Progress Bar
           Padding(
-            padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
+            padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 16.h),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(4.r),
               child: LinearProgressIndicator(
-                value: averageScore / 100,
+                value: (totalScore / 10).clamp(0.0, 1.0),
                 backgroundColor: isDark ? const Color(0xFF4B5563) : const Color(0xFFE5E7EB),
                 valueColor: AlwaysStoppedAnimation<Color>(statusColor),
                 minHeight: 6.h,
@@ -448,6 +497,10 @@ class _GradesScreenState extends State<GradesScreen> {
         ],
       ),
     );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
   }
 
   Widget _buildScoreColumn(String title, double? score, bool isDark, {bool isAverage = false}) {
@@ -478,17 +531,19 @@ class _GradesScreenState extends State<GradesScreen> {
   }
 
   String _getGradeStatus(double score) {
-    if (score >= 90) return 'Xuất sắc';
-    if (score >= 80) return 'Giỏi';
-    if (score >= 65) return 'Khá';
-    if (score >= 50) return 'Trung bình';
+    // Thang điểm 10
+    if (score >= 9) return 'Xuất sắc';
+    if (score >= 8) return 'Giỏi';
+    if (score >= 6.5) return 'Khá';
+    if (score >= 5) return 'Trung bình';
     return 'Yếu';
   }
 
   Color _getStatusColor(double score) {
-    if (score >= 90) return const Color(0xFF10B981); // Success/Green
-    if (score >= 80) return const Color(0xFF3B82F6); // Blue
-    if (score >= 65) return const Color(0xFFF59E0B); // Warning/Orange
+    // Thang điểm 10
+    if (score >= 9) return const Color(0xFF10B981); // Success/Green
+    if (score >= 8) return const Color(0xFF3B82F6); // Blue
+    if (score >= 6.5) return const Color(0xFFF59E0B); // Warning/Orange
     return const Color(0xFFEF4444); // Error/Red
   }
 }

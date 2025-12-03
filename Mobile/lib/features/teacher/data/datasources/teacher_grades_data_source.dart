@@ -24,18 +24,18 @@ class TeacherGradesDataSourceImpl implements TeacherGradesDataSource {
         final data = response.data['data'];
         if (data == null) return [];
 
-        // Parse response format từ ClassGradesResponse
+        
         final className = data['className'] ?? '';
         final courseName = data['courseName'] ?? '';
         final students = data['students'] as List? ?? [];
 
         return students.map((student) {
-          // Map từ API response format sang ClassGradeSummaryModel format
+          
           return ClassGradeSummaryModel.fromJson({
             'mahocvien': student['studentId']?.toString() ?? '',
             'ten_hocvien': student['studentName'] ?? '',
             'email': student['email'] ?? '',
-            'sdt': '', // API không trả về phone
+            'sdt': '', 
             'malop': classId,
             'tenlop': className,
             'tenkhoahoc': courseName,

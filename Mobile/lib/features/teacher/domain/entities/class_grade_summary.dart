@@ -1,7 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-
-
 class ClassGradeSummary extends Equatable {
   final String studentId; 
   final String studentName; 
@@ -11,21 +9,14 @@ class ClassGradeSummary extends Equatable {
   final String className; 
   final String courseName; 
 
-  
   final double? attendanceScore; 
   final double? midtermScore; 
   final double? finalScore; 
 
-  
   final double finalGrade; 
-
-  
   final String classification; 
-
-  
   final DateTime? lastGradedDate; 
 
-  
   final String
   completionStatus; 
 
@@ -53,7 +44,6 @@ class ClassGradeSummary extends Equatable {
   bool get hasAnyGrade =>
       attendanceScore != null || midtermScore != null || finalScore != null;
 
-  
   String get classificationColor {
     switch (classification) {
       case 'Xuất sắc':

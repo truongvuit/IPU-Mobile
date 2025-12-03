@@ -4,6 +4,12 @@ enum DiscountType { percentage, fixedAmount }
 
 enum PromotionStatus { active, scheduled, expired, draft }
 
+/// Loại khuyến mãi: đơn lẻ hoặc combo
+enum PromotionType { 
+  single,  // Áp dụng cho 1 hoặc nhiều khóa, chọn 1 khóa là được
+  combo,   // Phải chọn đúng tất cả các khóa trong combo mới áp dụng được
+}
+
 class Promotion extends Equatable {
   final String id;
   final String code;
@@ -19,6 +25,8 @@ class Promotion extends Equatable {
   final double? minOrderValue;
   final List<String>? applicableCourseIds;
   final List<String>? applicableCourseNames;
+  final PromotionType promotionType; // Loại khuyến mãi
+  final bool requireAllCourses; // true nếu phải chọn tất cả khóa trong danh sách
 
   const Promotion({
     required this.id,
@@ -35,6 +43,8 @@ class Promotion extends Equatable {
     this.minOrderValue,
     this.applicableCourseIds,
     this.applicableCourseNames,
+    this.promotionType = PromotionType.single,
+    this.requireAllCourses = false,
   });
 
   @override
@@ -53,6 +63,8 @@ class Promotion extends Equatable {
     minOrderValue,
     applicableCourseIds,
     applicableCourseNames,
+    promotionType,
+    requireAllCourses,
   ];
 
   bool get isValid {
@@ -61,6 +73,29 @@ class Promotion extends Equatable {
         now.isAfter(startDate) &&
         now.isBefore(endDate) &&
         (usageLimit == null || usageCount < usageLimit!);
+  }
+
+  /// Kiểm tra xem khuyến mãi có thể áp dụng cho danh sách khóa học đã chọn không
+  bool canApplyForCourses(List<String> selectedCourseIds) {
+    if (!isValid) return false;
+    
+    // Nếu không có ràng buộc khóa học, áp dụng cho tất cả
+    if (applicableCourseIds == null || applicableCourseIds!.isEmpty) {
+      return true;
+    }
+    
+    // Nếu là combo (requireAllCourses = true), phải chọn đúng tất cả khóa
+    if (requireAllCourses || promotionType == PromotionType.combo) {
+      // Kiểm tra xem tất cả khóa trong combo có được chọn không
+      return applicableCourseIds!.every(
+        (courseId) => selectedCourseIds.contains(courseId),
+      );
+    }
+    
+    // Nếu là single, chỉ cần 1 khóa trong danh sách được chọn
+    return selectedCourseIds.any(
+      (courseId) => applicableCourseIds!.contains(courseId),
+    );
   }
 
   double calculateDiscount(double originalPrice) {

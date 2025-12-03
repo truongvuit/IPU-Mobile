@@ -301,7 +301,7 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
                 _buildLabel('Trình độ học vấn'),
                 SizedBox(height: AppSizes.p8),
                 DropdownButtonFormField<String>(
-                  value: _selectedEducationLevel,
+                  initialValue: _selectedEducationLevel,
                   decoration: InputDecoration(
                     prefixIcon: Icon(
                       Icons.school_outlined,
@@ -388,7 +388,7 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
                               }
                             });
                           },
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                         ),
                       ],
                     ),

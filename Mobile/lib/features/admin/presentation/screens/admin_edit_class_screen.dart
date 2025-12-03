@@ -31,7 +31,7 @@ class _AdminEditClassScreenState extends State<AdminEditClassScreen> {
   TimeOfDay? _startTime;
   TimeOfDay? _endTime;
   String? _selectedRoom;
-  Set<int> _selectedDays = {};
+  final Set<int> _selectedDays = {};
 
   List<Map<String, dynamic>> _rooms = [];
   bool _isLoadingRooms = true;
@@ -453,7 +453,7 @@ class _AdminEditClassScreenState extends State<AdminEditClassScreen> {
                         ),
                       )
                     : DropdownButtonFormField<String>(
-                        value: _selectedRoom,
+                        initialValue: _selectedRoom,
                         decoration: InputDecoration(
                           filled: true,
                           fillColor: isDark

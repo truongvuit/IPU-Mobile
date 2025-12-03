@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-
 class TeacherClass extends Equatable {
   final String id;
   final String code;

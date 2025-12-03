@@ -106,6 +106,13 @@ class RegistrationInProgress extends RegistrationState {
   String? get courseName =>
       selectedClasses.isEmpty ? null : selectedClasses.first.courseName;
 
+  // Lấy tất cả course IDs đã chọn (unique)
+  List<String> get selectedCourseIds => selectedClasses
+      .where((c) => c.courseId != null)
+      .map((c) => c.courseId!)
+      .toSet()
+      .toList();
+
   bool get isValid {
     // Học viên mới: cần có tên và SĐT
     // Học viên cũ: cần có studentId
@@ -171,22 +178,75 @@ class RegistrationInProgress extends RegistrationState {
   }
 }
 
+/// Thông tin filter cho màn chọn lớp
+class ClassFilterInfo {
+  final String? courseId;
+  final String? courseName;
+  final String? teacherId;
+  final String? teacherName;
+  final String? schedule; // Ví dụ: "2-4-6", "3-5-7"
+
+  const ClassFilterInfo({
+    this.courseId,
+    this.courseName,
+    this.teacherId,
+    this.teacherName,
+    this.schedule,
+  });
+}
+
 // Classes list loaded
 class ClassesLoaded extends RegistrationState {
   final List<AdminClass> classes;
   final RegistrationInProgress currentRegistration;
+  // Dữ liệu filter từ API
+  final List<Map<String, dynamic>> courses;
+  final List<Map<String, dynamic>> teachers;
+  final List<String> schedules;
+  // Filter đang áp dụng
+  final ClassFilterInfo? appliedFilter;
 
   const ClassesLoaded({
     required this.classes,
     required this.currentRegistration,
+    this.courses = const [],
+    this.teachers = const [],
+    this.schedules = const [],
+    this.appliedFilter,
   });
 
   @override
-  List<Object?> get props => [classes, currentRegistration];
+  List<Object?> get props => [
+    classes,
+    currentRegistration,
+    courses,
+    teachers,
+    schedules,
+    appliedFilter,
+  ];
 
   List<AdminClass> get availableClasses => classes
       .where((c) => !c.isFull && c.status != ClassStatus.completed)
       .toList();
+
+  ClassesLoaded copyWith({
+    List<AdminClass>? classes,
+    RegistrationInProgress? currentRegistration,
+    List<Map<String, dynamic>>? courses,
+    List<Map<String, dynamic>>? teachers,
+    List<String>? schedules,
+    ClassFilterInfo? appliedFilter,
+    bool clearFilter = false,
+  }) {
+    return ClassesLoaded(
+      classes: classes ?? this.classes,
+      currentRegistration: currentRegistration ?? this.currentRegistration,
+      courses: courses ?? this.courses,
+      teachers: teachers ?? this.teachers,
+      schedules: schedules ?? this.schedules,
+      appliedFilter: clearFilter ? null : (appliedFilter ?? this.appliedFilter),
+    );
+  }
 }
 
 // Promotions loaded
@@ -202,8 +262,16 @@ class PromotionsLoaded extends RegistrationState {
   @override
   List<Object?> get props => [promotions, currentRegistration];
 
-  List<Promotion> get validPromotions =>
-      promotions.where((p) => p.isValid).toList();
+  /// Lọc khuyến mãi có thể áp dụng cho các khóa đã chọn
+  List<Promotion> get validPromotions {
+    final selectedCourseIds = currentRegistration.selectedCourseIds;
+    return promotions.where((p) {
+      // Kiểm tra khuyến mãi còn hiệu lực
+      if (!p.isValid) return false;
+      // Kiểm tra có thể áp dụng cho các khóa đã chọn
+      return p.canApplyForCourses(selectedCourseIds);
+    }).toList();
+  }
 }
 
 // Registration submitted

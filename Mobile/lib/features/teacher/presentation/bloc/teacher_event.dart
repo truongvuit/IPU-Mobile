@@ -60,11 +60,18 @@ class SearchStudents extends TeacherEvent {
 
 
 class LoadAttendance extends TeacherEvent {
+  /// Session ID để gọi API điểm danh
+  final String sessionId;
+  /// Class ID để lấy danh sách sinh viên nếu cần
   final String classId;
-  final DateTime date;
-  const LoadAttendance(this.classId, this.date);
+  
+  const LoadAttendance({
+    required this.sessionId,
+    required this.classId,
+  });
+  
   @override
-  List<Object> get props => [classId, date];
+  List<Object> get props => [sessionId, classId];
 }
 
 class RecordAttendance extends TeacherEvent {
@@ -82,6 +89,14 @@ class SubmitAttendance extends TeacherEvent {
   const SubmitAttendance(this.sessionId);
   @override
   List<Object> get props => [sessionId];
+}
+
+class BatchRecordAttendance extends TeacherEvent {
+  final String sessionId;
+  final List<Map<String, dynamic>> entries;
+  const BatchRecordAttendance({required this.sessionId, required this.entries});
+  @override
+  List<Object> get props => [sessionId, entries];
 }
 
 

@@ -43,7 +43,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final List<Widget> _pages = [
+    final List<Widget> pages = [
       StudentHomeTab(onOpenDrawer: _openDrawer),
       ClassListScreen(isTab: true, onMenuPressed: _openDrawer),
       ScheduleScreen(isTab: true, onMenuPressed: _openDrawer),
@@ -51,7 +51,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     ];
 
     
-    if (_currentIndex >= _pages.length) {
+    if (_currentIndex >= pages.length) {
       _currentIndex = 0;
     }
 
@@ -70,7 +70,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       ),
       body: IndexedStack(
         index: _currentIndex,
-        children: _pages,
+        children: pages,
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(

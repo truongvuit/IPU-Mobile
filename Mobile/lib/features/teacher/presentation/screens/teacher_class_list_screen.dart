@@ -11,9 +11,6 @@ import '../bloc/teacher_event.dart';
 import '../bloc/teacher_state.dart';
 import '../widgets/teacher_class_card.dart';
 import '../widgets/teacher_app_bar.dart';
-
-
-
 class TeacherClassListScreen extends StatefulWidget {
   final String? mode;
   final bool showScaffold;
@@ -216,12 +213,19 @@ class _TeacherClassListScreenState extends State<TeacherClassListScreen> {
                                   final classId = state.classes[index].id;
 
                                   if (widget.mode == 'attendance') {
-                                    Navigator.of(
-                                      context,
-                                      rootNavigator: true,
-                                    ).pushNamed(
-                                      AppRouter.teacherAttendance,
-                                      arguments: classId,
+                                    // Navigate to schedule to select session
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: const Text('Vui lòng chọn buổi học từ Lịch dạy để điểm danh'),
+                                        backgroundColor: AppColors.warning,
+                                        action: SnackBarAction(
+                                          label: 'Xem lịch',
+                                          textColor: Colors.white,
+                                          onPressed: () {
+                                            Navigator.pushNamed(context, AppRouter.teacherSchedule);
+                                          },
+                                        ),
+                                      ),
                                     );
                                   } else {
                                     Navigator.of(
@@ -234,20 +238,25 @@ class _TeacherClassListScreenState extends State<TeacherClassListScreen> {
                                   }
                                 },
                               )
-                            : SizedBox(
-                                height: 250.h,
-                                child: TeacherClassCard(
+                            : TeacherClassCard(
                                   classItem: state.classes[index],
                                   onTap: () {
                                     final classId = state.classes[index].id;
 
                                     if (widget.mode == 'attendance') {
-                                      Navigator.of(
-                                        context,
-                                        rootNavigator: true,
-                                      ).pushNamed(
-                                        AppRouter.teacherAttendance,
-                                        arguments: classId,
+                                      // Navigate to schedule to select session
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: const Text('Vui lòng chọn buổi học từ Lịch dạy để điểm danh'),
+                                          backgroundColor: AppColors.warning,
+                                          action: SnackBarAction(
+                                            label: 'Xem lịch',
+                                            textColor: Colors.white,
+                                            onPressed: () {
+                                              Navigator.pushNamed(context, AppRouter.teacherSchedule);
+                                            },
+                                          ),
+                                        ),
                                       );
                                     } else {
                                       Navigator.of(
@@ -260,7 +269,6 @@ class _TeacherClassListScreenState extends State<TeacherClassListScreen> {
                                     }
                                   },
                                 ),
-                              ),
                       );
                     },
                   ),

@@ -27,7 +27,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<AdminBloc>().add(const LoadAdminDashboard());
+    // Load được quản lý bởi HomeAdminScreen._loadDataForTab
   }
 
   @override
@@ -40,7 +40,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
     return BlocBuilder<AdminBloc, AdminState>(
       builder: (context, state) {
-        
         if (state is AdminInitial || state is AdminLoading) {
           return SingleChildScrollView(
             padding: EdgeInsets.all(AppSizes.paddingMedium),
@@ -112,7 +111,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
-                
                 SliverToBoxAdapter(
                   child: Builder(
                     builder: (scaffoldContext) {
@@ -129,7 +127,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                 ),
 
-                
                 SliverPadding(
                   padding: EdgeInsets.symmetric(
                     horizontal: AppSizes.paddingMedium,
@@ -153,12 +150,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           AppColors.primary.withValues(alpha: 0.7),
                         ],
                         onTap: () {
-                          
                           final homeState = context
                               .findAncestorStateOfType<State>();
-                          if (homeState != null && homeState.mounted) {
-                            
-                          }
+                          if (homeState != null && homeState.mounted) {}
                         },
                       ),
                       _LargeStatCard(
@@ -186,9 +180,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           AppColors.info,
                           AppColors.info.withValues(alpha: 0.7),
                         ],
-                        onTap: () {
-                          
-                        },
+                        onTap: () {},
                       ),
                       _LargeStatCard(
                         title: 'Giảng viên',
@@ -205,7 +197,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                 ),
 
-                
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.symmetric(
@@ -275,7 +266,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                 ),
 
-                
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(
@@ -297,7 +287,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         if (state.recentActivities.length > 5)
                           TextButton(
                             onPressed: () {
-                              
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
@@ -330,7 +319,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                   )
                 else ...[
-                  
                   SliverPadding(
                     padding: EdgeInsets.fromLTRB(
                       AppSizes.paddingMedium,
@@ -373,12 +361,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           );
         }
 
-        return const SizedBox.shrink();
+        return SingleChildScrollView(
+          padding: EdgeInsets.all(AppSizes.paddingMedium),
+          child: Column(
+            children: [
+              SkeletonWidget.rectangular(height: 64.h),
+              SizedBox(height: AppSizes.paddingMedium),
+              SkeletonWidget.rectangular(height: 100.h),
+              SizedBox(height: AppSizes.paddingMedium),
+              SkeletonWidget.rectangular(height: 200.h),
+              SizedBox(height: AppSizes.paddingMedium),
+              SkeletonWidget.rectangular(height: 150.h),
+            ],
+          ),
+        );
       },
     );
   }
 }
-
 
 class _LargeStatCard extends StatelessWidget {
   final String title;
@@ -473,7 +473,6 @@ class _LargeStatCard extends StatelessWidget {
   }
 }
 
-
 class _QuickActionCard extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -498,7 +497,7 @@ class _QuickActionCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
         child: Container(
-          height: 100.h, 
+          height: 100.h,
           padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 8.w),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppSizes.radiusMedium),

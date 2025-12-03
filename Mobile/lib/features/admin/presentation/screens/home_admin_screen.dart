@@ -9,6 +9,7 @@ import '../../../authentication/presentation/bloc/auth_bloc.dart';
 import '../../../authentication/presentation/bloc/auth_state.dart';
 import '../bloc/admin_bloc.dart';
 import '../bloc/admin_event.dart';
+import '../bloc/admin_state.dart';
 import 'admin_dashboard_screen.dart';
 import 'admin_class_list_screen.dart';
 import 'admin_teacher_list_screen.dart';
@@ -27,7 +28,6 @@ class _HomeAdminScreenState extends State<HomeAdminScreen> {
   int _selectedIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  
   late final List<Widget> _screens;
 
   @override
@@ -40,6 +40,11 @@ class _HomeAdminScreenState extends State<HomeAdminScreen> {
       const AdminStudentListScreen(),
       const AdminProfileScreen(isTab: true),
     ];
+    
+    // Load data cho tab đầu tiên (dashboard) khi khởi động
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadDataForTab(0);
+    });
   }
 
   void _onTabSelected(int index) {
@@ -47,27 +52,33 @@ class _HomeAdminScreenState extends State<HomeAdminScreen> {
       setState(() {
         _selectedIndex = index;
       });
-      
+
       _loadDataForTab(index);
     }
   }
 
   void _loadDataForTab(int index) {
     final bloc = context.read<AdminBloc>();
+    final currentState = bloc.state;
     switch (index) {
       case 0:
-        bloc.add(const LoadAdminDashboard());
+        // Dashboard - chỉ load nếu chưa có hoặc state không phải dashboard
+        if (currentState is! AdminDashboardLoaded) {
+          bloc.add(const LoadAdminDashboard());
+        }
         break;
       case 1:
+        // Class list - luôn reload để đảm bảo hiển thị đúng sau khi từ detail quay về
         bloc.add(const LoadClassList());
         break;
       case 2:
+        // Teacher list - luôn reload
         bloc.add(const LoadTeacherList());
         break;
       case 3:
+        // Student list - luôn reload
         bloc.add(const LoadStudentList());
         break;
-      
     }
   }
 
@@ -80,7 +91,6 @@ class _HomeAdminScreenState extends State<HomeAdminScreen> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthUnauthenticated) {
-          
           Navigator.of(
             context,
           ).pushNamedAndRemoveUntil(AppRouter.login, (route) => false);
@@ -91,14 +101,14 @@ class _HomeAdminScreenState extends State<HomeAdminScreen> {
         backgroundColor: isDark
             ? AppColors.backgroundDark
             : AppColors.backgroundLight,
-        
+
         drawer: AdminDrawer(
           currentIndex: _selectedIndex,
           onTabSelected: _onTabSelected,
         ),
-        
+
         body: IndexedStack(index: _selectedIndex, children: _screens),
-        
+
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () {
             Navigator.pushNamed(context, AppRouter.adminQuickRegistration);

@@ -116,6 +116,27 @@ class LoadAvailableClasses extends RegistrationEvent {
   List<Object?> get props => [searchQuery];
 }
 
+// Filter classes by course, teacher, schedule
+class FilterClasses extends RegistrationEvent {
+  final String? courseId;
+  final String? teacherId;
+  final String? schedule;
+
+  const FilterClasses({
+    this.courseId,
+    this.teacherId,
+    this.schedule,
+  });
+
+  @override
+  List<Object?> get props => [courseId, teacherId, schedule];
+}
+
+// Clear class filter
+class ClearClassFilter extends RegistrationEvent {
+  const ClearClassFilter();
+}
+
 class ApplyPromotion extends RegistrationEvent {
   final String promotionCode;
 
@@ -127,11 +148,12 @@ class ApplyPromotion extends RegistrationEvent {
 
 class LoadPromotions extends RegistrationEvent {
   final String? courseId;
+  final List<String>? selectedCourseIds; // Danh sách các khóa đã chọn
 
-  const LoadPromotions({this.courseId});
+  const LoadPromotions({this.courseId, this.selectedCourseIds});
 
   @override
-  List<Object?> get props => [courseId];
+  List<Object?> get props => [courseId, selectedCourseIds];
 }
 
 class RemovePromotion extends RegistrationEvent {

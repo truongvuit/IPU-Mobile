@@ -1,64 +1,100 @@
 import 'package:equatable/equatable.dart';
 
-
+/// Grade entity matching backend GradeResponse
 class Grade extends Equatable {
-  final String id;
-  final String courseName;
-  final String examType; 
-  final double score;
-  final double maxScore;
-  final DateTime examDate;
-  final String? feedback;
+  final int? gradeId;
+  final int? classId;
+  final String? className;
+  final int? courseId;
+  final String? courseName;
+  final String? courseImage;
+  
+  // Điểm theo từng loại
+  final double? attendanceScore;  // Điểm chuyên cần
+  final double? midtermScore;     // Điểm giữa kỳ
+  final double? finalScore;       // Điểm cuối kỳ
+  
+  // Điểm tổng kết và xếp loại
+  final double? totalScore;
+  final String? grade;            // Xuất sắc/Giỏi/Khá/TB/Yếu
+  final String? status;           // Hoàn thành / Chưa hoàn thành
+  
+  // Thông tin bổ sung
+  final String? comment;
+  final DateTime? lastGradedAt;
+  final String? gradedByName;
 
   const Grade({
-    required this.id,
-    required this.courseName,
-    required this.examType,
-    required this.score,
-    required this.maxScore,
-    required this.examDate,
-    this.feedback,
+    this.gradeId,
+    this.classId,
+    this.className,
+    this.courseId,
+    this.courseName,
+    this.courseImage,
+    this.attendanceScore,
+    this.midtermScore,
+    this.finalScore,
+    this.totalScore,
+    this.grade,
+    this.status,
+    this.comment,
+    this.lastGradedAt,
+    this.gradedByName,
   });
 
-  double get percentage => (score / maxScore) * 100;
+  factory Grade.fromJson(Map<String, dynamic> json) {
+    return Grade(
+      gradeId: json['gradeId'] as int?,
+      classId: json['classId'] as int?,
+      className: json['className'] as String?,
+      courseId: json['courseId'] as int?,
+      courseName: json['courseName'] as String?,
+      courseImage: json['courseImage'] as String?,
+      attendanceScore: _parseDouble(json['attendanceScore']),
+      midtermScore: _parseDouble(json['midtermScore']),
+      finalScore: _parseDouble(json['finalScore']),
+      totalScore: _parseDouble(json['totalScore']),
+      grade: json['grade'] as String?,
+      status: json['status'] as String?,
+      comment: json['comment'] as String?,
+      lastGradedAt: json['lastGradedAt'] != null 
+          ? DateTime.tryParse(json['lastGradedAt'].toString())
+          : null,
+      gradedByName: json['gradedByName'] as String?,
+    );
+  }
 
-  String get letterGrade {
-    final percent = percentage;
-    if (percent >= 90) return 'A';
-    if (percent >= 80) return 'B';
-    if (percent >= 70) return 'C';
-    if (percent >= 60) return 'D';
-    return 'F';
+  static double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
+  }
+
+  bool get isCompleted => status == 'Hoàn thành';
+  
+  String get displayTotalScore {
+    if (totalScore == null) return '--';
+    return totalScore!.toStringAsFixed(1);
   }
 
   @override
   List<Object?> get props => [
-        id,
+        gradeId,
+        classId,
+        className,
+        courseId,
         courseName,
-        examType,
-        score,
-        maxScore,
-        examDate,
-        feedback,
+        courseImage,
+        attendanceScore,
+        midtermScore,
+        finalScore,
+        totalScore,
+        grade,
+        status,
+        comment,
+        lastGradedAt,
+        gradedByName,
       ];
-
-  Grade copyWith({
-    String? id,
-    String? courseName,
-    String? examType,
-    double? score,
-    double? maxScore,
-    DateTime? examDate,
-    String? feedback,
-  }) {
-    return Grade(
-      id: id ?? this.id,
-      courseName: courseName ?? this.courseName,
-      examType: examType ?? this.examType,
-      score: score ?? this.score,
-      maxScore: maxScore ?? this.maxScore,
-      examDate: examDate ?? this.examDate,
-      feedback: feedback ?? this.feedback,
-    );
-  }
 }

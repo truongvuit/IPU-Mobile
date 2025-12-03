@@ -109,7 +109,7 @@ class AdminRemoteDataSource implements AdminApiDataSource {
       final classesData = classesResponse.data['data'];
       totalClasses = classesData['totalItems'] ?? 0;
     } catch (_) {
-      // Ignore error, use default value
+      
     }
 
     try {
@@ -117,7 +117,7 @@ class AdminRemoteDataSource implements AdminApiDataSource {
       final teachersData = teachersResponse.data['data'] ?? [];
       totalTeachers = teachersData is List ? teachersData.length : 0;
     } catch (_) {
-      // Ignore error, use default value
+      
     }
 
     try {
@@ -130,7 +130,7 @@ class AdminRemoteDataSource implements AdminApiDataSource {
         }
       }
     } catch (_) {
-      // Ignore error, use default value
+      
     }
 
     try {
@@ -141,7 +141,7 @@ class AdminRemoteDataSource implements AdminApiDataSource {
       final studentsData = studentsResponse.data['data'];
       totalStudents = studentsData['totalItems'] ?? 0;
     } catch (_) {
-      // Ignore error, use default value
+      
     }
 
     return AdminDashboardStats(
@@ -520,7 +520,6 @@ class AdminRemoteDataSource implements AdminApiDataSource {
       }
     } catch (e) {
       print('Student classes API error, falling back to mock: $e');
-      ;
       try {
         final response = await dioClient.get(
           '/courseclasses',
@@ -633,7 +632,7 @@ class AdminRemoteDataSource implements AdminApiDataSource {
               }
             }
           } catch (_) {
-            // Ignore errors when fetching class count
+            
           }
           
           teachers.add(AdminTeacher(
@@ -1064,7 +1063,7 @@ class AdminRemoteDataSource implements AdminApiDataSource {
         final data = response.data['data'];
         if (data == null || data is! List) return [];
         
-        return (data as List).map((item) {
+        return (data).map((item) {
           return AdminFeedback(
             id: item['reviewId']?.toString() ?? '',
             studentName: item['studentName'] ?? 'Học viên',

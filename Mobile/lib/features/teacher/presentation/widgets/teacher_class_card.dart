@@ -18,41 +18,32 @@ class TeacherClassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return _buildSimpleCard(context, isDark);
-  }
-
-  Widget _buildSimpleCard(BuildContext context, bool isDark) {
     final statusColor = _getStatusColor(classItem.status);
     final statusText = _getStatusText(classItem.status);
 
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1F2937) : Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: isDark 
-                ? Colors.black.withOpacity(0.15) 
-                : Colors.black.withOpacity(0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: isDark ? AppColors.gray800 : Colors.white,
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(
+          color: isDark ? AppColors.gray700 : AppColors.gray200,
+          width: 1,
+        ),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(12.r),
+          borderRadius: BorderRadius.circular(10.r),
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
             child: Row(
               children: [
-                // Left: Status indicator bar
+                // Status indicator
                 Container(
-                  width: 3.w,
-                  height: 50.h,
+                  width: 4.w,
+                  height: 40.h,
                   decoration: BoxDecoration(
                     color: statusColor,
                     borderRadius: BorderRadius.circular(2.r),
@@ -61,72 +52,36 @@ class TeacherClassCard extends StatelessWidget {
                 
                 SizedBox(width: 12.w),
                 
-                // Middle: Main info
+                // Class info
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Class name
                       Text(
                         classItem.name ?? 'Không có tên',
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : const Color(0xFF1F2937),
-                          fontFamily: 'Lexend',
+                          color: isDark ? Colors.white : AppColors.textPrimary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      
                       SizedBox(height: 4.h),
-                      
-                      // Schedule & Time row
                       Row(
                         children: [
                           Icon(
-                            Icons.access_time_rounded,
-                            size: 13.sp,
-                            color: isDark 
-                                ? Colors.white.withOpacity(0.5) 
-                                : const Color(0xFF94A3B8),
+                            Icons.schedule,
+                            size: 12.sp,
+                            color: isDark ? AppColors.gray400 : AppColors.gray500,
                           ),
                           SizedBox(width: 4.w),
                           Text(
-                            '${classItem.schedule ?? 'N/A'} • ${_formatTime(classItem.startTime)} - ${_formatTime(classItem.endTime)}',
+                            '${classItem.schedule ?? 'N/A'} • ${_formatTime(classItem.startTime)}-${_formatTime(classItem.endTime)}',
                             style: TextStyle(
                               fontSize: 12.sp,
-                              color: isDark 
-                                  ? Colors.white.withOpacity(0.6) 
-                                  : const Color(0xFF64748B),
-                              fontFamily: 'Lexend',
-                            ),
-                          ),
-                        ],
-                      ),
-                      
-                      SizedBox(height: 3.h),
-                      
-                      // Students count
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.people_outline_rounded,
-                            size: 13.sp,
-                            color: isDark 
-                                ? Colors.white.withOpacity(0.5) 
-                                : const Color(0xFF94A3B8),
-                          ),
-                          SizedBox(width: 4.w),
-                          Text(
-                            '${classItem.totalStudents} học viên',
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              color: isDark 
-                                  ? Colors.white.withOpacity(0.6) 
-                                  : const Color(0xFF64748B),
-                              fontFamily: 'Lexend',
+                              color: isDark ? AppColors.gray400 : AppColors.textSecondary,
                             ),
                           ),
                         ],
@@ -137,26 +92,55 @@ class TeacherClassCard extends StatelessWidget {
                 
                 SizedBox(width: 8.w),
                 
-                // Right: Status badge
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
-                  decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6.r),
-                    border: Border.all(
-                      color: statusColor.withOpacity(0.3),
-                      width: 1,
+                // Right side: students count + status
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      child: Text(
+                        statusText,
+                        style: TextStyle(
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w600,
+                          color: statusColor,
+                        ),
+                      ),
                     ),
-                  ),
-                  child: Text(
-                    statusText,
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w600,
-                      color: statusColor,
-                      fontFamily: 'Lexend',
+                    SizedBox(height: 4.h),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.people_outline,
+                          size: 12.sp,
+                          color: isDark ? AppColors.gray400 : AppColors.gray500,
+                        ),
+                        SizedBox(width: 3.w),
+                        Text(
+                          '${classItem.totalStudents}',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w500,
+                            color: isDark ? AppColors.gray300 : AppColors.gray600,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
+                  ],
+                ),
+                
+                SizedBox(width: 4.w),
+                
+                Icon(
+                  Icons.chevron_right,
+                  size: 20.sp,
+                  color: isDark ? AppColors.gray500 : AppColors.gray400,
                 ),
               ],
             ),
@@ -167,18 +151,18 @@ class TeacherClassCard extends StatelessWidget {
   }
 
   Color _getStatusColor(String? status) {
-    if (status == null) return const Color(0xFFF59E0B);
+    if (status == null) return AppColors.warning;
     switch (status.toLowerCase()) {
       case 'inprogress':
       case 'ongoing':
-        return const Color(0xFF10B981);
+        return AppColors.success;
       case 'upcoming':
-        return const Color(0xFF6366F1);
+        return AppColors.info;
       case 'completed':
       case 'closed':
-        return const Color(0xFF64748B);
+        return AppColors.gray500;
       default:
-        return const Color(0xFFF59E0B);
+        return AppColors.warning;
     }
   }
 
@@ -189,10 +173,10 @@ class TeacherClassCard extends StatelessWidget {
       case 'ongoing':
         return 'Đang học';
       case 'upcoming':
-        return 'Sắp mở';
+        return 'Sắp tới';
       case 'completed':
       case 'closed':
-        return 'Đã xong';
+        return 'Hoàn thành';
       default:
         return status;
     }
@@ -202,4 +186,3 @@ class TeacherClassCard extends StatelessWidget {
     return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
   }
 }
-

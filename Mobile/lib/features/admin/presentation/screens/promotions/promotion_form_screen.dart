@@ -212,7 +212,7 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<DiscountType>(
-                      value: _discountType,
+                      initialValue: _discountType,
                       decoration: const InputDecoration(
                         labelText: 'Loại giảm giá',
                         border: OutlineInputBorder(),
@@ -228,8 +228,9 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
                         ),
                       ],
                       onChanged: (value) {
-                        if (value != null)
+                        if (value != null) {
                           setState(() => _discountType = value);
+                        }
                       },
                     ),
                   ),
@@ -243,8 +244,9 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
                       ),
                       keyboardType: TextInputType.number,
                       validator: (value) {
-                        if (value == null || value.isEmpty)
+                        if (value == null || value.isEmpty) {
                           return 'Nhập giá trị';
+                        }
                         final numVal = double.tryParse(value);
                         if (numVal == null) return 'Không hợp lệ';
                         if (_discountType == DiscountType.percentage &&
@@ -326,7 +328,7 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
 
               // Status
               DropdownButtonFormField<PromotionStatus>(
-                value: _status,
+                initialValue: _status,
                 decoration: const InputDecoration(
                   labelText: 'Trạng thái',
                   border: OutlineInputBorder(),

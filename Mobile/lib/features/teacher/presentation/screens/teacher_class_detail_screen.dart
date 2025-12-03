@@ -11,9 +11,8 @@ import '../../domain/entities/class_student.dart';
 import '../bloc/teacher_bloc.dart';
 import '../bloc/teacher_event.dart';
 import '../bloc/teacher_state.dart';
-import '../widgets/student_list_item.dart';
+import '../widgets/student_grid_item.dart';
 import '../widgets/teacher_app_bar.dart';
-
 
 class TeacherClassDetailScreen extends StatefulWidget {
   final String classId;
@@ -28,6 +27,9 @@ class TeacherClassDetailScreen extends StatefulWidget {
 class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final TextEditingController _studentSearchController =
+      TextEditingController();
+  String _studentSearchQuery = '';
 
   @override
   void initState() {
@@ -39,6 +41,7 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
   @override
   void dispose() {
     _tabController.dispose();
+    _studentSearchController.dispose();
     super.dispose();
   }
 
@@ -143,7 +146,7 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
                         title: 'Hiệu suất lớp học',
                         showBackButton: true,
                       ),
-                      
+
                       Container(
                         width: double.infinity,
                         padding: EdgeInsets.all(AppSizes.p20),
@@ -242,7 +245,7 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
                           ],
                         ),
                       ),
-                      
+
                       Container(
                         color: isDark ? AppColors.gray800 : Colors.white,
                         child: TabBar(
@@ -259,7 +262,7 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
                           ],
                         ),
                       ),
-                      
+
                       Expanded(
                         child: TabBarView(
                           controller: _tabController,
@@ -294,38 +297,44 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
     bool isDark,
     bool isDesktop,
   ) {
-    // Tính toán thống kê từ danh sách students thực tế
+    
     double avgAttendance = 0.0;
     double avgScore = 0.0;
     int completedCount = 0;
-    
+
     if (students.isNotEmpty) {
-      // Tính điểm danh trung bình
+      
       final totalAttendance = students.fold<double>(0.0, (sum, s) {
         final student = s as ClassStudent;
         return sum + student.attendanceRate;
       });
       avgAttendance = totalAttendance / students.length;
+
       
-      // Tính điểm trung bình
-      final studentsWithScore = students.where((s) => (s as ClassStudent).averageScore != null).toList();
+      final studentsWithScore = students
+          .where((s) => (s as ClassStudent).averageScore != null)
+          .toList();
       if (studentsWithScore.isNotEmpty) {
-        final totalScore = studentsWithScore.fold<double>(0.0, (sum, s) => sum + ((s as ClassStudent).averageScore ?? 0));
+        final totalScore = studentsWithScore.fold<double>(
+          0.0,
+          (sum, s) => sum + ((s as ClassStudent).averageScore ?? 0),
+        );
         avgScore = totalScore / studentsWithScore.length;
       }
+
       
-      // Tính tỷ lệ hoàn thành (học viên có điểm)
       completedCount = studentsWithScore.length;
     }
-    
-    final completionRate = students.isEmpty ? 0.0 : (completedCount / students.length * 100);
+
+    final completionRate = students.isEmpty
+        ? 0.0
+        : (completedCount / students.length * 100);
 
     return SingleChildScrollView(
       padding: EdgeInsets.all(isDesktop ? AppSizes.p32 : AppSizes.p16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          
           GridView.count(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -365,7 +374,7 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
             ],
           ),
           SizedBox(height: 24.h),
-          
+
           Text(
             'Hành động nhanh',
             style: TextStyle(
@@ -379,10 +388,19 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: () {
-                Navigator.pushNamed(
-                  context,
-                  AppRouter.teacherAttendance,
-                  arguments: widget.classId,
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Vui lòng chọn buổi học từ Lịch dạy để điểm danh'),
+                    backgroundColor: AppColors.warning,
+                    action: SnackBarAction(
+                      label: 'Xem lịch',
+                      textColor: Colors.white,
+                      onPressed: () {
+                        Navigator.pushNamed(context, AppRouter.teacherSchedule);
+                      },
+                    ),
+                  ),
                 );
               },
               icon: const Icon(Icons.checklist),
@@ -400,57 +418,169 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
   }
 
   Widget _buildStudentsTab(List students, bool isDark, bool isDesktop) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(isDesktop ? AppSizes.p32 : AppSizes.p16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Danh sách học viên (${students.length})',
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : Colors.black87,
+    
+    final filteredStudents = _studentSearchQuery.isEmpty
+        ? students
+        : students.where((s) {
+            final student = s as ClassStudent;
+            final query = _studentSearchQuery.toLowerCase();
+            return student.fullName.toLowerCase().contains(query) ||
+                student.studentCode.toLowerCase().contains(query) ||
+                (student.email?.toLowerCase().contains(query) ?? false);
+          }).toList();
+
+    return Column(
+      children: [
+        
+        Container(
+          padding: EdgeInsets.fromLTRB(
+            isDesktop ? AppSizes.p32 : AppSizes.p16,
+            AppSizes.p12,
+            isDesktop ? AppSizes.p32 : AppSizes.p16,
+            AppSizes.p8,
+          ),
+          child: TextField(
+            controller: _studentSearchController,
+            onChanged: (value) {
+              setState(() {
+                _studentSearchQuery = value;
+              });
+            },
+            decoration: InputDecoration(
+              hintText: 'Tìm kiếm theo tên, mã HV...',
+              hintStyle: TextStyle(
+                color: isDark ? AppColors.gray500 : AppColors.textSecondary,
+                fontSize: 14.sp,
+              ),
+              prefixIcon: Icon(
+                Icons.search,
+                color: isDark ? AppColors.gray400 : AppColors.textSecondary,
+                size: 20.sp,
+              ),
+              suffixIcon: _studentSearchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: Icon(Icons.clear, size: 18.sp),
+                      onPressed: () {
+                        _studentSearchController.clear();
+                        setState(() {
+                          _studentSearchQuery = '';
+                        });
+                      },
+                    )
+                  : null,
+              filled: true,
+              fillColor: isDark ? AppColors.gray800 : Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.r),
+                borderSide: BorderSide(
+                  color: isDark ? AppColors.gray700 : AppColors.gray200,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.r),
+                borderSide: BorderSide(
+                  color: isDark ? AppColors.gray700 : AppColors.gray200,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.r),
+                borderSide: const BorderSide(
+                  color: AppColors.primary,
+                  width: 1.5,
+                ),
+              ),
+              contentPadding: EdgeInsets.symmetric(
+                vertical: 12.h,
+                horizontal: 16.w,
+              ),
             ),
           ),
-          SizedBox(height: 16.h),
-          if (students.isEmpty)
-            const EmptyStateWidget(
-              message: 'Chưa có học sinh nào trong lớp',
-              icon: Icons.people_outline,
-            )
-          else
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: students.length,
-              itemBuilder: (context, index) {
-                final student = students[index];
-                return StudentListItem(
-                  student: student,
-                  onTap: () {
-                    _showStudentDetailBottomSheet(context, student);
+        ),
+
+        
+        Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: isDesktop ? AppSizes.p32 : AppSizes.p16,
+            vertical: AppSizes.p8,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Danh sách học viên (${filteredStudents.length})',
+                style: TextStyle(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
+              if (_studentSearchQuery.isNotEmpty &&
+                  filteredStudents.length != students.length)
+                Text(
+                  'Tổng: ${students.length}',
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: isDark ? AppColors.gray400 : AppColors.textSecondary,
+                  ),
+                ),
+            ],
+          ),
+        ),
+
+        
+        Expanded(
+          child: filteredStudents.isEmpty
+              ? Center(
+                  child: EmptyStateWidget(
+                    message: _studentSearchQuery.isNotEmpty
+                        ? 'Không tìm thấy học viên phù hợp'
+                        : 'Chưa có học sinh nào trong lớp',
+                    icon: _studentSearchQuery.isNotEmpty
+                        ? Icons.search_off
+                        : Icons.people_outline,
+                  ),
+                )
+              : GridView.builder(
+                  padding: EdgeInsets.fromLTRB(
+                    isDesktop ? AppSizes.p32 : AppSizes.p16,
+                    AppSizes.p8,
+                    isDesktop ? AppSizes.p32 : AppSizes.p16,
+                    AppSizes.p24,
+                  ),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: isDesktop ? 3 : 2,
+                    mainAxisSpacing: 12.h,
+                    crossAxisSpacing: 12.w,
+                    childAspectRatio: isDesktop ? 2.2 : 1.6,
+                  ),
+                  itemCount: filteredStudents.length,
+                  itemBuilder: (context, index) {
+                    final student = filteredStudents[index] as ClassStudent;
+                    return StudentGridItem(
+                      student: student,
+                      onTap: () {
+                        _showStudentDetailBottomSheet(context, student);
+                      },
+                    );
                   },
-                );
-              },
-            ),
-        ],
-      ),
+                ),
+        ),
+      ],
     );
   }
 
   Widget _buildAnalyticsTab(List students, bool isDark, bool isDesktop) {
-    // Phân khúc học viên theo điểm trung bình
-    int excellent = 0; // >= 8.5
-    int good = 0;      // >= 7.0
-    int average = 0;   // >= 5.0
-    int needImprove = 0; // < 5.0
     
+    int excellent = 0; 
+    int good = 0; 
+    int average = 0; 
+    int needImprove = 0; 
+
     for (final s in students) {
       final student = s as ClassStudent;
       final score = student.averageScore;
       if (score == null) continue;
-      
+
       if (score >= 8.5) {
         excellent++;
       } else if (score >= 7.0) {
@@ -467,7 +597,7 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Thống kê tổng quan
+          
           Container(
             padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
@@ -489,9 +619,21 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildStatItem('Tổng học viên', '${students.length}', Colors.blue),
-                    _buildStatItem('Có điểm', '${excellent + good + average + needImprove}', Colors.green),
-                    _buildStatItem('Chưa có điểm', '${students.length - (excellent + good + average + needImprove)}', Colors.orange),
+                    _buildStatItem(
+                      'Tổng học viên',
+                      '${students.length}',
+                      Colors.blue,
+                    ),
+                    _buildStatItem(
+                      'Có điểm',
+                      '${excellent + good + average + needImprove}',
+                      Colors.green,
+                    ),
+                    _buildStatItem(
+                      'Chưa có điểm',
+                      '${students.length - (excellent + good + average + needImprove)}',
+                      Colors.orange,
+                    ),
                   ],
                 ),
               ],
@@ -511,42 +653,24 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
           SizedBox(height: 8.h),
           _buildSegmentCard('Khá (≥7.0)', good, Colors.blue, isDark),
           SizedBox(height: 8.h),
-          _buildSegmentCard('Trung bình (≥5.0)', average, Colors.orange, isDark),
+          _buildSegmentCard(
+            'Trung bình (≥5.0)',
+            average,
+            Colors.orange,
+            isDark,
+          ),
           SizedBox(height: 8.h),
-          _buildSegmentCard('Cần cải thiện (<5.0)', needImprove, Colors.red, isDark),
-          
-          // Thông báo nếu chưa có đủ dữ liệu
-          if (excellent + good + average + needImprove == 0) ...[
-            SizedBox(height: 24.h),
-            Container(
-              padding: EdgeInsets.all(16.w),
-              decoration: BoxDecoration(
-                color: AppColors.info.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.info.withOpacity(0.3)),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.info_outline, color: AppColors.info, size: 24.sp),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: Text(
-                      'Chưa có dữ liệu điểm số để phân tích. Dữ liệu sẽ được cập nhật khi có điểm.',
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: isDark ? Colors.white70 : AppColors.textSecondary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+          _buildSegmentCard(
+            'Cần cải thiện (<5.0)',
+            needImprove,
+            Colors.red,
+            isDark,
+          ),
         ],
       ),
     );
   }
-  
+
   Widget _buildStatItem(String label, String value, Color color) {
     return Column(
       children: [
@@ -561,10 +685,7 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
         SizedBox(height: 4.h),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12.sp,
-            color: AppColors.textSecondary,
-          ),
+          style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
         ),
       ],
     );
@@ -658,9 +779,12 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
     );
   }
 
-  void _showStudentDetailBottomSheet(BuildContext context, ClassStudent student) {
+  void _showStudentDetailBottomSheet(
+    BuildContext context,
+    ClassStudent student,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -680,7 +804,6 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              
               Center(
                 child: Container(
                   width: 40.w,
@@ -693,7 +816,6 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
               ),
               SizedBox(height: AppSizes.p24),
 
-              
               Row(
                 children: [
                   CircleAvatar(
@@ -704,7 +826,7 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
                         : null,
                     child: student.avatarUrl == null
                         ? Text(
-                            student.fullName.isNotEmpty 
+                            student.fullName.isNotEmpty
                                 ? student.fullName.substring(0, 1).toUpperCase()
                                 : '?',
                             style: TextStyle(
@@ -746,7 +868,6 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
               const Divider(),
               SizedBox(height: AppSizes.p16),
 
-              
               Text(
                 'Thông tin liên hệ',
                 style: TextStyle(
@@ -756,15 +877,18 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
                 ),
               ),
               SizedBox(height: AppSizes.p12),
-              
+
               if (student.email != null)
                 _buildInfoRow(Icons.email_outlined, 'Email', student.email!),
               if (student.phoneNumber != null)
-                _buildInfoRow(Icons.phone_outlined, 'Điện thoại', student.phoneNumber!),
-              
+                _buildInfoRow(
+                  Icons.phone_outlined,
+                  'Điện thoại',
+                  student.phoneNumber!,
+                ),
+
               SizedBox(height: AppSizes.p20),
 
-              
               Text(
                 'Thống kê',
                 style: TextStyle(
@@ -774,7 +898,7 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
                 ),
               ),
               SizedBox(height: AppSizes.p12),
-              
+
               Row(
                 children: [
                   Expanded(
@@ -808,7 +932,6 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
 
               SizedBox(height: AppSizes.p20),
 
-              
               _buildInfoRow(
                 Icons.calendar_today_outlined,
                 'Ngày tham gia',
@@ -817,7 +940,6 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
 
               SizedBox(height: AppSizes.p20),
 
-              
               Container(
                 padding: EdgeInsets.all(AppSizes.p16),
                 decoration: BoxDecoration(
@@ -873,24 +995,23 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
           SizedBox(width: AppSizes.p12),
           Text(
             '$label: ',
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
           ),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w500,
-            ),
+            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: EdgeInsets.all(AppSizes.p12),
       decoration: BoxDecoration(
@@ -911,10 +1032,7 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
           ),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 11.sp,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
           ),
         ],
       ),

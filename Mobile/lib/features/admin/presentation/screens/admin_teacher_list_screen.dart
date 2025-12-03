@@ -42,7 +42,7 @@ class _AdminTeacherListScreenState extends State<AdminTeacherListScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<AdminBloc>().add(const LoadTeacherList());
+    // Load được quản lý bởi HomeAdminScreen._loadDataForTab
     _loadFilterData();
   }
 
@@ -562,7 +562,12 @@ class _AdminTeacherListScreenState extends State<AdminTeacherListScreen> {
             context,
             AppRouter.adminTeacherDetail,
             arguments: teacher,
-          );
+          ).then((_) {
+            // Reload list khi quay lại từ màn chi tiết
+            context.read<AdminBloc>().add(
+              LoadTeacherList(searchQuery: _searchQuery),
+            );
+          });
         },
         borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
         child: Padding(

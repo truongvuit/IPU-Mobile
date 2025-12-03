@@ -130,7 +130,8 @@ Future<void> initializeDependencies() async {
     () => AdminRepositoryImpl(dataSource: getIt<AdminApiDataSource>()),
   );
 
-  getIt.registerFactory<AdminBloc>(
+  // AdminBloc dùng singleton để tránh double load và share state giữa các screens
+  getIt.registerLazySingleton<AdminBloc>(
     () => AdminBloc(repository: getIt<AdminRepository>()),
   );
 

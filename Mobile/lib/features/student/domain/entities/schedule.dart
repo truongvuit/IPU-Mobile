@@ -11,6 +11,10 @@ class Schedule extends Equatable {
   final DateTime endTime;
   final bool isOnline;
   final String? meetingLink;
+  final String? courseName;
+  final String? status;
+  final String? note;
+  final String? period; // Sáng / Chiều / Tối
 
   const Schedule({
     required this.id,
@@ -22,7 +26,46 @@ class Schedule extends Equatable {
     required this.endTime,
     this.isOnline = false,
     this.meetingLink,
+    this.courseName,
+    this.status,
+    this.note,
+    this.period,
   });
+
+  /// Parse from SessionInfo JSON format from backend
+  factory Schedule.fromSessionInfo(Map<String, dynamic> json, DateTime sessionDate, String period) {
+    final startTimeStr = json['startTime'] as String? ?? '08:00';
+    final durationMinutes = json['durationMinutes'] as int? ?? 90;
+    
+    // Parse startTime từ "HH:mm" format
+    final timeParts = startTimeStr.split(':');
+    final hour = int.tryParse(timeParts[0]) ?? 8;
+    final minute = timeParts.length > 1 ? int.tryParse(timeParts[1]) ?? 0 : 0;
+    
+    final startTime = DateTime(
+      sessionDate.year,
+      sessionDate.month,
+      sessionDate.day,
+      hour,
+      minute,
+    );
+    final endTime = startTime.add(Duration(minutes: durationMinutes));
+    
+    return Schedule(
+      id: (json['sessionId']?.toString() ?? ''),
+      classId: (json['classId']?.toString() ?? ''),
+      className: json['className'] as String? ?? '',
+      teacherName: json['instructorName'] as String? ?? '',
+      room: json['roomName'] as String? ?? '',
+      startTime: startTime,
+      endTime: endTime,
+      isOnline: false,
+      courseName: json['courseName'] as String?,
+      status: json['status'] as String?,
+      note: json['note'] as String?,
+      period: period,
+    );
+  }
 
   @override
   List<Object?> get props => [
@@ -35,6 +78,10 @@ class Schedule extends Equatable {
         endTime,
         isOnline,
         meetingLink,
+        courseName,
+        status,
+        note,
+        period,
       ];
 
   Schedule copyWith({
@@ -47,6 +94,10 @@ class Schedule extends Equatable {
     DateTime? endTime,
     bool? isOnline,
     String? meetingLink,
+    String? courseName,
+    String? status,
+    String? note,
+    String? period,
   }) {
     return Schedule(
       id: id ?? this.id,
@@ -58,6 +109,10 @@ class Schedule extends Equatable {
       endTime: endTime ?? this.endTime,
       isOnline: isOnline ?? this.isOnline,
       meetingLink: meetingLink ?? this.meetingLink,
+      courseName: courseName ?? this.courseName,
+      status: status ?? this.status,
+      note: note ?? this.note,
+      period: period ?? this.period,
     );
   }
 }

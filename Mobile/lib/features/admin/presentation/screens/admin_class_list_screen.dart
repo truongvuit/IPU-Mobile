@@ -57,8 +57,7 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
     });
 
     _scrollController.addListener(_onScroll);
-
-    context.read<AdminBloc>().add(const LoadClassList());
+    // Load được quản lý bởi HomeAdminScreen._loadDataForTab
   }
 
   void _onScroll() {
@@ -245,7 +244,12 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
                             context,
                             AppRouter.adminClassDetail,
                             arguments: classItem.id,
-                          );
+                          ).then((_) {
+                            // Reload danh sách khi quay về từ chi tiết
+                            if (mounted) {
+                              context.read<AdminBloc>().add(const LoadClassList());
+                            }
+                          });
                         },
                       );
                     },

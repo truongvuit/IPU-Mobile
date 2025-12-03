@@ -4,20 +4,17 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/widgets/skeleton_widget.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
+import '../../../../core/widgets/custom_image.dart';
 
 import '../bloc/teacher_bloc.dart';
 import '../bloc/teacher_event.dart';
 import '../bloc/teacher_state.dart';
 
-import '../widgets/teacher_app_bar.dart';
 import '../widgets/teacher_schedule_detail_modal.dart';
 import '../widgets/teacher_class_card.dart';
-import '../widgets/teacher_schedule_item.dart';
-import '../widgets/compact_schedule_list_item.dart';
 
 class TeacherDashboardScreen extends StatefulWidget {
   const TeacherDashboardScreen({super.key});
@@ -29,553 +26,505 @@ class TeacherDashboardScreen extends StatefulWidget {
 class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   int _selectedDayIndex = 0;
   DateTime? _startOfWeek;
-  bool _isCompactMode = false; 
 
   @override
   void initState() {
     super.initState();
     final now = DateTime.now();
     _startOfWeek = _getStartOfWeek(now);
-
     _selectedDayIndex = now.weekday - 1;
-
     context.read<TeacherBloc>().add(LoadTeacherDashboard());
   }
 
-  @override
-  void dispose() {
-    
-    super.dispose();
-  }
-
   DateTime _getStartOfWeek(DateTime date) {
-    return DateTime(
-      date.year,
-      date.month,
-      date.day,
-    ).subtract(Duration(days: date.weekday - 1));
+    return DateTime(date.year, date.month, date.day)
+        .subtract(Duration(days: date.weekday - 1));
   }
 
   bool _isSameDate(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
   String _getDayName(int index) {
-    return AppStrings.dayOfWeek(
-      index + 1,
-    ).replaceAll('Thứ ', 'T').replaceAll('Chủ nhật', 'CN');
+    return AppStrings.dayOfWeek(index + 1)
+        .replaceAll('Thứ ', 'T')
+        .replaceAll('Chủ nhật', 'CN');
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
-    final isDark = theme.brightness == Brightness.dark;
-
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isDesktop = screenWidth >= 1024;
-    final isTablet = screenWidth >= 600 && screenWidth < 1024;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return BlocBuilder<TeacherBloc, TeacherState>(
       builder: (context, state) {
         if (state is TeacherLoading) {
-          return Padding(
-            padding: EdgeInsets.all(AppSizes.paddingMedium),
-            child: Column(
-              children: [
-                SkeletonWidget.rectangular(height: 64.h),
-                SizedBox(height: AppSizes.paddingMedium),
-                SkeletonWidget.rectangular(height: 100.h),
-                SizedBox(height: AppSizes.paddingMedium),
-                SkeletonWidget.rectangular(height: 200.h),
-              ],
-            ),
-          );
+          return _buildLoadingState();
         }
 
         if (state is TeacherError) {
-          return Center(
-            child: Padding(
-              padding: EdgeInsets.all(isDesktop ? 32.w : 24.w),
+          return _buildErrorState(state.message);
+        }
+
+        if (state is DashboardLoaded) {
+          return _buildDashboard(state, isDark);
+        }
+
+        return const SizedBox.shrink();
+      },
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Padding(
+      padding: EdgeInsets.all(16.w),
+      child: Column(
+        children: [
+          SkeletonWidget.rectangular(height: 56.h),
+          SizedBox(height: 16.h),
+          SkeletonWidget.rectangular(height: 70.h),
+          SizedBox(height: 16.h),
+          SkeletonWidget.rectangular(height: 120.h),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String message) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(24.w),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 48.sp, color: AppColors.error),
+            SizedBox(height: 16.h),
+            Text(message, textAlign: TextAlign.center),
+            SizedBox(height: 16.h),
+            ElevatedButton(
+              onPressed: () =>
+                  context.read<TeacherBloc>().add(LoadTeacherDashboard()),
+              child: const Text('Thử lại'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDashboard(DashboardLoaded state, bool isDark) {
+    if (_startOfWeek == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    final selectedDate = _startOfWeek!.add(Duration(days: _selectedDayIndex));
+    final schedules = _getSchedulesForDate(state, selectedDate);
+
+    return RefreshIndicator(
+      color: AppColors.primary,
+      onRefresh: () async {
+        context.read<TeacherBloc>().add(LoadTeacherDashboard());
+      },
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          // Header
+          SliverToBoxAdapter(child: _buildHeader(state, isDark)),
+          
+          // Week selector
+          SliverToBoxAdapter(child: _buildWeekSelector(isDark)),
+          
+          // Schedule title
+          SliverToBoxAdapter(
+            child: _buildSectionTitle(
+              _isSameDate(selectedDate, DateTime.now())
+                  ? "Lịch dạy hôm nay"
+                  : "Lịch dạy ${selectedDate.day}/${selectedDate.month}",
+              isDark,
+            ),
+          ),
+          
+          // Schedule list
+          if (schedules.isEmpty)
+            SliverToBoxAdapter(child: _buildEmptySchedule(isDark))
+          else
+            SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => _buildScheduleItem(schedules[index], isDark),
+                  childCount: schedules.length,
+                ),
+              ),
+            ),
+          
+          // Classes section
+          SliverToBoxAdapter(child: _buildClassesSectionHeader(isDark)),
+          
+          if (state.recentClasses.isEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: EmptyStateWidget(
+                  icon: Icons.class_,
+                  message: "Bạn chưa có lớp học nào.",
+                ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: EdgeInsets.only(bottom: 100.h),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    if (index >= 3) return null;
+                    return TeacherClassCard(
+                      classItem: state.recentClasses[index],
+                      onTap: () => _navigateToClassDetail(state.recentClasses[index].id),
+                    );
+                  },
+                  childCount: state.recentClasses.length > 3 ? 3 : state.recentClasses.length,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(DashboardLoaded state, bool isDark) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 12.h),
+      child: SafeArea(
+        bottom: false,
+        child: Row(
+          children: [
+            GestureDetector(
+              onTap: () {
+                final scaffold = Scaffold.maybeOf(context);
+                if (scaffold?.hasDrawer ?? false) scaffold!.openDrawer();
+              },
+              child: Container(
+                width: 42.w,
+                height: 42.w,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                    width: 2,
+                  ),
+                ),
+                child: ClipOval(
+                  child: CustomImage(
+                    imageUrl: state.profile.avatarUrl ?? '',
+                    width: 42.w,
+                    height: 42.w,
+                    fit: BoxFit.cover,
+                    isAvatar: true,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(width: 12.w),
+            Text(
+              AppStrings.welcomeGreeting(state.profile.fullName.split(' ').last),
+              style: TextStyle(
+                fontSize: 17.sp,
+                fontWeight: FontWeight.w700,
+                color: isDark ? Colors.white : AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWeekSelector(bool isDark) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16.w),
+      padding: EdgeInsets.all(6.w),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.gray800 : AppColors.slate50,
+        borderRadius: BorderRadius.circular(14.r),
+      ),
+      child: Row(
+        children: List.generate(7, (index) {
+          final date = _startOfWeek!.add(Duration(days: index));
+          final isSelected = _selectedDayIndex == index;
+          final isToday = _isSameDate(DateTime.now(), date);
+
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _selectedDayIndex = index),
+              child: Container(
+                padding: EdgeInsets.symmetric(vertical: 6.h),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppColors.primary
+                      : (isToday ? AppColors.primary.withValues(alpha: 0.1) : Colors.transparent),
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _getDayName(index),
+                      style: TextStyle(
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.w600,
+                        color: isSelected
+                            ? Colors.white
+                            : (isDark ? AppColors.gray400 : AppColors.gray600),
+                      ),
+                    ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      "${date.day}",
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.bold,
+                        color: isSelected
+                            ? Colors.white
+                            : (isToday
+                                ? AppColors.primary
+                                : (isDark ? Colors.white : AppColors.textPrimary)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, bool isDark) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16.w, 18.h, 16.w, 10.h),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 17.sp,
+          fontWeight: FontWeight.bold,
+          color: isDark ? Colors.white : AppColors.textPrimary,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptySchedule(bool isDark) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16.w),
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.gray800 : AppColors.slate50,
+        borderRadius: BorderRadius.circular(10.r),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.event_available, size: 36.sp, color: AppColors.gray400),
+          SizedBox(height: 6.h),
+          Text(
+            "Không có lịch dạy",
+            style: TextStyle(fontSize: 13.sp, color: AppColors.gray500),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScheduleItem(dynamic schedule, bool isDark) {
+    final now = DateTime.now();
+    final isOngoing = now.isAfter(schedule.startTime) && now.isBefore(schedule.endTime);
+    final isCompleted = now.isAfter(schedule.endTime);
+
+    Color statusColor = AppColors.info;
+    String statusText = "Sắp tới";
+    if (isOngoing) {
+      statusColor = AppColors.success;
+      statusText = "Đang diễn ra";
+    } else if (isCompleted) {
+      statusColor = AppColors.gray500;
+      statusText = "Đã kết thúc";
+    }
+
+    return GestureDetector(
+      onTap: () => TeacherScheduleDetailModal.show(context, schedule),
+      child: Container(
+        margin: EdgeInsets.only(bottom: 8.h),
+        padding: EdgeInsets.all(10.w),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.gray800 : Colors.white,
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border.all(
+            color: isOngoing
+                ? AppColors.success.withValues(alpha: 0.5)
+                : (isDark ? AppColors.gray700 : AppColors.gray200),
+          ),
+        ),
+        child: Row(
+          children: [
+            // Time
+            Container(
+              width: 52.w,
+              padding: EdgeInsets.symmetric(vertical: 6.h),
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8.r),
+              ),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: isDesktop ? 64.sp : 48.sp,
-                    color: AppColors.error,
-                  ),
-                  SizedBox(height: 16.h),
                   Text(
-                    state.message,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: isDesktop ? 18.sp : 16.sp),
+                    _formatTime(schedule.startTime),
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.bold,
+                      color: statusColor,
+                    ),
                   ),
-                  SizedBox(height: 16.h),
-                  BlocBuilder<TeacherBloc, TeacherState>(
-                    builder: (context, btnState) {
-                      final isLoading = btnState is TeacherLoading;
-                      return ElevatedButton(
-                        onPressed: isLoading
-                            ? null
-                            : () => context.read<TeacherBloc>().add(
-                                LoadTeacherDashboard(),
-                              ),
-                        child: isLoading
-                            ? SizedBox(
-                                height: 24.h,
-                                width: 24.h,
-                                child: const CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Text(
-                                'Thử lại',
-                                style: TextStyle(
-                                  fontSize: isDesktop ? 18.sp : 16.sp,
-                                ),
-                              ),
-                      );
-                    },
+                  Text(
+                    _formatTime(schedule.endTime),
+                    style: TextStyle(fontSize: 10.sp, color: AppColors.gray500),
                   ),
                 ],
               ),
             ),
-          );
-        }
-
-        if (state is DashboardLoaded) {
-          if (_startOfWeek == null) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final selectedDate = _startOfWeek!.add(
-            Duration(days: _selectedDayIndex),
-          );
-
-          final schedulesForSelectedDate = (() {
-            try {
-              if (state.weekSchedule != null) {
-                return state.weekSchedule!
-                    .where((s) => _isSameDate(s.startTime, selectedDate))
-                    .toList();
-              }
-
-              if (_isSameDate(selectedDate, DateTime.now())) {
-                return state.todaySchedule;
-              }
-
-              return <dynamic>[];
-            } catch (_) {
-              return <dynamic>[];
-            }
-          })();
-
-          return RefreshIndicator(
-            color: AppColors.primary,
-            onRefresh: () async {
-              context.read<TeacherBloc>().add(LoadTeacherDashboard());
-            },
-            child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Builder(
-                    builder: (scaffoldContext) {
-                      return TeacherAppBar(
-                        greeting: AppStrings.welcomeGreeting(
-                          state.profile.fullName.split(' ').last,
-                        ),
-                        avatarUrl: state.profile.avatarUrl,
-                        onAvatarTap: () {
-                          final scaffold = Scaffold.maybeOf(scaffoldContext);
-                          if (scaffold?.hasDrawer ?? false) {
-                            scaffold!.openDrawer();
-                          }
-                        },
-                      );
-                    },
-                  ),
-                ),
-
-                SliverToBoxAdapter(
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      vertical: isDesktop ? 20.h : 16.h,
+            SizedBox(width: 10.w),
+            // Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    schedule.className,
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : AppColors.textPrimary,
                     ),
-                    color: isDark ? AppColors.gray800 : Colors.white,
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxWidth: isDesktop ? 1200 : double.infinity,
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: isDesktop ? 32.w : 16.w,
-                          ),
-                          child: LayoutBuilder(
-                            builder: (context, constraints) {
-                              return Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: List.generate(7, (index) {
-                                  if (_startOfWeek == null) {
-                                    return const SizedBox();
-                                  }
-
-                                  final date = _startOfWeek!.add(
-                                    Duration(days: index),
-                                  );
-                                  final isSelected = _selectedDayIndex == index;
-                                  final isToday = _isSameDate(
-                                    DateTime.now(),
-                                    date,
-                                  );
-
-                                  return Expanded(
-                                    child: Padding(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 4.w,
-                                      ),
-                                      child: InkWell(
-                                        onTap: () {
-                                          setState(() {
-                                            _selectedDayIndex = index;
-                                          });
-                                        },
-                                        borderRadius: BorderRadius.circular(
-                                          AppSizes.radiusMedium,
-                                        ),
-                                        child: Container(
-                                          padding: EdgeInsets.symmetric(
-                                            vertical: isDesktop ? 16.h : 12.h,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: isSelected
-                                                ? AppColors.primary
-                                                : (isDark
-                                                      ? AppColors.gray700
-                                                      : AppColors.slate100),
-                                            borderRadius: BorderRadius.circular(
-                                              AppSizes.radiusMedium,
-                                            ),
-                                            border: isToday
-                                                ? Border.all(
-                                                    color: AppColors.primary,
-                                                    width: 2,
-                                                  )
-                                                : null,
-                                          ),
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              FittedBox(
-                                                fit: BoxFit.scaleDown,
-                                                child: Text(
-                                                  _getDayName(index),
-                                                  style: textTheme.bodySmall
-                                                      ?.copyWith(
-                                                        fontWeight:
-                                                            FontWeight.w700,
-                                                        fontSize: isDesktop
-                                                            ? 14.sp
-                                                            : 11.sp,
-                                                        color: isSelected
-                                                            ? Colors.white
-                                                            : (isDark
-                                                                  ? Colors
-                                                                        .white70
-                                                                  : Colors
-                                                                        .black87),
-                                                      ),
-                                                ),
-                                              ),
-                                              SizedBox(height: 4.h),
-                                              FittedBox(
-                                                fit: BoxFit.scaleDown,
-                                                child: Text(
-                                                  "${date.day}",
-                                                  style: textTheme.titleMedium
-                                                      ?.copyWith(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontSize: isDesktop
-                                                            ? 18.sp
-                                                            : 16.sp,
-                                                        color: isSelected
-                                                            ? Colors.white
-                                                            : (isDark
-                                                                  ? Colors.white
-                                                                  : Colors
-                                                                        .black),
-                                                      ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }),
-                              );
-                            },
-                          ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 3.h),
+                  Row(
+                    children: [
+                      Icon(Icons.location_on_outlined, size: 12.sp, color: AppColors.gray500),
+                      SizedBox(width: 3.w),
+                      Expanded(
+                        child: Text(
+                          schedule.room,
+                          style: TextStyle(fontSize: 11.sp, color: AppColors.gray500),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                ),
-                SliverToBoxAdapter(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: isDesktop ? 1200 : double.infinity,
-                      ),
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(
-                          isDesktop ? 32.w : 20.w,
-                          20.h,
-                          20.w,
-                          12.h,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              _isSameDate(selectedDate, DateTime.now())
-                                  ? "Lịch dạy hôm nay"
-                                  : "Lịch dạy ngày ${selectedDate.day}/${selectedDate.month}/${selectedDate.year}",
-                              style: textTheme.titleLarge?.copyWith(
-                                fontSize: isDesktop ? 26.sp : 22.sp,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            
-                            if (schedulesForSelectedDate.length > 5)
-                              IconButton(
-                                icon: Icon(
-                                  _isCompactMode
-                                      ? Icons.view_agenda
-                                      : Icons.view_list,
-                                  size: 24.sp,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _isCompactMode = !_isCompactMode;
-                                  });
-                                },
-                                tooltip: _isCompactMode
-                                    ? 'Chế độ thường'
-                                    : 'Chế độ thu gọn',
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
+                  SizedBox(height: 4.h),
+                  Row(
+                    children: [
+                      _buildBadge(statusText, statusColor, isDark),
+                      SizedBox(width: 4.w),
+                      _buildBadge("Sessio...", AppColors.gray500, isDark, outlined: true),
+                    ],
                   ),
-                ),
-
-                if (schedulesForSelectedDate.isEmpty)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.all(AppSizes.paddingMedium),
-                      child: EmptyStateWidget(
-                        icon: Icons.calendar_today,
-                        message: "Không có lịch cho ngày này",
-                      ),
-                    ),
-                  )
-                else
-                  SliverPadding(
-                    padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 12.h),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate((context, index) {
-                        
-                        final maxDisplay = _isCompactMode ? schedulesForSelectedDate.length : 5;
-                        
-                        if (index >= maxDisplay) return null;
-                        
-                        final schedule = schedulesForSelectedDate[index];
-
-                        
-                        final useCompact =
-                            _isCompactMode ||
-                            schedulesForSelectedDate.length > 5;
-
-                        return useCompact
-                            ? CompactScheduleListItem(
-                                schedule: schedule,
-                                onTap: () {
-                                  TeacherScheduleDetailModal.show(
-                                    context,
-                                    schedule,
-                                  );
-                                },
-                              )
-                            : TeacherScheduleItem(
-                                schedule: schedule,
-                                onTap: () {
-                                  TeacherScheduleDetailModal.show(
-                                    context,
-                                    schedule,
-                                  );
-                                },
-                              );
-                      }, childCount: _isCompactMode 
-                          ? schedulesForSelectedDate.length 
-                          : (schedulesForSelectedDate.length > 5 ? 5 : schedulesForSelectedDate.length)),
-                    ),
-                  ),
-                
-                
-                if (schedulesForSelectedDate.length > 5 && !_isCompactMode)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20.w),
-                      child: TextButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _isCompactMode = true;
-                          });
-                        },
-                        icon: const Icon(Icons.expand_more),
-                        label: Text(
-                          'Xem thêm ${schedulesForSelectedDate.length - 5} buổi',
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 12.h),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text("Lớp học của tôi", style: textTheme.titleLarge),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pushNamed(
-                              context,
-                              AppRouter.teacherClasses,
-                            );
-                          },
-                          child: const Text("Xem tất cả"),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                if (state.recentClasses.isEmpty)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isDesktop ? 32.w : 20.w,
-                      ),
-                      child: EmptyStateWidget(
-                        icon: Icons.class_,
-                        message: "Bạn chưa có lớp học nào.",
-                      ),
-                    ),
-                  )
-                else
-                  SliverPadding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isDesktop ? 32.w : 20.w,
-                    ),
-                    sliver: isDesktop || isTablet
-                        
-                        ? SliverGrid(
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: isDesktop ? 3 : 2,
-                              mainAxisSpacing: 20.h,
-                              crossAxisSpacing: 20.w,
-                              childAspectRatio: isDesktop ? 1.3 : 1.2,
-                            ),
-                            delegate: SliverChildBuilderDelegate((context, index) {
-                              
-                              if (index >= 3) return null;
-                              final classItem = state.recentClasses[index];
-                              return TeacherClassCard(
-                                classItem: classItem,
-                                onTap: () {
-                                  if (classItem.id.isNotEmpty) {
-                                    try {
-                                      Navigator.of(
-                                        context,
-                                        rootNavigator: true,
-                                      ).pushNamed(
-                                        AppRouter.teacherClassDetail,
-                                        arguments: classItem.id,
-                                      );
-                                    } catch (e) {
-                                      if (!context.mounted) return;
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Lỗi khi mở chi tiết lớp: $e',
-                                          ),
-                                          backgroundColor: AppColors.error,
-                                        ),
-                                      );
-                                    }
-                                  }
-                                },
-                              );
-                            }, childCount: state.recentClasses.length > 3 ? 3 : state.recentClasses.length),
-                          )
-                        
-                        : SliverList(
-                            delegate: SliverChildBuilderDelegate((context, index) {
-                              
-                              if (index >= 3) return null;
-                              final classItem = state.recentClasses[index];
-                              return Padding(
-                                padding: EdgeInsets.only(bottom: 12.h),
-                                child: TeacherClassCard(
-                                  classItem: classItem,
-                                  compact: true,
-                                  onTap: () {
-                                    if (classItem.id.isNotEmpty) {
-                                      try {
-                                        Navigator.of(
-                                          context,
-                                          rootNavigator: true,
-                                        ).pushNamed(
-                                          AppRouter.teacherClassDetail,
-                                          arguments: classItem.id,
-                                        );
-                                      } catch (e) {
-                                        if (!context.mounted) return;
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              'Lỗi khi mở chi tiết lớp: $e',
-                                            ),
-                                            backgroundColor: AppColors.error,
-                                          ),
-                                        );
-                                      }
-                                    }
-                                  },
-                                ),
-                              );
-                            }, childCount: state.recentClasses.length > 3 ? 3 : state.recentClasses.length),
-                          ),
-                  ),
-
-                SliverToBoxAdapter(child: SizedBox(height: 80.h)),
-              ],
+                ],
+              ),
             ),
-          );
-        }
-        return const SizedBox.shrink();
-      },
+            Icon(Icons.chevron_right, size: 18.sp, color: AppColors.gray400),
+          ],
+        ),
+      ),
     );
+  }
+
+  Widget _buildBadge(String text, Color color, bool isDark, {bool outlined = false}) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+      decoration: BoxDecoration(
+        color: outlined ? Colors.transparent : color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(10.r),
+        border: outlined ? Border.all(color: AppColors.gray300) : null,
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 9.sp,
+          fontWeight: FontWeight.w600,
+          color: outlined ? AppColors.gray500 : color,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildClassesSectionHeader(bool isDark) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16.w, 16.h, 8.w, 6.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            "Lớp học của tôi",
+            style: TextStyle(
+              fontSize: 17.sp,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : AppColors.textPrimary,
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context, rootNavigator: true).pushNamed(AppRouter.teacherClasses),
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: 8.w),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Text(
+              "Xem tất cả",
+              style: TextStyle(fontSize: 12.sp, color: AppColors.primary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<dynamic> _getSchedulesForDate(DashboardLoaded state, DateTime date) {
+    try {
+      List<dynamic> schedules = [];
+      if (state.weekSchedule != null) {
+        schedules = state.weekSchedule!.where((s) => _isSameDate(s.startTime, date)).toList();
+      } else if (_isSameDate(date, DateTime.now())) {
+        schedules = state.todaySchedule;
+      }
+
+      schedules.sort((a, b) {
+        int getPriority(dynamic s) {
+          final now = DateTime.now();
+          if (now.isAfter(s.startTime) && now.isBefore(s.endTime)) return 0;
+          if (s.startTime.isAfter(now)) return 1;
+          return 2;
+        }
+        final p = getPriority(a).compareTo(getPriority(b));
+        return p != 0 ? p : a.startTime.compareTo(b.startTime);
+      });
+
+      return schedules;
+    } catch (_) {
+      return [];
+    }
+  }
+
+  void _navigateToClassDetail(String classId) {
+    if (classId.isNotEmpty) {
+      Navigator.of(context, rootNavigator: true).pushNamed(
+        AppRouter.teacherClassDetail,
+        arguments: classId,
+      );
+    }
+  }
+
+  String _formatTime(DateTime time) {
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
   }
 }

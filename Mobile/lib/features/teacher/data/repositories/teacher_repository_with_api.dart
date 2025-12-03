@@ -80,7 +80,8 @@ class TeacherRepositoryWithApi implements TeacherRepository {
   Future<Either<String, List<AttendanceSession>>> getClassSessions(
     String classId,
   ) async {
-    return Left('Not implemented');
+    // Not needed - we use session-based attendance
+    return const Left('Use getAttendanceSession with sessionId instead');
   }
 
   @override
@@ -88,7 +89,38 @@ class TeacherRepositoryWithApi implements TeacherRepository {
     String classId,
     DateTime date,
   ) async {
-    return Left('Not implemented');
+    // Note: This method expects classId but API uses sessionId
+    // The screen should pass sessionId, not classId
+    try {
+      final sessionId = int.tryParse(classId);
+      if (sessionId == null) {
+        return const Left('Invalid session ID');
+      }
+      final result = await apiDataSource.getAttendanceForSession(sessionId);
+      return Right(result);
+    } on ServerException catch (e) {
+      return Left(e.message);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  @override
+  Future<Either<String, AttendanceSession>> getAttendanceBySessionId(
+    String sessionId,
+  ) async {
+    try {
+      final id = int.tryParse(sessionId);
+      if (id == null) {
+        return const Left('Invalid session ID');
+      }
+      final result = await apiDataSource.getAttendanceForSession(id);
+      return Right(result);
+    } on ServerException catch (e) {
+      return Left(e.message);
+    } catch (e) {
+      return Left(e.toString());
+    }
   }
 
   @override
@@ -98,7 +130,8 @@ class TeacherRepositoryWithApi implements TeacherRepository {
     String status,
     String? note,
   ) async {
-    return Left('Not implemented');
+    // Single record - will be batched in UI
+    return const Left('Use batchRecordAttendance instead');
   }
 
   @override
@@ -106,12 +139,24 @@ class TeacherRepositoryWithApi implements TeacherRepository {
     String sessionId,
     List<Map<String, dynamic>> records,
   ) async {
-    return Left('Not implemented');
+    try {
+      final id = int.tryParse(sessionId);
+      if (id == null) {
+        return const Left('Invalid session ID');
+      }
+      await apiDataSource.submitAttendance(id, records);
+      return const Right(null);
+    } on ServerException catch (e) {
+      return Left(e.message);
+    } catch (e) {
+      return Left(e.toString());
+    }
   }
 
   @override
   Future<Either<String, void>> submitAttendance(String sessionId) async {
-    return Left('Not implemented');
+    // Attendance is submitted via batchRecordAttendance
+    return const Right(null);
   }
 
   @override

@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/repositories/student_repository.dart';
 import '../../domain/entities/student_class.dart';
+import '../../domain/entities/schedule.dart';
 import '../constants/student_messages.dart';
 import 'student_event.dart';
 import 'student_state.dart';
@@ -34,12 +35,14 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     emit(const StudentLoading(action: 'Đang tải dashboard...'));
 
     try {
-      
+      // Load classes, profile, và schedule hôm nay song song
       final classesResultFuture = repository.getUpcomingClasses();
       final profileResultFuture = repository.getProfile();
+      final todayScheduleFuture = repository.getScheduleByDate(DateTime.now());
       
       final classesResult = await classesResultFuture;
       final profileResult = await profileResultFuture;
+      final todayScheduleResult = await todayScheduleFuture;
 
       
       if (classesResult.isLeft()) {
@@ -50,9 +53,21 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
         return;
       }
 
+      // Filter lịch học hôm nay
+      final today = DateTime.now();
+      final todaySchedules = todayScheduleResult.fold(
+        (_) => <Schedule>[],
+        (schedules) => schedules.where((s) =>
+          s.startTime.year == today.year &&
+          s.startTime.month == today.month &&
+          s.startTime.day == today.day
+        ).toList(),
+      );
+
       emit(DashboardLoaded(
         upcomingClasses: classesResult.fold((_) => <StudentClass>[], (classes) => classes),
         profile: profileResult.fold((_) => null, (profile) => profile),
+        todaySchedules: todaySchedules,
       ));
     } catch (e) {
       emit(StudentError('${StudentMessages.errorLoadDashboard}: $e'));

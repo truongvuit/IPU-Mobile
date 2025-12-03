@@ -10,6 +10,7 @@ import '../../domain/repositories/student_repository.dart';
 import '../datasources/student_api_datasource.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../datasources/student_local_datasource.dart';
+import '../models/student_profile_model.dart';
 
 class StudentRepositoryWithApi implements StudentRepository {
   final StudentApiDataSource apiDataSource;
@@ -36,7 +37,19 @@ class StudentRepositoryWithApi implements StudentRepository {
   Future<Either<Failure, StudentProfile>> updateProfile(
     StudentProfile profile,
   ) async {
-    return Left(ServerFailure(message: 'Not implemented yet'));
+    try {
+      // Convert to model for API call
+      final profileModel = StudentProfileModel.fromEntity(profile);
+      await apiDataSource.updateProfile(profileModel);
+      
+      // Fetch updated profile from server
+      final updatedProfile = await apiDataSource.getProfile();
+      return Right(updatedProfile);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
   }
 
   @override
@@ -97,7 +110,7 @@ class StudentRepositoryWithApi implements StudentRepository {
   @override
   Future<Either<Failure, List<StudentClass>>> getMyClasses() async {
     try {
-      final result = await apiDataSource.getEnrolledCourses();
+      final result = await apiDataSource.getEnrolledClasses();
       return Right(result.cast<StudentClass>());
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
@@ -108,7 +121,14 @@ class StudentRepositoryWithApi implements StudentRepository {
 
   @override
   Future<Either<Failure, StudentClass>> getClassById(String id) async {
-    return Left(ServerFailure(message: 'Not implemented yet'));
+    try {
+      final result = await apiDataSource.getClassDetail(id);
+      return Right(result);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
   }
 
   @override
@@ -123,8 +143,33 @@ class StudentRepositoryWithApi implements StudentRepository {
     DateTime startDate,
   ) async {
     try {
-      await apiDataSource.getStudentSchedule(date: startDate);
-      return Right([]);
+      final data = await apiDataSource.getStudentSchedule(date: startDate);
+      
+      // Parse WeeklyScheduleResponse format
+      final List<Schedule> schedules = [];
+      final days = data['days'] as List<dynamic>? ?? [];
+      
+      for (final day in days) {
+        final dayMap = day as Map<String, dynamic>;
+        final dateStr = dayMap['date'] as String?;
+        if (dateStr == null) continue;
+        
+        final sessionDate = DateTime.parse(dateStr);
+        final periods = dayMap['periods'] as List<dynamic>? ?? [];
+        
+        for (final periodData in periods) {
+          final periodMap = periodData as Map<String, dynamic>;
+          final period = periodMap['period'] as String? ?? '';
+          final sessions = periodMap['sessions'] as List<dynamic>? ?? [];
+          
+          for (final session in sessions) {
+            final sessionMap = session as Map<String, dynamic>;
+            schedules.add(Schedule.fromSessionInfo(sessionMap, sessionDate, period));
+          }
+        }
+      }
+      
+      return Right(schedules);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
     } catch (e) {
@@ -141,7 +186,23 @@ class StudentRepositoryWithApi implements StudentRepository {
   Future<Either<Failure, List<Grade>>> getGradesByCourse(
     String courseId,
   ) async {
-    return Left(ServerFailure(message: 'Not implemented yet'));
+    // Backend không có endpoint filter by course, nên lấy tất cả grades
+    // và filter phía client nếu cần
+    try {
+      final result = await apiDataSource.getGrades();
+      List<Grade> grades = result.map((json) => Grade.fromJson(json as Map<String, dynamic>)).toList();
+      
+      // Filter by courseId nếu được cung cấp
+      if (courseId.isNotEmpty) {
+        grades = grades.where((g) => g.courseId?.toString() == courseId).toList();
+      }
+      
+      return Right(grades);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
   }
 
   @override
@@ -164,7 +225,8 @@ class StudentRepositoryWithApi implements StudentRepository {
   Future<Either<Failure, List<Grade>>> getMyGrades() async {
     try {
       final result = await apiDataSource.getGrades();
-      return Right(result.cast<Grade>());
+      final grades = result.map((json) => Grade.fromJson(json as Map<String, dynamic>)).toList();
+      return Right(grades);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
     } catch (e) {

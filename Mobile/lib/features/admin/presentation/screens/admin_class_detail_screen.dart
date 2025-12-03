@@ -30,6 +30,10 @@ class _AdminClassDetailScreenState extends State<AdminClassDetailScreen> {
   @override
   void initState() {
     super.initState();
+    _loadClassDetail();
+  }
+  
+  void _loadClassDetail() {
     context.read<AdminBloc>().add(LoadClassDetail(widget.classId));
   }
 
@@ -210,7 +214,7 @@ class _AdminClassDetailScreenState extends State<AdminClassDetailScreen> {
                                 context,
                                 AppRouter.adminCourseDetail,
                                 arguments: course,
-                              );
+                              ).then((_) => _loadClassDetail());
                             },
                           ),
                           _InfoRow(
@@ -243,7 +247,7 @@ class _AdminClassDetailScreenState extends State<AdminClassDetailScreen> {
                                   context,
                                   AppRouter.adminTeacherDetail,
                                   arguments: teacher,
-                                );
+                                ).then((_) => _loadClassDetail());
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
@@ -294,7 +298,7 @@ class _AdminClassDetailScreenState extends State<AdminClassDetailScreen> {
                                   ),
                                 ),
                               ),
-                            );
+                            ).then((_) => _loadClassDetail());
                           },
                         ),
                         _ActionButton(
@@ -306,7 +310,7 @@ class _AdminClassDetailScreenState extends State<AdminClassDetailScreen> {
                               context,
                               AppRouter.adminClassFeedback,
                               arguments: widget.classId,
-                            );
+                            ).then((_) => _loadClassDetail());
                           },
                         ),
                       ],
@@ -379,7 +383,7 @@ class _AdminClassDetailScreenState extends State<AdminClassDetailScreen> {
                                 ],
                               ),
                             );
-                          }).toList(),
+                          }),
 
                           if (students.length > 3) ...[
                             SizedBox(height: AppSizes.p8),
@@ -390,12 +394,13 @@ class _AdminClassDetailScreenState extends State<AdminClassDetailScreen> {
                                   context,
                                   AppRouter.adminClassStudents,
                                   arguments: widget.classId,
-                                );
+                                ).then((_) => _loadClassDetail());
                               },
                               icon: const Icon(Icons.arrow_forward),
                               label: const Text('Xem tất cả học viên'),
                             ),
                           ],
+                        
                         ],
                       ),
                     ),

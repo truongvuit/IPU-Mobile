@@ -10,7 +10,7 @@ import '../../../authentication/presentation/bloc/auth_bloc.dart';
 import '../../../authentication/presentation/bloc/auth_state.dart';
 import '../../../authentication/presentation/bloc/auth_event.dart';
 
-/// Admin Drawer - Menu bên trái cho Admin/Staff
+
 class AdminDrawer extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTabSelected;
@@ -30,15 +30,15 @@ class AdminDrawer extends StatelessWidget {
       backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surface,
       child: Column(
         children: [
-          // Header with user info
+          
           _buildDrawerHeader(context, isDark),
 
-          // Menu items
+          
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                // Main menu section
+                
                 _buildSectionHeader(context, 'MENU CHÍNH'),
 
                 _DrawerMenuItem(
@@ -86,7 +86,7 @@ class AdminDrawer extends StatelessWidget {
                   color: isDark ? AppColors.gray700 : AppColors.gray200,
                 ),
 
-                // Secondary features
+                
                 _buildSectionHeader(context, 'TÍNH NĂNG'),
 
                 _DrawerMenuItem(
@@ -127,7 +127,7 @@ class AdminDrawer extends StatelessWidget {
                   color: isDark ? AppColors.gray700 : AppColors.gray200,
                 ),
 
-                // Settings
+                
                 _buildSectionHeader(context, 'CÀI ĐẶT'),
 
                 _DrawerMenuItem(
@@ -155,7 +155,7 @@ class AdminDrawer extends StatelessWidget {
             ),
           ),
 
-          // Logout button at bottom
+          
           _buildLogoutButton(context, isDark),
         ],
       ),
@@ -200,7 +200,7 @@ class AdminDrawer extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  // Avatar
+                  
                   Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
@@ -261,7 +261,7 @@ class AdminDrawer extends StatelessWidget {
                 ],
               ),
               SizedBox(height: 12.h),
-              // Role badge
+              
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
                 decoration: BoxDecoration(
@@ -344,7 +344,7 @@ class AdminDrawer extends StatelessWidget {
   }
 
   void _showLogoutConfirmation(BuildContext context) {
-    // Lưu reference đến AuthBloc trước khi mở dialog
+    
     final authBloc = context.read<AuthBloc>();
 
     showDialog(
@@ -375,13 +375,12 @@ class AdminDrawer extends StatelessWidget {
   }
 }
 
-/// Menu item widget for drawer
+
 class _DrawerMenuItem extends StatelessWidget {
   final IconData icon;
   final String title;
   final String? subtitle;
   final bool isSelected;
-  final Color? iconColor;
   final VoidCallback onTap;
 
   const _DrawerMenuItem({
@@ -389,18 +388,15 @@ class _DrawerMenuItem extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.isSelected = false,
-    this.iconColor,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final effectiveIconColor =
-        iconColor ??
-        (isSelected
-            ? AppColors.primary
-            : (isDark ? AppColors.gray400 : AppColors.gray600));
+    final effectiveIconColor = isSelected
+        ? AppColors.primary
+        : (isDark ? AppColors.gray400 : AppColors.gray600);
 
     return ListTile(
       leading: Container(
@@ -408,7 +404,7 @@ class _DrawerMenuItem extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? AppColors.primary.withValues(alpha: 0.1)
-              : (iconColor?.withValues(alpha: 0.1) ?? Colors.transparent),
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(8.r),
         ),
         child: Icon(icon, color: effectiveIconColor, size: 22.sp),

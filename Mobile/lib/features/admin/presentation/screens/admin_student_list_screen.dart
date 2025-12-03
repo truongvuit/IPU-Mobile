@@ -27,7 +27,7 @@ class _AdminStudentListScreenState extends State<AdminStudentListScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<AdminBloc>().add(const LoadStudentList());
+    // Load được quản lý bởi HomeAdminScreen._loadDataForTab
   }
 
   @override
@@ -169,7 +169,12 @@ class _AdminStudentListScreenState extends State<AdminStudentListScreen> {
             context,
             AppRouter.adminStudentDetail,
             arguments: student.id,
-          );
+          ).then((_) {
+            // Reload list khi quay lại từ màn chi tiết
+            context.read<AdminBloc>().add(
+              LoadStudentList(searchQuery: _searchQuery),
+            );
+          });
         },
         borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
         child: Padding(

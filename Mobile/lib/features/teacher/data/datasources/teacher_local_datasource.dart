@@ -2,19 +2,14 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/teacher_schedule_model.dart';
 
-
-
 class TeacherLocalDataSource {
   final SharedPreferences sharedPreferences;
 
   TeacherLocalDataSource({required this.sharedPreferences});
 
-  
   static const String _schedulesCacheKey = 'cached_teacher_schedules';
   static const String _schedulesTimestampKey = 'cached_teacher_schedules_timestamp';
 
-  
-  
   Future<void> cacheSchedules(List<TeacherScheduleModel> schedules) async {
     try {
       final jsonList = schedules.map((schedule) => schedule.toJson()).toList();
@@ -30,8 +25,6 @@ class TeacherLocalDataSource {
     }
   }
 
-  
-  
   Future<List<TeacherScheduleModel>?> getCachedSchedules() async {
     try {
       final jsonString = sharedPreferences.getString(_schedulesCacheKey);
@@ -51,8 +44,6 @@ class TeacherLocalDataSource {
     }
   }
 
-  
-  
   DateTime? getCacheTimestamp() {
     final timestampString = sharedPreferences.getString(_schedulesTimestampKey);
     if (timestampString == null) {

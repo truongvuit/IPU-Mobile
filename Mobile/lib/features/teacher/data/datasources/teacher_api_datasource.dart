@@ -6,6 +6,7 @@ import '../models/teacher_profile_model.dart';
 import '../models/teacher_class_model.dart';
 import '../models/teacher_schedule_model.dart';
 import '../models/teacher_student_model.dart';
+import '../../domain/entities/attendance.dart';
 
 abstract class TeacherApiDataSource {
   Future<TeacherProfileModel> getProfile();
@@ -13,9 +14,10 @@ abstract class TeacherApiDataSource {
   Future<List<TeacherScheduleModel>> getWeekSchedule(DateTime date);
   Future<List<TeacherStudentModel>> getClassStudents(int classId);
   Future<TeacherClassModel> getClassDetail(int classId);
-  Future<void> submitAttendance(
+  Future<AttendanceSession> getAttendanceForSession(int sessionId);
+  Future<AttendanceSession> submitAttendance(
     int sessionId,
-    List<Map<String, dynamic>> attendances,
+    List<Map<String, dynamic>> entries,
   );
 }
 
@@ -83,7 +85,7 @@ class TeacherApiDataSourceImpl implements TeacherApiDataSource {
         final data = response.data['data'];
         final List<TeacherScheduleModel> schedules = [];
         
-        // Parse WeeklyScheduleResponse structure: days -> periods -> sessions
+        
         final List<dynamic> days = data['days'] ?? [];
         for (final day in days) {
           final sessionDate = day['date'] as String?;
@@ -93,16 +95,16 @@ class TeacherApiDataSourceImpl implements TeacherApiDataSource {
             final List<dynamic> sessions = period['sessions'] ?? [];
             
             for (final session in sessions) {
-              // Get class details for startTime/endTime from courseClass
+              
               final classId = session['classId']?.toString() ?? '';
               
-              // Parse start time from course class startTime + sessionDate
+              
               DateTime startTime = DateTime.now();
               DateTime endTime = DateTime.now().add(const Duration(hours: 1));
               
               if (sessionDate != null) {
                 final dateOnly = DateTime.parse(sessionDate);
-                // Get time from class startTime if available
+                
                 final startTimeStr = session['startTime'] as String?;
                 if (startTimeStr != null) {
                   final timeParts = startTimeStr.split(':');
@@ -119,7 +121,7 @@ class TeacherApiDataSourceImpl implements TeacherApiDataSource {
                   startTime = dateOnly;
                 }
                 
-                // Calculate endTime from duration or default 1 hour
+                
                 final durationMinutes = session['durationMinutes'] as int? ?? 60;
                 endTime = startTime.add(Duration(minutes: durationMinutes));
               }
@@ -188,17 +190,45 @@ class TeacherApiDataSourceImpl implements TeacherApiDataSource {
   }
 
   @override
-  Future<void> submitAttendance(
-    int sessionId,
-    List<Map<String, dynamic>> attendances,
-  ) async {
+  Future<AttendanceSession> getAttendanceForSession(int sessionId) async {
     try {
-      final response = await dioClient.post(
-        '${ApiEndpoints.teacherAttendance}/$sessionId/attendance',
-        data: {'sessionId': sessionId, 'attendances': attendances},
+      final response = await dioClient.get(
+        '/courseclasses/sessions/$sessionId/attendance',
       );
 
-      if (response.statusCode != 200 || response.data['code'] != 1000) {
+      if (response.statusCode == 200 && response.data['code'] == 1000) {
+        final data = response.data['data'];
+        return _parseAttendanceSession(data, sessionId);
+      } else {
+        throw ServerException(
+          response.data['message'] ?? 'Get attendance failed',
+        );
+      }
+    } on DioException catch (e) {
+      throw ServerException(e.response?.data['message'] ?? 'Network error');
+    }
+  }
+
+  @override
+  Future<AttendanceSession> submitAttendance(
+    int sessionId,
+    List<Map<String, dynamic>> entries,
+  ) async {
+    try {
+      
+      
+      final response = await dioClient.post(
+        '${ApiEndpoints.teacherAttendance}/$sessionId/attendance',
+        data: {
+          'sessionId': sessionId,
+          'entries': entries,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data['code'] == 1000) {
+        final data = response.data['data'];
+        return _parseAttendanceSession(data, sessionId);
+      } else {
         throw ServerException(
           response.data['message'] ?? 'Submit attendance failed',
         );
@@ -206,5 +236,32 @@ class TeacherApiDataSourceImpl implements TeacherApiDataSource {
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Network error');
     }
+  }
+
+  
+  AttendanceSession _parseAttendanceSession(Map<String, dynamic> data, int sessionId) {
+    final entries = data['entries'] as List<dynamic>? ?? [];
+    final records = entries.map((e) {
+      return AttendanceRecord(
+        id: '${sessionId}_${e['studentId']}',
+        studentId: e['studentId']?.toString() ?? '',
+        classId: '', 
+        date: DateTime.now(),
+        status: (e['absent'] == true) ? 'absent' : 'present',
+        note: e['note'] as String?,
+        createdAt: DateTime.now(),
+        studentName: e['studentName'] as String?,
+        studentCode: null,
+        studentAvatar: null,
+      );
+    }).toList();
+
+    return AttendanceSession(
+      id: sessionId.toString(),
+      classId: '', 
+      date: DateTime.now(),
+      records: records,
+      isCompleted: false, // Will be determined by UI based on session time
+    );
   }
 }

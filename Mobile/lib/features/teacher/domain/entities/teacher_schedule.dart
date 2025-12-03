@@ -27,6 +27,25 @@ class TeacherSchedule extends Equatable {
   }
 
   bool get isUpcoming => startTime.isAfter(DateTime.now());
+  
+  bool get isOngoing {
+    final now = DateTime.now();
+    return now.isAfter(startTime) && now.isBefore(endTime);
+  }
+  
+  bool get isCompleted => DateTime.now().isAfter(endTime);
+  
+  String get status {
+    if (isOngoing) return 'ongoing';
+    if (isUpcoming) return 'upcoming';
+    return 'completed';
+  }
+  
+  int get sortPriority {
+    if (isOngoing) return 0;
+    if (isUpcoming) return 1;
+    return 2;
+  }
 
   factory TeacherSchedule.fromJson(Map<String, dynamic> json) {
     return TeacherSchedule(

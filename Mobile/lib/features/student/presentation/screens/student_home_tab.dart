@@ -7,6 +7,7 @@ import '../bloc/student_bloc.dart';
 import '../bloc/student_event.dart';
 import '../bloc/student_state.dart';
 import '../../domain/entities/student_class.dart';
+import '../../domain/entities/schedule.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/routing/app_router.dart';
 import '../widgets/dashboard/streak_indicator.dart';
@@ -82,30 +83,36 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
   Widget _buildTodayFocus(bool isDark, bool isDesktop) {
     return BlocBuilder<StudentBloc, StudentState>(
       builder: (context, state) {
-        List<StudentClass> upcomingClasses = [];
+        List<Schedule> todaySchedules = [];
 
         if (state is DashboardLoaded) {
-          upcomingClasses = state.upcomingClasses;
-        } else if (state is ClassesLoaded) {
-          upcomingClasses = state.classes;
-        } else if (state is StudentLoaded && state.classes != null) {
-          upcomingClasses = state.classes!;
+          todaySchedules = state.todaySchedules;
         }
 
-        
-        final todayClass = upcomingClasses.isNotEmpty
-            ? upcomingClasses.first
-            : null;
-
-        if (todayClass == null) {
+        // Nếu không có lịch học hôm nay
+        if (todaySchedules.isEmpty) {
           return const SizedBox.shrink();
         }
 
-        // Format time from actual class data
-        final startHour = todayClass.startTime.hour.toString().padLeft(2, '0');
-        final startMin = todayClass.startTime.minute.toString().padLeft(2, '0');
-        final endHour = todayClass.endTime.hour.toString().padLeft(2, '0');
-        final endMin = todayClass.endTime.minute.toString().padLeft(2, '0');
+        // Lấy buổi học sắp tới (hoặc buổi học đầu tiên trong ngày)
+        final now = DateTime.now();
+        Schedule? nextSchedule;
+        for (var s in todaySchedules) {
+          if (s.endTime.isAfter(now)) {
+            nextSchedule = s;
+            break;
+          }
+        }
+        // Nếu tất cả đã kết thúc, không hiển thị
+        if (nextSchedule == null) {
+          return const SizedBox.shrink();
+        }
+
+        // Format time
+        final startHour = nextSchedule.startTime.hour.toString().padLeft(2, '0');
+        final startMin = nextSchedule.startTime.minute.toString().padLeft(2, '0');
+        final endHour = nextSchedule.endTime.hour.toString().padLeft(2, '0');
+        final endMin = nextSchedule.endTime.minute.toString().padLeft(2, '0');
         final timeSlot = '$startHour:$startMin - $endHour:$endMin';
 
         return Padding(
@@ -123,16 +130,16 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
               ),
               SizedBox(height: 12.h),
               TodayFocusCard(
-                className: todayClass.courseName,
+                className: nextSchedule.courseName ?? nextSchedule.className,
                 timeSlot: timeSlot, 
-                room: todayClass.room,
-                isOnline: todayClass.isOnline,
+                room: nextSchedule.room,
+                isOnline: nextSchedule.isOnline,
                 isDark: isDark,
                 onTap: () {
                   Navigator.pushNamed(
                     context,
                     AppRouter.studentClassDetail,
-                    arguments: todayClass.id,
+                    arguments: nextSchedule!.classId,
                   );
                 },
               ),
@@ -317,18 +324,6 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
                         ),
                       ),
                     ],
-                  ),
-                  SizedBox(height: 12.h),
-                  SizedBox(
-                    width: double.infinity,
-                    child: PerformanceCard(
-                      title: 'Tổng tín chỉ',
-                      value: totalCredits > 0 ? '$totalCredits' : '--',
-                      subtitle: studyHours > 0 ? '~$studyHours giờ học' : 'Chưa có dữ liệu',
-                      icon: Icons.access_time,
-                      color: Colors.orange,
-                      isDark: isDark,
-                    ),
                   ),
                 ],
               ),
