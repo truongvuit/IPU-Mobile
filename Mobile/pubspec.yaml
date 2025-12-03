@@ -1,0 +1,97 @@
+name: trungtamngoaingu
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # State Management
+  flutter_bloc: ^8.1.6
+  equatable: ^2.0.5
+  
+  # Functional Programming
+  dartz: ^0.10.1
+  
+  # Network
+  dio: ^5.7.0
+  
+  # Dependency Injection
+  get_it: ^8.0.2
+  
+  # Local Storage
+  shared_preferences: ^2.3.3
+  
+  # Network Connectivity
+  connectivity_plus: ^6.1.2
+  
+  # Utils
+  intl: ^0.19.0
+  
+  # Responsive UI
+  flutter_screenutil: ^5.9.3
+
+  cached_network_image: ^3.3.1
+  shimmer: ^3.0.0
+  url_launcher: ^6.3.1
+  carousel_slider: ^5.1.1
+  image_picker: ^1.2.1
+  table_calendar: ^3.1.1
+  universal_html: ^2.2.4
+  fl_chart: ^1.1.1
+  timeline_tile: ^2.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
+
+# Configuration for flutter_launcher_icons
+flutter_launcher_icons:
+  android: true
+  ios: true
+  web:
+    generate: true
+    image_path: "assets/images/logo.png"
+    background_color: "#FFFFFF"
+    theme_color: "#0175C2"
+  image_path: "assets/images/logo.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/logo.png"
+
+flutter:
+  uses-material-design: true
+
+  fonts:
+      # Font Lexend cho authentication screens
+      - family: Lexend
+        fonts:
+          - asset: assets/fonts/Lexend-Regular.ttf
+            weight: 400
+          - asset: assets/fonts/Lexend-Medium.ttf
+            weight: 500
+          - asset: assets/fonts/Lexend-SemiBold.ttf
+            weight: 600
+          - asset: assets/fonts/Lexend-Bold.ttf
+            weight: 700
+      
+      # Font Inter cho các phần khác
+      - family: Inter
+        fonts:
+          - asset: assets/fonts/Inter-Regular.otf
+            weight: 400
+          - asset: assets/fonts/Inter-SemiBold.otf
+            weight: 600
+          - asset: assets/fonts/Inter-Bold.otf
+            weight: 700
+
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/fonts/

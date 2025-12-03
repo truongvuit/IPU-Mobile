@@ -1,0 +1,342 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../domain/repositories/teacher_repository.dart';
+import '../../domain/entities/teacher_class.dart';
+import 'teacher_event.dart';
+import 'teacher_state.dart';
+
+class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
+  final TeacherRepository repository;
+  List<TeacherClass>? _cachedClasses;
+
+  TeacherBloc({required this.repository}) : super(TeacherInitial()) {
+    on<LoadTeacherDashboard>(_onLoadDashboard);
+    on<LoadMyClasses>(_onLoadMyClasses);
+    on<SearchClasses>(_onSearchClasses);
+    on<FilterClasses>(_onFilterClasses);
+    on<LoadClassDetail>(_onLoadClassDetail);
+    on<LoadClassStudents>(_onLoadClassStudents);
+    on<LoadStudentDetail>(_onLoadStudentDetail);
+    on<SearchStudents>(_onSearchStudents);
+    on<LoadAttendance>(_onLoadAttendance);
+    on<RecordAttendance>(_onRecordAttendance);
+    on<SubmitAttendance>(_onSubmitAttendance);
+    on<LoadClassScores>(_onLoadClassScores);
+    on<LoadStudentScores>(_onLoadStudentScores);
+    on<SubmitScore>(_onSubmitScore);
+    on<UpdateScore>(_onUpdateScore);
+    on<LoadWeekSchedule>(_onLoadWeekSchedule);
+    on<LoadTodaySchedule>(_onLoadTodaySchedule);
+    on<LoadTeacherProfile>(_onLoadProfile);
+    on<UpdateTeacherProfile>(_onUpdateProfile);
+  }
+
+  Future<void> _onLoadDashboard(
+    LoadTeacherDashboard event,
+    Emitter<TeacherState> emit,
+  ) async {
+    emit(const TeacherLoading(action: 'Đang tải dashboard...'));
+    
+    try {
+      final todayScheduleResult = await repository.getTodaySchedule();
+      final weekScheduleResult = await repository.getWeekSchedule(DateTime.now());
+      final classesResult = await repository.getMyClasses();
+      final profileResult = await repository.getProfile();
+      
+      
+      if (todayScheduleResult.isLeft()) {
+        final error = todayScheduleResult.fold((l) => l, (_) => 'Unknown error');
+        emit(TeacherError(error));
+        return;
+      }
+      
+      if (classesResult.isLeft()) {
+        final error = classesResult.fold((l) => l, (_) => 'Unknown error');
+        emit(TeacherError(error));
+        return;
+      }
+      
+      if (profileResult.isLeft()) {
+        final error = profileResult.fold((l) => l, (_) => 'Unknown error');
+        emit(TeacherError(error));
+        return;
+      }
+      
+      
+      final schedule = todayScheduleResult.getOrElse(() => []);
+      final weekSchedule = weekScheduleResult.getOrElse(() => []);
+      final classes = classesResult.getOrElse(() => []);
+      final profile = profileResult.getOrElse(() => throw Exception('Profile not found'));
+      
+      emit(DashboardLoaded(
+        todaySchedule: schedule,
+        weekSchedule: weekSchedule,
+        recentClasses: classes.take(3).toList(),
+        profile: profile,
+      ));
+    } catch (e) {
+      emit(TeacherError('Không thể tải dashboard: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onLoadMyClasses(
+    LoadMyClasses event,
+    Emitter<TeacherState> emit,
+  ) async {
+    emit(const TeacherLoading(action: 'Đang tải danh sách lớp...'));
+    final result = await repository.getMyClasses();
+    result.fold(
+      (error) => emit(TeacherError(error)),
+      (classes) {
+        _cachedClasses = classes;
+        emit(ClassesLoaded(classes));
+      },
+    );
+  }
+
+  Future<void> _onSearchClasses(
+    SearchClasses event,
+    Emitter<TeacherState> emit,
+  ) async {
+    if (_cachedClasses == null) {
+      await _onLoadMyClasses(LoadMyClasses(), emit);
+      if (_cachedClasses == null) return;
+    }
+    
+    final filtered = _cachedClasses!
+        .where((c) =>
+            (c.name ?? '').toLowerCase().contains(event.query.toLowerCase()) ||
+            c.code.toLowerCase().contains(event.query.toLowerCase()))
+        .toList();
+    emit(ClassesLoaded(filtered));
+  }
+
+  Future<void> _onFilterClasses(
+    FilterClasses event,
+    Emitter<TeacherState> emit,
+  ) async {
+    if (_cachedClasses == null) {
+      await _onLoadMyClasses(LoadMyClasses(), emit);
+      if (_cachedClasses == null) return;
+    }
+    
+    final filtered = event.status == 'all'
+        ? _cachedClasses!
+        : _cachedClasses!.where((c) => c.status == event.status).toList();
+    emit(ClassesLoaded(filtered));
+  }
+
+  Future<void> _onLoadClassDetail(
+    LoadClassDetail event,
+    Emitter<TeacherState> emit,
+  ) async {
+    emit(const TeacherLoading(action: 'Đang tải chi tiết lớp...'));
+    
+    try {
+      final classDetailResult = await repository.getClassDetail(event.classId);
+      final studentsResult = await repository.getClassStudents(event.classId);
+      
+      if (classDetailResult.isLeft()) {
+        final error = classDetailResult.fold((l) => l, (_) => 'Unknown error');
+        emit(TeacherError(error));
+        return;
+      }
+      
+      if (studentsResult.isLeft()) {
+        final error = studentsResult.fold((l) => l, (_) => 'Unknown error');
+        emit(TeacherError(error));
+        return;
+      }
+      
+      final classDetail = classDetailResult.getOrElse(() => throw Exception('Class not found'));
+      final students = studentsResult.getOrElse(() => []);
+      
+      emit(ClassDetailLoaded(classDetail, students));
+    } catch (e) {
+      emit(TeacherError('Không thể tải chi tiết lớp: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onLoadClassStudents(
+    LoadClassStudents event,
+    Emitter<TeacherState> emit,
+  ) async {
+    emit(const TeacherLoading(action: 'Đang tải danh sách học sinh...'));
+    final result = await repository.getClassStudents(event.classId);
+    result.fold(
+      (error) => emit(TeacherError(error)),
+      (students) => emit(StudentsLoaded(students)),
+    );
+  }
+
+  Future<void> _onLoadStudentDetail(
+    LoadStudentDetail event,
+    Emitter<TeacherState> emit,
+  ) async {
+    emit(TeacherLoading());
+    final result = await repository.getStudentDetail(event.studentId);
+    result.fold(
+      (error) => emit(TeacherError(error)),
+      (student) => emit(StudentDetailLoaded(student, const [], const [])),
+    );
+  }
+
+  Future<void> _onSearchStudents(
+    SearchStudents event,
+    Emitter<TeacherState> emit,
+  ) async {
+    emit(const TeacherError('Chức năng tìm kiếm chưa được triển khai trong ngữ cảnh hiện tại'));
+  }
+
+  Future<void> _onLoadAttendance(
+    LoadAttendance event,
+    Emitter<TeacherState> emit,
+  ) async {
+    emit(TeacherLoading());
+    final result = await repository.getAttendanceSession(
+      event.classId,
+      event.date,
+    );
+    result.fold(
+      (error) => emit(TeacherError(error)),
+      (session) => emit(AttendanceLoaded(session)),
+    );
+  }
+
+  Future<void> _onRecordAttendance(
+    RecordAttendance event,
+    Emitter<TeacherState> emit,
+  ) async {
+    final result = await repository.recordAttendance(
+      event.classId,
+      event.studentId,
+      event.status,
+      event.note,
+    );
+    
+    if (result.isLeft()) {
+      result.fold(
+        (error) => emit(TeacherError(error)),
+        (_) => null,
+      );
+      return;
+    }
+    
+    final sessionResult = await repository.getAttendanceSession(
+      event.classId,
+      DateTime.now(),
+    );
+    
+    sessionResult.fold(
+      (error) => emit(TeacherError(error)),
+      (session) => emit(AttendanceRecorded(session)),
+    );
+  }
+
+  Future<void> _onSubmitAttendance(
+    SubmitAttendance event,
+    Emitter<TeacherState> emit,
+  ) async {
+    final result = await repository.submitAttendance(event.sessionId);
+    result.fold(
+      (error) => emit(TeacherError(error)),
+      (_) => emit(const AttendanceSubmitted('Điểm danh đã được lưu thành công')),
+    );
+  }
+
+  Future<void> _onLoadClassScores(
+    LoadClassScores event,
+    Emitter<TeacherState> emit,
+  ) async {
+    emit(TeacherLoading());
+    final result = await repository.getClassScores(event.classId);
+    result.fold(
+      (error) => emit(TeacherError(error)),
+      (scores) => emit(ClassScoresLoaded(scores)),
+    );
+  }
+
+  Future<void> _onLoadStudentScores(
+    LoadStudentScores event,
+    Emitter<TeacherState> emit,
+  ) async {
+    emit(TeacherLoading());
+    final result = await repository.getStudentScores(
+      event.studentId,
+      event.classId,
+    );
+    result.fold(
+      (error) => emit(TeacherError(error)),
+      (scores) => emit(StudentScoresLoaded(scores)),
+    );
+  }
+
+  Future<void> _onSubmitScore(
+    SubmitScore event,
+    Emitter<TeacherState> emit,
+  ) async {
+    final result = await repository.submitScore(event.score);
+    result.fold(
+      (error) => emit(TeacherError(error)),
+      (_) => emit(const ScoreSubmitted('Điểm đã được nhập thành công')),
+    );
+  }
+
+  Future<void> _onUpdateScore(
+    UpdateScore event,
+    Emitter<TeacherState> emit,
+  ) async {
+    final result = await repository.updateScore(event.score);
+    result.fold(
+      (error) => emit(TeacherError(error)),
+      (_) => emit(const ScoreUpdated('Điểm đã được cập nhật')),
+    );
+  }
+
+  Future<void> _onLoadWeekSchedule(
+    LoadWeekSchedule event,
+    Emitter<TeacherState> emit,
+  ) async {
+    emit(TeacherLoading());
+    final result = await repository.getWeekSchedule(event.date);
+    result.fold(
+      (error) => emit(TeacherError(error)),
+      (schedule) => emit(ScheduleLoaded(schedule)),
+    );
+  }
+
+  Future<void> _onLoadTodaySchedule(
+    LoadTodaySchedule event,
+    Emitter<TeacherState> emit,
+  ) async {
+    emit(TeacherLoading());
+    final result = await repository.getTodaySchedule();
+    result.fold(
+      (error) => emit(TeacherError(error)),
+      (schedule) => emit(ScheduleLoaded(schedule)),
+    );
+  }
+
+  Future<void> _onLoadProfile(
+    LoadTeacherProfile event,
+    Emitter<TeacherState> emit,
+  ) async {
+    emit(TeacherLoading());
+    final result = await repository.getProfile();
+    result.fold(
+      (error) => emit(TeacherError(error)),
+      (profile) => emit(ProfileLoaded(profile)),
+    );
+  }
+
+  Future<void> _onUpdateProfile(
+    UpdateTeacherProfile event,
+    Emitter<TeacherState> emit,
+  ) async {
+    emit(TeacherLoading());
+    final result = await repository.updateProfile(event.profile);
+    result.fold(
+      (error) => emit(TeacherError(error)),
+      (_) => emit(const ProfileUpdated('Hồ sơ đã được cập nhật')),
+    );
+  }
+}
