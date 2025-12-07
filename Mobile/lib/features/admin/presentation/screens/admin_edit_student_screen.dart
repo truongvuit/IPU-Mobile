@@ -12,6 +12,7 @@ import '../../../authentication/presentation/bloc/auth_state.dart';
 import '../bloc/admin_bloc.dart';
 import '../bloc/admin_event.dart';
 import '../bloc/admin_state.dart';
+import '../widgets/simple_admin_app_bar.dart';
 
 import '../../domain/entities/admin_student.dart';
 
@@ -153,7 +154,7 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
       backgroundColor: isDark
           ? AppColors.backgroundDark
           : AppColors.backgroundLight,
-      appBar: AppBar(title: const Text('Chỉnh sửa học viên')),
+      appBar: const SimpleAdminAppBar(title: 'Chỉnh sửa học viên'),
       body: BlocListener<AdminBloc, AdminState>(
         listener: (context, state) {
           if (state is StudentUpdated) {
@@ -248,7 +249,7 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
                       color: isDark ? AppColors.surfaceDark : AppColors.surface,
                       borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
                       border: Border.all(
-                        color: isDark ? AppColors.gray700 : AppColors.gray200,
+                        color: isDark ? AppColors.neutral700 : AppColors.neutral200,
                       ),
                     ),
                     child: Row(
@@ -256,7 +257,7 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
                         Icon(
                           Icons.calendar_today,
                           size: 20.sp,
-                          color: isDark ? AppColors.gray400 : AppColors.gray600,
+                          color: isDark ? AppColors.neutral400 : AppColors.neutral600,
                         ),
                         SizedBox(width: AppSizes.p12),
                         Expanded(
@@ -267,13 +268,13 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: _dateOfBirth != null
                                   ? null
-                                  : (isDark ? AppColors.gray400 : AppColors.gray600),
+                                  : (isDark ? AppColors.neutral400 : AppColors.neutral600),
                             ),
                           ),
                         ),
                         Icon(
                           Icons.arrow_drop_down,
-                          color: isDark ? AppColors.gray400 : AppColors.gray600,
+                          color: isDark ? AppColors.neutral400 : AppColors.neutral600,
                         ),
                       ],
                     ),
@@ -305,27 +306,27 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
                   decoration: InputDecoration(
                     prefixIcon: Icon(
                       Icons.school_outlined,
-                      color: isDark ? AppColors.gray400 : AppColors.gray600,
+                      color: isDark ? AppColors.neutral400 : AppColors.neutral600,
                     ),
                     filled: true,
                     fillColor: isDark ? AppColors.surfaceDark : AppColors.surface,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
                       borderSide: BorderSide(
-                        color: isDark ? AppColors.gray700 : AppColors.gray200,
+                        color: isDark ? AppColors.neutral700 : AppColors.neutral200,
                       ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
                       borderSide: BorderSide(
-                        color: isDark ? AppColors.gray700 : AppColors.gray200,
+                        color: isDark ? AppColors.neutral700 : AppColors.neutral200,
                       ),
                     ),
                   ),
                   hint: Text(
                     'Chọn trình độ học vấn',
                     style: TextStyle(
-                      color: isDark ? AppColors.gray400 : AppColors.gray600,
+                      color: isDark ? AppColors.neutral400 : AppColors.neutral600,
                     ),
                   ),
                   items: _educationLevels.map((level) {
@@ -361,7 +362,7 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
                       color: isDark ? AppColors.surfaceDark : AppColors.surface,
                       borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
                       border: Border.all(
-                        color: isDark ? AppColors.gray700 : AppColors.gray200,
+                        color: isDark ? AppColors.neutral700 : AppColors.neutral200,
                       ),
                     ),
                     child: Row(
@@ -369,7 +370,7 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
                         Icon(
                           Icons.lock_outline,
                           size: 20.sp,
-                          color: isDark ? AppColors.gray400 : AppColors.gray600,
+                          color: isDark ? AppColors.neutral400 : AppColors.neutral600,
                         ),
                         SizedBox(width: AppSizes.p12),
                         Expanded(
@@ -405,7 +406,7 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
                       suffixIcon: IconButton(
                         icon: Icon(
                           _showPassword ? Icons.visibility_off : Icons.visibility,
-                          color: isDark ? AppColors.gray400 : AppColors.gray600,
+                          color: isDark ? AppColors.neutral400 : AppColors.neutral600,
                         ),
                         onPressed: () {
                           setState(() {
@@ -541,30 +542,30 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
             prefixIcon: prefixIcon != null
                 ? Icon(
                     prefixIcon,
-                    color: isDark ? AppColors.gray400 : AppColors.gray600,
+                    color: isDark ? AppColors.neutral400 : AppColors.neutral600,
                   )
                 : null,
             suffixIcon: suffixIcon,
             filled: true,
             fillColor: enabled
                 ? (isDark ? AppColors.surfaceDark : AppColors.surface)
-                : (isDark ? AppColors.gray800 : AppColors.gray100),
+                : (isDark ? AppColors.neutral800 : AppColors.neutral100),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
               borderSide: BorderSide(
-                color: isDark ? AppColors.gray700 : AppColors.gray200,
+                color: isDark ? AppColors.neutral700 : AppColors.neutral200,
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
               borderSide: BorderSide(
-                color: isDark ? AppColors.gray700 : AppColors.gray200,
+                color: isDark ? AppColors.neutral700 : AppColors.neutral200,
               ),
             ),
             disabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
               borderSide: BorderSide(
-                color: isDark ? AppColors.gray700 : AppColors.gray200,
+                color: isDark ? AppColors.neutral700 : AppColors.neutral200,
               ),
             ),
           ),

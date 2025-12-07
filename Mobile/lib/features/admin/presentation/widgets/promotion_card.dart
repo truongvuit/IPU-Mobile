@@ -80,7 +80,7 @@ class PromotionCard extends StatelessWidget {
           side: BorderSide(
             color: isSelected
                 ? AppColors.primary
-                : (isDark ? AppColors.gray700 : AppColors.gray200),
+                : (isDark ? AppColors.neutral700 : AppColors.neutral200),
           ),
         ),
         child: InkWell(
@@ -97,7 +97,7 @@ class PromotionCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: isSelected ? AppColors.primary : AppColors.gray400,
+                      color: isSelected ? AppColors.primary : AppColors.neutral400,
                       width: 2,
                     ),
                     color: isSelected ? AppColors.primary : Colors.transparent,
@@ -160,7 +160,7 @@ class PromotionCard extends StatelessWidget {
                         promotion.description,
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontSize: AppSizes.textXs,
-                          color: isDark ? AppColors.gray400 : AppColors.gray600,
+                          color: isDark ? AppColors.neutral400 : AppColors.neutral600,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -173,7 +173,7 @@ class PromotionCard extends StatelessWidget {
                           Icon(
                             Icons.access_time,
                             size: AppSizes.textXs,
-                            color: isDark ? AppColors.gray400 : AppColors.gray600,
+                            color: isDark ? AppColors.neutral400 : AppColors.neutral600,
                           ),
                           SizedBox(width: AppSizes.p4),
                           Text(
@@ -181,8 +181,8 @@ class PromotionCard extends StatelessWidget {
                             style: theme.textTheme.bodySmall?.copyWith(
                               fontSize: AppSizes.textXs,
                               color: isDark
-                                  ? AppColors.gray400
-                                  : AppColors.gray600,
+                                  ? AppColors.neutral400
+                                  : AppColors.neutral600,
                             ),
                           ),
                         ],
@@ -226,7 +226,7 @@ class PromotionCard extends StatelessWidget {
                                   _missingCourseNames.join(', '),
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     fontSize: AppSizes.textXs,
-                                    color: isDark ? AppColors.gray300 : AppColors.gray700,
+                                    color: isDark ? AppColors.neutral300 : AppColors.neutral700,
                                   ),
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,

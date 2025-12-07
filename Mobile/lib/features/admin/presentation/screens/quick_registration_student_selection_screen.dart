@@ -8,6 +8,8 @@ import '../../../../core/widgets/empty_state_widget.dart';
 
 import '../bloc/registration_bloc.dart';
 import '../bloc/registration_event.dart';
+import '../widgets/admin_search_bar.dart';
+import '../widgets/simple_admin_app_bar.dart';
 
 import '../../domain/entities/admin_student.dart';
 
@@ -109,37 +111,24 @@ class _QuickRegistrationStudentSelectionScreenState
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-      appBar: AppBar(
-        title: const Text('Chọn Học viên'),
-      ),
+      backgroundColor: isDark
+          ? AppColors.backgroundDark
+          : AppColors.backgroundLight,
+      appBar: const SimpleAdminAppBar(title: 'Chọn Học viên'),
       body: Column(
         children: [
           
-          Container(
+          Padding(
             padding: EdgeInsets.all(AppSizes.paddingMedium),
-            color: isDark ? AppColors.surfaceDark : AppColors.surface,
-            child: TextField(
+            child: AdminSearchBar(
               controller: _searchController,
+              hintText: 'Tìm kiếm theo tên, SĐT, email...',
               onChanged: _onSearch,
-              decoration: InputDecoration(
-                hintText: 'Tìm kiếm theo tên, SĐT, email...',
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: isDark ? AppColors.gray700 : AppColors.gray100,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-                  borderSide: BorderSide.none,
-                ),
-              ),
+              onClear: () => _loadStudents(),
             ),
           ),
 
-          
-          Expanded(
-            child: _buildContent(isDark),
-          ),
+          Expanded(child: _buildContent(isDark)),
         ],
       ),
     );
@@ -214,12 +203,11 @@ class _QuickRegistrationStudentSelectionScreenState
           padding: EdgeInsets.all(AppSizes.paddingMedium),
           child: Row(
             children: [
-              
               CircleAvatar(
                 radius: 24.r,
                 backgroundColor: isSelected
                     ? AppColors.primary
-                    : (isDark ? AppColors.gray600 : AppColors.gray200),
+                    : (isDark ? AppColors.neutral600 : AppColors.neutral200),
                 backgroundImage: student.avatarUrl != null
                     ? NetworkImage(student.avatarUrl!)
                     : null,
@@ -227,7 +215,9 @@ class _QuickRegistrationStudentSelectionScreenState
                     ? Text(
                         student.initials,
                         style: TextStyle(
-                          color: isSelected ? Colors.white : AppColors.gray600,
+                          color: isSelected
+                              ? Colors.white
+                              : AppColors.neutral600,
                           fontWeight: FontWeight.bold,
                         ),
                       )
@@ -235,7 +225,6 @@ class _QuickRegistrationStudentSelectionScreenState
               ),
               SizedBox(width: AppSizes.paddingMedium),
 
-              
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -253,14 +242,17 @@ class _QuickRegistrationStudentSelectionScreenState
                         Icon(
                           Icons.phone,
                           size: 14.sp,
-                          color: isDark ? AppColors.gray400 : AppColors.gray600,
+                          color: isDark
+                              ? AppColors.neutral400
+                              : AppColors.neutral600,
                         ),
                         SizedBox(width: 4.w),
                         Text(
                           student.phoneNumber,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color:
-                                isDark ? AppColors.gray400 : AppColors.gray600,
+                            color: isDark
+                                ? AppColors.neutral400
+                                : AppColors.neutral600,
                           ),
                         ),
                       ],
@@ -272,8 +264,9 @@ class _QuickRegistrationStudentSelectionScreenState
                           Icon(
                             Icons.email,
                             size: 14.sp,
-                            color:
-                                isDark ? AppColors.gray400 : AppColors.gray600,
+                            color: isDark
+                                ? AppColors.neutral400
+                                : AppColors.neutral600,
                           ),
                           SizedBox(width: 4.w),
                           Expanded(
@@ -281,8 +274,8 @@ class _QuickRegistrationStudentSelectionScreenState
                               student.email,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: isDark
-                                    ? AppColors.gray400
-                                    : AppColors.gray600,
+                                    ? AppColors.neutral400
+                                    : AppColors.neutral600,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -294,17 +287,12 @@ class _QuickRegistrationStudentSelectionScreenState
                 ),
               ),
 
-              
               if (isSelected)
-                Icon(
-                  Icons.check_circle,
-                  color: AppColors.primary,
-                  size: 24.sp,
-                )
+                Icon(Icons.check_circle, color: AppColors.primary, size: 24.sp)
               else
                 Icon(
                   Icons.arrow_forward_ios,
-                  color: isDark ? AppColors.gray500 : AppColors.gray400,
+                  color: isDark ? AppColors.neutral500 : AppColors.neutral400,
                   size: 16.sp,
                 ),
             ],

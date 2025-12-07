@@ -1,40 +1,107 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'core/auth/session_expiry_notifier.dart';
 import 'core/di/injector.dart';
 import 'core/routing/app_router.dart';
+import 'core/services/deep_link_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/authentication/presentation/bloc/auth_bloc.dart';
 import 'features/authentication/presentation/bloc/auth_event.dart';
+import 'features/payment/domain/vnpay_models.dart';
 import 'features/settings/presentation/bloc/settings_bloc.dart';
 import 'features/settings/presentation/bloc/settings_event.dart';
 import 'features/settings/presentation/bloc/settings_state.dart';
 import 'features/student/presentation/bloc/student_bloc.dart';
 import 'features/teacher/presentation/bloc/teacher_bloc.dart';
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  StreamSubscription<void>? _sessionExpirySubscription;
+  StreamSubscription<VNPayPaymentResult>? _deepLinkSubscription;
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _setupSessionExpiryListener();
+    _setupDeepLinkListener();
+  }
+
+  @override
+  void dispose() {
+    _sessionExpirySubscription?.cancel();
+    _deepLinkSubscription?.cancel();
+    super.dispose();
+  }
+
+  
+  
+  
+  
+  
+  void _setupDeepLinkListener() {
+    final deepLinkService = getIt<DeepLinkService>();
+    
+    
+    _deepLinkSubscription = deepLinkService.paymentResultStream.listen(
+      (VNPayPaymentResult result) {
+        
+        _navigatorKey.currentState?.pushNamed(
+          AppRouter.vnpayResult,
+          arguments: result,
+        );
+      },
+    );
+    
+    
+    
+    
+  }
+
+  void _setupSessionExpiryListener() {
+    final sessionExpiryNotifier = getIt<SessionExpiryNotifier>();
+    _sessionExpirySubscription = sessionExpiryNotifier.sessionExpiredStream.listen((_) {
+      
+      final authBloc = getIt<AuthBloc>();
+      authBloc.add(const LogoutRequested());
+      
+      
+      _navigatorKey.currentState?.pushNamedAndRemoveUntil(
+        AppRouter.welcome,
+        (route) => false,
+      );
+    });
+  }
 
   Size _getAdaptiveDesignSize(BoxConstraints constraints) {
     final width = constraints.maxWidth;
     final height = constraints.maxHeight;
 
-    // Mobile
+    
     if (width < 600) {
       return const Size(375, 812);
     }
 
-    // Tablet Portrait
+    
     if (width >= 600 && width < 900) {
       return Size(width, height);
     }
 
-    // Tablet Landscape / Small Desktop
+    
     if (width >= 900 && width < 1200) {
       return Size(width, height);
     }
 
-    // Desktop - Use actual size for full responsive
+    
     return Size(width, height);
   }
 
@@ -42,8 +109,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<AuthBloc>(
-          create: (_) => getIt<AuthBloc>()..add(const CheckAuthStatus()),
+        
+        
+        
+        
+        BlocProvider<AuthBloc>.value(
+          value: getIt<AuthBloc>(),
         ),
         BlocProvider<SettingsBloc>(
           create: (_) => getIt<SettingsBloc>()..add(const LoadSettings()),
@@ -95,6 +166,7 @@ class MyApp extends StatelessWidget {
                 minTextAdapt: true,
                 splitScreenMode: true,
                 builder: (_, __) => MaterialApp(
+                  navigatorKey: _navigatorKey,
                   title: 'IPU - Ielts Power Up',
                   debugShowCheckedModeBanner: false,
                   theme: AppTheme.lightTheme,

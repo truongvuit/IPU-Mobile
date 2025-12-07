@@ -26,7 +26,7 @@ class _TeacherAttendanceListScreenState
     extends State<TeacherAttendanceListScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  String _selectedFilter = 'active'; 
+  String _selectedFilter = 'active';
 
   @override
   void initState() {
@@ -48,7 +48,7 @@ class _TeacherAttendanceListScreenState
     setState(() {
       switch (_tabController.index) {
         case 0:
-          _selectedFilter = 'active'; 
+          _selectedFilter = 'active';
           break;
         case 1:
           _selectedFilter = 'completed';
@@ -66,7 +66,7 @@ class _TeacherAttendanceListScreenState
 
   List<TeacherSchedule> _filterSchedules(List<TeacherSchedule> schedules) {
     List<TeacherSchedule> filtered;
-    
+
     switch (_selectedFilter) {
       case 'ongoing':
         filtered = schedules.where((s) => s.isOngoing).toList();
@@ -78,20 +78,18 @@ class _TeacherAttendanceListScreenState
         filtered = schedules.where((s) => s.isCompleted).toList();
         break;
       case 'active':
-        
         filtered = schedules.where((s) => s.isOngoing || s.isUpcoming).toList();
         break;
       default:
         filtered = schedules;
     }
-    
-    
+
     filtered.sort((a, b) {
       final priorityCompare = a.sortPriority.compareTo(b.sortPriority);
       if (priorityCompare != 0) return priorityCompare;
       return a.startTime.compareTo(b.startTime);
     });
-    
+
     return filtered;
   }
 
@@ -136,7 +134,9 @@ class _TeacherAttendanceListScreenState
         bottom: TabBar(
           controller: _tabController,
           labelColor: AppColors.primary,
-          unselectedLabelColor: isDark ? Colors.white70 : AppColors.textSecondary,
+          unselectedLabelColor: isDark
+              ? Colors.white70
+              : AppColors.textSecondary,
           indicatorColor: AppColors.primary,
           indicatorWeight: 3,
           labelStyle: TextStyle(
@@ -166,7 +166,6 @@ class _TeacherAttendanceListScreenState
             return _buildErrorState(state.message);
           }
 
-          
           List<TeacherSchedule> todaySchedule = [];
 
           if (state is DashboardLoaded) {
@@ -179,14 +178,17 @@ class _TeacherAttendanceListScreenState
             return _buildEmptyState(isDark);
           }
 
-          
           final filteredSchedules = _filterSchedules(todaySchedule);
-          
+
           if (filteredSchedules.isEmpty) {
             return _buildEmptyFilterState(isDark);
           }
 
-          return _buildScheduleList(filteredSchedules, todaySchedule.length, isDark);
+          return _buildScheduleList(
+            filteredSchedules,
+            todaySchedule.length,
+            isDark,
+          );
         },
       ),
     );
@@ -252,13 +254,14 @@ class _TeacherAttendanceListScreenState
       default:
         message = 'Không có buổi học phù hợp với bộ lọc';
     }
-    return EmptyStateWidget(
-      icon: Icons.filter_list_off,
-      message: message,
-    );
+    return EmptyStateWidget(icon: Icons.filter_list_off, message: message);
   }
 
-  Widget _buildScheduleList(List<TeacherSchedule> schedules, int totalCount, bool isDark) {
+  Widget _buildScheduleList(
+    List<TeacherSchedule> schedules,
+    int totalCount,
+    bool isDark,
+  ) {
     final now = DateTime.now();
     final dateFormat = DateFormat('HH:mm');
 
@@ -266,7 +269,7 @@ class _TeacherAttendanceListScreenState
       onRefresh: () async => _loadTodaySchedule(),
       child: ListView.builder(
         padding: EdgeInsets.all(16.w),
-        itemCount: schedules.length + 1, 
+        itemCount: schedules.length + 1,
         itemBuilder: (context, index) {
           if (index == 0) {
             return Padding(
@@ -290,7 +293,10 @@ class _TeacherAttendanceListScreenState
                   ),
                   const Spacer(),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.w,
+                      vertical: 4.h,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12.r),
@@ -335,7 +341,7 @@ class _TeacherAttendanceListScreenState
     required bool isOngoing,
   }) {
     final isUpcoming = !isPast && !isOngoing;
-    
+
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
       decoration: BoxDecoration(
@@ -344,8 +350,11 @@ class _TeacherAttendanceListScreenState
         border: isOngoing
             ? Border.all(color: AppColors.success, width: 2)
             : isUpcoming
-                ? Border.all(color: AppColors.primary.withValues(alpha: 0.5), width: 1)
-                : null,
+            ? Border.all(
+                color: AppColors.primary.withValues(alpha: 0.5),
+                width: 1,
+              )
+            : null,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: isPast ? 0.02 : 0.05),
@@ -368,7 +377,6 @@ class _TeacherAttendanceListScreenState
                 children: [
                   Row(
                     children: [
-                      
                       Container(
                         padding: EdgeInsets.symmetric(
                           horizontal: 10.w,
@@ -378,8 +386,8 @@ class _TeacherAttendanceListScreenState
                           color: isOngoing
                               ? AppColors.success.withValues(alpha: 0.1)
                               : isPast
-                                  ? AppColors.gray200.withValues(alpha: 0.5)
-                                  : AppColors.primary.withValues(alpha: 0.1),
+                              ? AppColors.neutral200.withValues(alpha: 0.5)
+                              : AppColors.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20.r),
                         ),
                         child: Row(
@@ -399,16 +407,16 @@ class _TeacherAttendanceListScreenState
                               isOngoing
                                   ? 'Đang diễn ra'
                                   : isPast
-                                      ? 'Đã kết thúc'
-                                      : 'Sắp tới',
+                                  ? 'Đã kết thúc'
+                                  : 'Sắp tới',
                               style: TextStyle(
                                 fontSize: 12.sp,
                                 fontWeight: FontWeight.w600,
                                 color: isOngoing
                                     ? AppColors.success
                                     : isPast
-                                        ? AppColors.textSecondary
-                                        : AppColors.primary,
+                                    ? AppColors.textSecondary
+                                    : AppColors.primary,
                                 fontFamily: 'Lexend',
                               ),
                             ),
@@ -416,7 +424,7 @@ class _TeacherAttendanceListScreenState
                         ),
                       ),
                       const Spacer(),
-                      
+
                       Row(
                         children: [
                           Icon(
@@ -443,7 +451,7 @@ class _TeacherAttendanceListScreenState
                     ],
                   ),
                   SizedBox(height: 12.h),
-                  
+
                   Text(
                     schedule.className,
                     style: TextStyle(
@@ -467,7 +475,7 @@ class _TeacherAttendanceListScreenState
                     ),
                   ],
                   SizedBox(height: 12.h),
-                  
+
                   Row(
                     children: [
                       Icon(
@@ -477,7 +485,7 @@ class _TeacherAttendanceListScreenState
                       ),
                       SizedBox(width: 4.w),
                       Text(
-                        schedule.room ?? 'Chưa có phòng',
+                        schedule.room,
                         style: TextStyle(
                           fontSize: 13.sp,
                           color: AppColors.primary,
@@ -485,8 +493,12 @@ class _TeacherAttendanceListScreenState
                         ),
                       ),
                       const Spacer(),
-                      
-                      _buildAttendanceButton(isPast: isPast, isOngoing: isOngoing, isUpcoming: isUpcoming),
+
+                      _buildAttendanceButton(
+                        isPast: isPast,
+                        isOngoing: isOngoing,
+                        isUpcoming: isUpcoming,
+                      ),
                     ],
                   ),
                 ],
@@ -504,14 +516,10 @@ class _TeacherAttendanceListScreenState
     required bool isUpcoming,
   }) {
     if (isPast) {
-      
       return Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: 12.w,
-          vertical: 6.h,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
         decoration: BoxDecoration(
-          color: AppColors.gray200,
+          color: AppColors.neutral200,
           borderRadius: BorderRadius.circular(20.r),
         ),
         child: Row(
@@ -536,14 +544,10 @@ class _TeacherAttendanceListScreenState
         ),
       );
     }
-    
+
     if (isOngoing) {
-      
       return Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: 12.w,
-          vertical: 6.h,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
         decoration: BoxDecoration(
           color: AppColors.success,
           borderRadius: BorderRadius.circular(20.r),
@@ -558,11 +562,7 @@ class _TeacherAttendanceListScreenState
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.fact_check,
-              size: 16.sp,
-              color: Colors.white,
-            ),
+            Icon(Icons.fact_check, size: 16.sp, color: Colors.white),
             SizedBox(width: 6.w),
             Text(
               'Điểm danh ngay',
@@ -577,13 +577,9 @@ class _TeacherAttendanceListScreenState
         ),
       );
     }
-    
-    
+
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: 12.w,
-        vertical: 6.h,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
       decoration: BoxDecoration(
         color: AppColors.primary,
         borderRadius: BorderRadius.circular(20.r),
@@ -591,11 +587,7 @@ class _TeacherAttendanceListScreenState
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.fact_check_outlined,
-            size: 16.sp,
-            color: Colors.white,
-          ),
+          Icon(Icons.fact_check_outlined, size: 16.sp, color: Colors.white),
           SizedBox(width: 6.w),
           Text(
             'Điểm danh',
@@ -612,21 +604,17 @@ class _TeacherAttendanceListScreenState
   }
 
   void _navigateToAttendance(TeacherSchedule schedule, bool isPast) {
-    
-    
-    
-    
-    
-    
-    
     if (isPast) {
-      
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
           title: Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 28.sp),
+              Icon(
+                Icons.warning_amber_rounded,
+                color: AppColors.warning,
+                size: 28.sp,
+              ),
               SizedBox(width: 8.w),
               Text(
                 'Buổi học đã kết thúc',
@@ -640,10 +628,7 @@ class _TeacherAttendanceListScreenState
           ),
           content: Text(
             'Buổi học "${schedule.className}" đã kết thúc lúc ${DateFormat('HH:mm').format(schedule.endTime)}.\n\nBạn chỉ có thể xem lại thông tin điểm danh, không thể chỉnh sửa.',
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontFamily: 'Lexend',
-            ),
+            style: TextStyle(fontSize: 14.sp, fontFamily: 'Lexend'),
           ),
           actions: [
             TextButton(
@@ -666,10 +651,7 @@ class _TeacherAttendanceListScreenState
               ),
               child: Text(
                 'Xem điểm danh',
-                style: TextStyle(
-                  fontFamily: 'Lexend',
-                  color: Colors.white,
-                ),
+                style: TextStyle(fontFamily: 'Lexend', color: Colors.white),
               ),
             ),
           ],
@@ -680,7 +662,10 @@ class _TeacherAttendanceListScreenState
     }
   }
 
-  void _doNavigateToAttendance(TeacherSchedule schedule, {required bool viewOnly}) {
+  void _doNavigateToAttendance(
+    TeacherSchedule schedule, {
+    required bool viewOnly,
+  }) {
     final args = AttendanceArguments(
       classId: schedule.classId,
       sessionId: schedule.id,
@@ -690,10 +675,9 @@ class _TeacherAttendanceListScreenState
       viewOnly: viewOnly,
     );
 
-    
-    Navigator.of(context, rootNavigator: true).pushNamed(
-      AppRouter.teacherAttendance,
-      arguments: args,
-    );
+    Navigator.of(
+      context,
+      rootNavigator: true,
+    ).pushNamed(AppRouter.teacherAttendance, arguments: args);
   }
 }

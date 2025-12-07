@@ -5,10 +5,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/routing/app_router.dart';
+import '../../../../core/widgets/common/app_button.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
-import '../widgets/auth_button.dart';
 import '../widgets/otp_input_field.dart';
 
 class VerifyCodeScreen extends StatefulWidget {
@@ -246,7 +246,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
       builder: (context, state) {
         final isEnabled = _otpCode.length == 6;
 
-        return AuthButton(
+        return AppButton(
           text: 'Xác nhận',
           onPressed: isEnabled ? _handleConfirm : null,
           isLoading: state is AuthLoading,

@@ -10,6 +10,7 @@ import '../../domain/entities/admin_feedback.dart';
 import '../bloc/admin_bloc.dart';
 import '../bloc/admin_event.dart';
 import '../bloc/admin_state.dart';
+import '../widgets/simple_admin_app_bar.dart';
 
 class AdminClassFeedbackScreen extends StatefulWidget {
   final String classId;
@@ -101,7 +102,7 @@ class _AdminClassFeedbackScreenState extends State<AdminClassFeedbackScreen> {
       backgroundColor: isDark
           ? AppColors.backgroundDark
           : AppColors.backgroundLight,
-      appBar: AppBar(title: const Text('Phản hồi học viên')),
+      appBar: const SimpleAdminAppBar(title: 'Phản hồi học viên'),
       body: BlocBuilder<AdminBloc, AdminState>(
         builder: (context, state) {
           if (state is AdminLoading) {
@@ -193,7 +194,7 @@ class _AdminClassFeedbackScreenState extends State<AdminClassFeedbackScreen> {
         borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -240,7 +241,7 @@ class _AdminClassFeedbackScreenState extends State<AdminClassFeedbackScreen> {
                     Text(
                       '$total đánh giá',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: isDark ? AppColors.gray400 : AppColors.gray600,
+                        color: isDark ? AppColors.neutral400 : AppColors.neutral600,
                       ),
                     ),
                   ],
@@ -298,14 +299,14 @@ class _AdminClassFeedbackScreenState extends State<AdminClassFeedbackScreen> {
         Icon(
           icon,
           size: 16.sp,
-          color: isDark ? AppColors.gray400 : AppColors.gray600,
+          color: isDark ? AppColors.neutral400 : AppColors.neutral600,
         ),
         SizedBox(width: 8),
         Expanded(
           child: Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: isDark ? AppColors.gray400 : AppColors.gray600,
+              color: isDark ? AppColors.neutral400 : AppColors.neutral600,
             ),
           ),
         ),
@@ -315,7 +316,7 @@ class _AdminClassFeedbackScreenState extends State<AdminClassFeedbackScreen> {
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: rating / 5,
-              backgroundColor: isDark ? AppColors.gray700 : AppColors.gray200,
+              backgroundColor: isDark ? AppColors.neutral700 : AppColors.neutral200,
               valueColor: AlwaysStoppedAnimation<Color>(AppColors.warning),
               minHeight: 6,
             ),
@@ -427,7 +428,7 @@ class _AdminClassFeedbackScreenState extends State<AdminClassFeedbackScreen> {
           border: Border.all(
             color: isSelected
                 ? AppColors.primary
-                : (isDark ? AppColors.gray600 : AppColors.gray300),
+                : (isDark ? AppColors.neutral600 : AppColors.neutral300),
           ),
         ),
         child: Row(
@@ -448,7 +449,7 @@ class _AdminClassFeedbackScreenState extends State<AdminClassFeedbackScreen> {
                 fontWeight: FontWeight.w600,
                 color: isSelected
                     ? Colors.white
-                    : (isDark ? AppColors.gray300 : AppColors.gray700),
+                    : (isDark ? AppColors.neutral300 : AppColors.neutral700),
               ),
             ),
             SizedBox(width: 4),
@@ -456,8 +457,8 @@ class _AdminClassFeedbackScreenState extends State<AdminClassFeedbackScreen> {
               padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? Colors.white.withOpacity(0.2)
-                    : (isDark ? AppColors.gray700 : AppColors.gray200),
+                    ? Colors.white.withValues(alpha: 0.2)
+                    : (isDark ? AppColors.neutral700 : AppColors.neutral200),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
@@ -467,7 +468,7 @@ class _AdminClassFeedbackScreenState extends State<AdminClassFeedbackScreen> {
                   fontWeight: FontWeight.bold,
                   color: isSelected
                       ? Colors.white
-                      : (isDark ? AppColors.gray400 : AppColors.gray600),
+                      : (isDark ? AppColors.neutral400 : AppColors.neutral600),
                 ),
               ),
             ),
@@ -486,13 +487,13 @@ class _AdminClassFeedbackScreenState extends State<AdminClassFeedbackScreen> {
           Icon(
             Icons.filter_list_off,
             size: 48.sp,
-            color: isDark ? AppColors.gray600 : AppColors.gray400,
+            color: isDark ? AppColors.neutral600 : AppColors.neutral400,
           ),
           SizedBox(height: AppSizes.p12),
           Text(
             'Không có đánh giá nào',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: isDark ? AppColors.gray400 : AppColors.gray600,
+              color: isDark ? AppColors.neutral400 : AppColors.neutral600,
             ),
           ),
           SizedBox(height: AppSizes.p8),
@@ -548,20 +549,20 @@ class _AdminClassFeedbackScreenState extends State<AdminClassFeedbackScreen> {
           Icon(
             Icons.chat_bubble_outline,
             size: 64.sp,
-            color: isDark ? AppColors.gray600 : AppColors.gray400,
+            color: isDark ? AppColors.neutral600 : AppColors.neutral400,
           ),
           SizedBox(height: AppSizes.p16),
           Text(
             'Chưa có phản hồi nào',
             style: theme.textTheme.bodyLarge?.copyWith(
-              color: isDark ? AppColors.gray400 : AppColors.gray600,
+              color: isDark ? AppColors.neutral400 : AppColors.neutral600,
             ),
           ),
           SizedBox(height: AppSizes.p8),
           Text(
             'Học viên chưa gửi đánh giá cho lớp học này',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: isDark ? AppColors.gray500 : AppColors.gray500,
+              color: isDark ? AppColors.neutral500 : AppColors.neutral500,
             ),
             textAlign: TextAlign.center,
           ),
@@ -598,7 +599,7 @@ class _FeedbackCardState extends State<_FeedbackCard> {
         borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -612,7 +613,7 @@ class _FeedbackCardState extends State<_FeedbackCard> {
             children: [
               CircleAvatar(
                 radius: 20.r,
-                backgroundColor: AppColors.primary.withOpacity(0.1),
+                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                 backgroundImage: feedback.studentAvatar != null
                     ? NetworkImage(feedback.studentAvatar!)
                     : null,
@@ -643,7 +644,7 @@ class _FeedbackCardState extends State<_FeedbackCard> {
                     Text(
                       dateFormat.format(feedback.createdAt),
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: isDark ? AppColors.gray400 : AppColors.gray600,
+                        color: isDark ? AppColors.neutral400 : AppColors.neutral600,
                         fontSize: 10.sp,
                       ),
                     ),
@@ -660,7 +661,7 @@ class _FeedbackCardState extends State<_FeedbackCard> {
                 child: Container(
                   padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.warning.withOpacity(0.1),
+                    color: AppColors.warning.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -722,7 +723,7 @@ class _FeedbackCardState extends State<_FeedbackCard> {
       margin: EdgeInsets.only(top: AppSizes.p12),
       padding: EdgeInsets.all(AppSizes.p12),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.gray800.withOpacity(0.5) : AppColors.gray100,
+        color: isDark ? AppColors.neutral800.withValues(alpha: 0.5) : AppColors.neutral100,
         borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
       ),
       child: Column(
@@ -767,14 +768,14 @@ class _FeedbackCardState extends State<_FeedbackCard> {
         Icon(
           icon,
           size: 16.sp,
-          color: isDark ? AppColors.gray400 : AppColors.gray600,
+          color: isDark ? AppColors.neutral400 : AppColors.neutral600,
         ),
         SizedBox(width: 8),
         Expanded(
           child: Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: isDark ? AppColors.gray400 : AppColors.gray600,
+              color: isDark ? AppColors.neutral400 : AppColors.neutral600,
             ),
           ),
         ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/constants/app_sizes.dart';
 
 class SimpleAdminAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -17,8 +17,9 @@ class SimpleAdminAppBar extends StatelessWidget implements PreferredSizeWidget {
       title: Text(
         title,
         style: TextStyle(
-          fontSize: AppSizes.textLg,
-          fontWeight: FontWeight.bold,
+          fontSize: 18.sp,
+          fontWeight: FontWeight.w700,
+          fontFamily: 'Lexend',
         ),
       ),
       backgroundColor: isDark
@@ -27,7 +28,7 @@ class SimpleAdminAppBar extends StatelessWidget implements PreferredSizeWidget {
       foregroundColor: isDark
           ? AppColors.textPrimaryDark
           : AppColors.textPrimary,
-      elevation: 2,
+      elevation: 0,
       actions: actions,
     );
   }

@@ -17,7 +17,7 @@ class AdminClassCard extends StatelessWidget {
       case ClassStatus.upcoming:
         return AppColors.info;
       case ClassStatus.completed:
-        return AppColors.gray500;
+        return AppColors.neutral500;
     }
   }
 
@@ -43,8 +43,8 @@ class AdminClassCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
           color: isDark
-              ? AppColors.gray700.withValues(alpha: 0.3)
-              : AppColors.gray200,
+              ? AppColors.neutral700.withValues(alpha: 0.3)
+              : AppColors.neutral200,
           width: 1,
         ),
       ),
@@ -178,8 +178,8 @@ class AdminClassCard extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: isDark
-                        ? AppColors.gray800.withValues(alpha: 0.5)
-                        : AppColors.gray100,
+                        ? AppColors.neutral800.withValues(alpha: 0.5)
+                        : AppColors.neutral100,
                     borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Row(
@@ -202,7 +202,7 @@ class AdminClassCard extends StatelessWidget {
                       Icon(
                         Icons.arrow_forward_ios,
                         size: 12.sp,
-                        color: isDark ? AppColors.gray500 : AppColors.gray400,
+                        color: isDark ? AppColors.neutral500 : AppColors.neutral400,
                       ),
                     ],
                   ),
@@ -224,14 +224,14 @@ class AdminClassCard extends StatelessWidget {
   }) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark ? AppColors.gray300 : AppColors.gray700;
+    final textColor = isDark ? AppColors.neutral300 : AppColors.neutral700;
 
     return Row(
       children: [
         Icon(
           icon,
           size: 14.sp,
-          color: isDark ? AppColors.gray400 : AppColors.gray500,
+          color: isDark ? AppColors.neutral400 : AppColors.neutral500,
         ),
         SizedBox(width: 6.w),
         Expanded(
@@ -250,7 +250,7 @@ class AdminClassCard extends StatelessWidget {
           Icon(
             secondIcon,
             size: 14.sp,
-            color: isDark ? AppColors.gray400 : AppColors.gray500,
+            color: isDark ? AppColors.neutral400 : AppColors.neutral500,
           ),
           SizedBox(width: 6.w),
           Text(

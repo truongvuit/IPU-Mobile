@@ -9,7 +9,7 @@ import '../../../../core/routing/app_router.dart';
 
 import '../bloc/admin_bloc.dart';
 import '../../domain/entities/class_session.dart';
-
+import '../widgets/simple_admin_app_bar.dart';
 
 class AdminClassSessionsScreen extends StatefulWidget {
   final String classId;
@@ -30,7 +30,7 @@ class AdminClassSessionsScreen extends StatefulWidget {
 
 class _AdminClassSessionsScreenState extends State<AdminClassSessionsScreen> {
   late List<ClassSession> _sessions;
-  String _filter = 'all'; 
+  String _filter = 'all';
 
   @override
   void initState() {
@@ -66,10 +66,9 @@ class _AdminClassSessionsScreenState extends State<AdminClassSessionsScreen> {
       backgroundColor: isDark
           ? AppColors.backgroundDark
           : AppColors.backgroundLight,
-      appBar: AppBar(title: Text('Buổi học - ${widget.className}')),
+      appBar: SimpleAdminAppBar(title: 'Buổi học - ${widget.className}'),
       body: Column(
         children: [
-          
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.all(AppSizes.paddingMedium),
@@ -108,7 +107,6 @@ class _AdminClassSessionsScreenState extends State<AdminClassSessionsScreen> {
             ),
           ),
 
-          
           Expanded(
             child: _filteredSessions.isEmpty
                 ? Center(
@@ -118,15 +116,17 @@ class _AdminClassSessionsScreenState extends State<AdminClassSessionsScreen> {
                         Icon(
                           Icons.event_busy,
                           size: 64.sp,
-                          color: isDark ? AppColors.gray400 : AppColors.gray600,
+                          color: isDark
+                              ? AppColors.neutral400
+                              : AppColors.neutral600,
                         ),
                         SizedBox(height: AppSizes.paddingMedium),
                         Text(
                           'Không có buổi học nào',
                           style: theme.textTheme.bodyLarge?.copyWith(
                             color: isDark
-                                ? AppColors.gray400
-                                : AppColors.gray600,
+                                ? AppColors.neutral400
+                                : AppColors.neutral600,
                           ),
                         ),
                       ],
@@ -157,8 +157,11 @@ class _AdminClassSessionsScreenState extends State<AdminClassSessionsScreen> {
     );
   }
 
-  void _navigateToDetail(ClassSession session, int sessionNumber) {
-    Navigator.pushNamed(
+  Future<void> _navigateToDetail(
+    ClassSession session,
+    int sessionNumber,
+  ) async {
+    final result = await Navigator.pushNamed(
       context,
       AppRouter.adminSessionDetail,
       arguments: {
@@ -168,6 +171,16 @@ class _AdminClassSessionsScreenState extends State<AdminClassSessionsScreen> {
         'classId': widget.classId,
       },
     );
+
+    // If an updated session was returned, update the list
+    if (result != null && result is ClassSession) {
+      final index = _sessions.indexWhere((s) => s.id == result.id);
+      if (index != -1) {
+        setState(() {
+          _sessions[index] = result;
+        });
+      }
+    }
   }
 
   void _showStatusChangeDialog(ClassSession session) {
@@ -192,7 +205,7 @@ class _AdminClassSessionsScreenState extends State<AdminClassSessionsScreen> {
                 width: 40.w,
                 height: 4.h,
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.gray600 : AppColors.gray300,
+                  color: isDark ? AppColors.neutral600 : AppColors.neutral300,
                   borderRadius: BorderRadius.circular(2.r),
                 ),
               ),
@@ -208,13 +221,12 @@ class _AdminClassSessionsScreenState extends State<AdminClassSessionsScreen> {
             Text(
               'Ngày: ${dateFormat.format(session.date)}',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: isDark ? AppColors.gray400 : AppColors.gray600,
+                color: isDark ? AppColors.neutral400 : AppColors.neutral600,
               ),
             ),
             SizedBox(height: AppSizes.paddingMedium),
 
             _StatusOption(
-              icon: Icons.check_circle,
               label: 'Đã hoàn thành',
               color: AppColors.success,
               isSelected: session.status == SessionStatus.completed,
@@ -222,7 +234,6 @@ class _AdminClassSessionsScreenState extends State<AdminClassSessionsScreen> {
             ),
             SizedBox(height: AppSizes.p8),
             _StatusOption(
-              icon: Icons.pending,
               label: 'Chưa hoàn thành',
               color: AppColors.warning,
               isSelected: session.status == SessionStatus.notCompleted,
@@ -230,7 +241,6 @@ class _AdminClassSessionsScreenState extends State<AdminClassSessionsScreen> {
             ),
             SizedBox(height: AppSizes.p8),
             _StatusOption(
-              icon: Icons.cancel,
               label: 'Đã hủy',
               color: AppColors.error,
               isSelected: session.status == SessionStatus.canceled,
@@ -269,7 +279,6 @@ class _AdminClassSessionsScreenState extends State<AdminClassSessionsScreen> {
       if (mounted) {
         Navigator.pop(context);
 
-        
         final index = _sessions.indexWhere((s) => s.id == session.id);
         if (index != -1) {
           setState(() {
@@ -359,18 +368,18 @@ class _SessionCard extends StatelessWidget {
       case SessionStatus.canceled:
         return AppColors.error;
       case SessionStatus.notCompleted:
-        return session.isPast ? AppColors.warning : AppColors.gray500;
+        return session.isPast ? AppColors.warning : AppColors.neutral500;
     }
   }
 
-  IconData get _statusIcon {
+  String get _shortStatusText {
     switch (session.status) {
       case SessionStatus.completed:
-        return Icons.check_circle;
+        return 'Xong';
       case SessionStatus.canceled:
-        return Icons.cancel;
+        return 'Hủy';
       case SessionStatus.notCompleted:
-        return session.isPast ? Icons.warning : Icons.pending;
+        return session.isPast ? 'Trễ' : 'Chờ';
     }
   }
 
@@ -393,7 +402,6 @@ class _SessionCard extends StatelessWidget {
           padding: EdgeInsets.all(AppSizes.paddingMedium),
           child: Row(
             children: [
-              
               Container(
                 width: 48.w,
                 height: 48.h,
@@ -413,7 +421,6 @@ class _SessionCard extends StatelessWidget {
               ),
               SizedBox(width: AppSizes.paddingMedium),
 
-              
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -427,7 +434,9 @@ class _SessionCard extends StatelessWidget {
                     Text(
                       dayFormat.format(session.date),
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: isDark ? AppColors.gray400 : AppColors.gray600,
+                        color: isDark
+                            ? AppColors.neutral400
+                            : AppColors.neutral600,
                       ),
                     ),
                     if (session.note != null && session.note!.isNotEmpty)
@@ -447,42 +456,35 @@ class _SessionCard extends StatelessWidget {
                 ),
               ),
 
-              
+              // Compact status pill with text only
               GestureDetector(
                 onTap: onStatusChange,
                 child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: AppSizes.p12,
-                    vertical: 6.h,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
                   decoration: BoxDecoration(
-                    color: _statusColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(16.r),
+                    color: _statusColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12.r),
                     border: Border.all(
                       color: _statusColor.withValues(alpha: 0.3),
+                      width: 1,
                     ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(_statusIcon, color: _statusColor, size: 16.sp),
-                      SizedBox(width: 4.w),
-                      Text(
-                        session.statusText,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: _statusColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    _shortStatusText,
+                    style: TextStyle(
+                      color: _statusColor,
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
 
-              SizedBox(width: AppSizes.p8),
+              SizedBox(width: 4.w),
               Icon(
                 Icons.chevron_right,
-                color: isDark ? AppColors.gray400 : AppColors.gray600,
+                color: isDark ? AppColors.neutral400 : AppColors.neutral600,
+                size: 20.sp,
               ),
             ],
           ),
@@ -493,14 +495,12 @@ class _SessionCard extends StatelessWidget {
 }
 
 class _StatusOption extends StatelessWidget {
-  final IconData icon;
   final String label;
   final Color color;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _StatusOption({
-    required this.icon,
     required this.label,
     required this.color,
     required this.isSelected,
@@ -514,21 +514,41 @@ class _StatusOption extends StatelessWidget {
 
     return Material(
       color: isSelected
-          ? color.withValues(alpha: 0.1)
-          : (isDark ? AppColors.gray800 : AppColors.gray100),
+          ? color.withValues(alpha: 0.15)
+          : (isDark ? AppColors.neutral800 : AppColors.neutral100),
       borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
         child: Container(
-          padding: EdgeInsets.all(AppSizes.p12),
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSizes.paddingMedium,
+            vertical: AppSizes.p12,
+          ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
-            border: isSelected ? Border.all(color: color, width: 2) : null,
+            border: Border.all(
+              color: isSelected ? color : (isDark ? AppColors.neutral700 : AppColors.neutral300),
+              width: isSelected ? 2 : 1,
+            ),
           ),
           child: Row(
             children: [
-              Icon(icon, color: color, size: 24.sp),
+              Container(
+                width: 16.w,
+                height: 16.h,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isSelected ? color : Colors.transparent,
+                  border: Border.all(
+                    color: isSelected ? color : AppColors.neutral500,
+                    width: 2,
+                  ),
+                ),
+                child: isSelected
+                    ? Icon(Icons.check, color: Colors.white, size: 10.sp)
+                    : null,
+              ),
               SizedBox(width: AppSizes.p12),
               Expanded(
                 child: Text(
@@ -539,7 +559,6 @@ class _StatusOption extends StatelessWidget {
                   ),
                 ),
               ),
-              if (isSelected) Icon(Icons.check, color: color, size: 20.sp),
             ],
           ),
         ),

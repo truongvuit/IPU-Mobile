@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import '../../domain/entities/admin_profile.dart';
 import '../../domain/entities/admin_dashboard_stats.dart';
 import '../../domain/entities/admin_activity.dart';
@@ -8,7 +10,7 @@ import '../../domain/entities/class_student.dart';
 import '../../domain/entities/class_session.dart';
 import '../../domain/entities/promotion.dart';
 import '../../domain/entities/admin_feedback.dart';
-
+import '../../domain/entities/cart_preview.dart';
 
 class SessionAttendanceInfo {
   final int sessionId;
@@ -16,7 +18,6 @@ class SessionAttendanceInfo {
 
   const SessionAttendanceInfo({required this.sessionId, required this.entries});
 }
-
 
 class StudentAttendanceEntry {
   final int studentId;
@@ -59,25 +60,27 @@ abstract class AdminApiDataSource {
     required String schedule,
     required String timeRange,
     required String room,
+    String? startDate,
+    int? maxStudents,
   });
   Future<List<ClassStudent>> getClassStudents(String classId);
   Future<List<AdminStudent>> getStudents({String? searchQuery});
   Future<AdminStudent> getStudentById(String studentId);
   Future<List<AdminClass>> getStudentEnrolledClasses(String studentId);
-  Future<AdminStudent> updateStudent({
-    required String studentId,
-    required String fullName,
-    required String phoneNumber,
-    String? email,
-    String? address,
-    String? occupation,
-    String? educationLevel,
-    DateTime? dateOfBirth,
-    String? password,
-  });
+  Future<AdminStudent> updateStudent(AdminStudent student);
   Future<List<AdminTeacher>> getTeachers({String? searchQuery});
   Future<AdminTeacher> getTeacherById(String teacherId);
   Future<void> createTeacher({
+    required String name,
+    required String phoneNumber,
+    String? email,
+    DateTime? dateOfBirth,
+    String? imageUrl,
+  });
+
+  
+  Future<AdminTeacher> updateTeacher({
+    required String teacherId,
     required String name,
     required String phoneNumber,
     String? email,
@@ -112,7 +115,6 @@ abstract class AdminApiDataSource {
 
   Future<List<AdminFeedback>> getClassFeedbacks(String classId);
 
-  
   Future<ClassSession> updateSession({
     required int sessionId,
     required String status,
@@ -120,4 +122,13 @@ abstract class AdminApiDataSource {
   });
 
   Future<SessionAttendanceInfo> getSessionAttendance(int sessionId);
+
+  
+  
+  
+  Future<CartPreview> previewCart(List<String> classIds, {String? studentId});
+
+  
+  
+  Future<String?> uploadFile(File file);
 }

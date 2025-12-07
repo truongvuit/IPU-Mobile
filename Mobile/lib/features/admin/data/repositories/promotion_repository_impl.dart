@@ -72,4 +72,16 @@ class PromotionRepositoryImpl implements PromotionRepository {
       return Left(ServerFailure(message: e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, List<Promotion>>> getPromotionsByCourse(String courseId) async {
+    try {
+      final promotions = await remoteDataSource.getPromotionsByCourse(courseId);
+      return Right(promotions);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
 }

@@ -5,11 +5,11 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/utils/input_validators.dart';
+import '../../../../core/widgets/common/app_button.dart';
+import '../../../../core/widgets/common/app_text_field.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
-import '../widgets/auth_button.dart';
-import '../widgets/custom_text_field.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -202,7 +202,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Column(
       children: [
         
-        CustomTextField(
+        AppTextField(
           label: 'Email hoặc Số điện thoại',
           hintText: 'Nhập email hoặc số điện thoại',
           controller: _emailController,
@@ -218,12 +218,11 @@ class _LoginScreenState extends State<LoginScreen> {
         SizedBox(height: AppSizes.paddingMedium),
 
         
-        CustomTextField(
+        AppTextField(
           label: 'Mật khẩu',
           hintText: 'Nhập mật khẩu của bạn',
           controller: _passwordController,
           obscureText: true,
-          showPasswordToggle: true,
           validator: (value) {
             if (value == null || value.isEmpty) {
               return 'Vui lòng nhập mật khẩu';
@@ -294,7 +293,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildLoginButton(bool isDesktop) {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
-        return AuthButton(
+        return AppButton(
           text: 'Đăng nhập',
           onPressed: _handleLogin,
           isLoading: state is AuthLoading,

@@ -2,17 +2,22 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/constants/app_sizes.dart';
-import '../../../../../core/di/injector.dart';
-import '../../../../../core/api/dio_client.dart';
+import '../../../../../core/config/environment.dart';
+import '../../widgets/admin_icon_action.dart';
 import '../../../domain/entities/course_detail.dart';
-import 'package:dio/dio.dart';
+import '../../../data/models/course_detail_model.dart';
+import '../../bloc/admin_course_bloc.dart';
+import '../../bloc/admin_course_event.dart';
+import '../../bloc/admin_course_state.dart';
+import '../../bloc/admin_bloc.dart';
 
-/// Screen chỉnh sửa khóa học cho Admin
+
 class AdminCourseEditScreen extends StatefulWidget {
   final CourseDetail course;
 
@@ -28,7 +33,7 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
   bool _isLoadingCategories = true;
   bool _isUploadingImage = false;
 
-  // Controllers
+  
   late TextEditingController _nameController;
   late TextEditingController _totalHoursController;
   late TextEditingController _tuitionFeeController;
@@ -40,7 +45,7 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
   String? _selectedCategoryId;
   bool _isActive = true;
   
-  // Image
+  
   String? _imageUrl;
   File? _selectedImage;
 
@@ -56,30 +61,24 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
 
   Future<void> _loadCategories() async {
     try {
-      // Gọi API lấy danh sách danh mục
-      final dioClient = getIt<DioClient>();
-      final response = await dioClient.get('/categories');
       
-      if (response.statusCode == 200 && response.data['code'] == 1000) {
-        final List<dynamic> data = response.data['data'] ?? [];
-        if (mounted) {
-          setState(() {
-            _categories = data.map((item) => {
-              'id': item['id'].toString(),
-              'name': item['name'] ?? '',
-            }).toList();
-            
-            // Đảm bảo selectedCategoryId nằm trong danh sách
-            if (_selectedCategoryId != null && 
-                !_categories.any((c) => c['id'] == _selectedCategoryId)) {
-              _selectedCategoryId = null;
-            }
-            _isLoadingCategories = false;
-          });
-        }
+      final adminBloc = context.read<AdminBloc>();
+      final categories = await adminBloc.adminRepository.getCategories();
+      
+      if (mounted) {
+        setState(() {
+          _categories = categories;
+          
+          
+          if (_selectedCategoryId != null && 
+              !_categories.any((c) => c['id'] == _selectedCategoryId)) {
+            _selectedCategoryId = null;
+          }
+          _isLoadingCategories = false;
+        });
       }
     } catch (e) {
-      // Nếu lỗi thì dùng danh sách mặc định
+      
       if (mounted) {
         setState(() {
           _categories = [
@@ -232,22 +231,10 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
     setState(() => _isUploadingImage = true);
     
     try {
-      final dioClient = getIt<DioClient>();
       
-      final formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(
-          _selectedImage!.path,
-          filename: _selectedImage!.path.split('/').last,
-        ),
-      });
-      
-      final response = await dioClient.post('/files', data: formData);
-      
-      if (response.statusCode == 200 && response.data['code'] == 1000) {
-        final fileUrl = response.data['data']['fileUrl'] as String;
-        return fileUrl;
-      }
-      return null;
+      final adminBloc = context.read<AdminBloc>();
+      final fileUrl = await adminBloc.adminRepository.uploadFile(_selectedImage!);
+      return fileUrl ?? _imageUrl;
     } catch (e) {
       debugPrint('Upload error: $e');
       return null;
@@ -266,7 +253,7 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Upload image if selected
+      
       String? finalImageUrl = _imageUrl;
       if (_selectedImage != null) {
         finalImageUrl = await _uploadImage();
@@ -275,61 +262,63 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
         }
       }
 
-      // Prepare request data matching CourseUpdateRequest
-      final requestData = {
-        'courseName': _nameController.text.trim(),
-        'studyHours': int.parse(_totalHoursController.text.trim()),
-        'tuitionFee': double.parse(_tuitionFeeController.text.trim()),
-        'video': _videoUrlController.text.trim().isEmpty
+      
+      final request = UpdateCourseRequest(
+        name: _nameController.text.trim(),
+        totalHours: int.parse(_totalHoursController.text.trim()),
+        tuitionFee: double.parse(_tuitionFeeController.text.trim()),
+        videoUrl: _videoUrlController.text.trim().isEmpty
             ? null
             : _videoUrlController.text.trim(),
-        'image': finalImageUrl,
-        'description': _descriptionController.text.trim().isEmpty
+        imageUrl: finalImageUrl,
+        description: _descriptionController.text.trim().isEmpty
             ? null
             : _descriptionController.text.trim(),
-        'entryLevel': _entryRequirementController.text.trim().isEmpty
+        entryRequirement: _entryRequirementController.text.trim().isEmpty
             ? null
             : _entryRequirementController.text.trim(),
-        'targetLevel': _exitRequirementController.text.trim().isEmpty
+        exitRequirement: _exitRequirementController.text.trim().isEmpty
             ? null
             : _exitRequirementController.text.trim(),
-        'categoryId': _selectedCategoryId != null 
-            ? int.tryParse(_selectedCategoryId!) 
-            : null,
-      };
-
-      // Call API
-      final dioClient = getIt<DioClient>();
-      final response = await dioClient.put(
-        '/courses/${widget.course.id}',
-        data: requestData,
+        categoryId: _selectedCategoryId,
+        isActive: _isActive,
       );
 
-      if (!mounted) return;
       
-      if (response.statusCode == 200 && response.data['code'] == 1000) {
-        Navigator.pop(context, true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Cập nhật khóa học thành công'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-      } else {
-        throw Exception(response.data['message'] ?? 'Cập nhật thất bại');
-      }
+      if (!mounted) return;
+      context.read<AdminCourseBloc>().add(
+        UpdateCourseEvent(id: widget.course.id, request: request),
+      );
     } catch (e) {
       if (!mounted) return;
+      setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Lỗi: ${e.toString()}'),
           backgroundColor: AppColors.error,
         ),
       );
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+    }
+  }
+
+  void _onBlocStateChanged(BuildContext context, AdminCourseState state) {
+    if (state is AdminCourseSuccess) {
+      setState(() => _isLoading = false);
+      Navigator.pop(context, true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(state.message),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    } else if (state is AdminCourseError) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(state.message),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
   }
 
@@ -338,78 +327,80 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      backgroundColor: isDark
-          ? AppColors.backgroundDark
-          : AppColors.backgroundLight,
-      appBar: AppBar(
-        title: const Text('Chỉnh sửa khóa học'),
-        actions: [
-          if (_isLoading || _isUploadingImage)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
+    return BlocListener<AdminCourseBloc, AdminCourseState>(
+      listener: _onBlocStateChanged,
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        backgroundColor: isDark
+            ? AppColors.backgroundDark
+            : AppColors.backgroundLight,
+        appBar: AppBar(
+          title: const Text('Chỉnh sửa khóa học'),
+          actions: [
+            if (_isLoading || _isUploadingImage)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
+              )
+            else
+              IconButton(
+                icon: const Icon(Icons.check),
+                onPressed: _saveCourse,
+                tooltip: 'Lưu',
               ),
-            )
-          else
-            IconButton(
-              icon: const Icon(Icons.check),
-              onPressed: _saveCourse,
-              tooltip: 'Lưu',
-            ),
-        ],
-      ),
-      body: SafeArea(
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: EdgeInsets.fromLTRB(
-              AppSizes.p20, 
-              AppSizes.p20, 
-              AppSizes.p20, 
-              AppSizes.p20 + bottomPadding + 40,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildSectionTitle('Thông tin cơ bản', isDark),
-                SizedBox(height: AppSizes.p16),
+          ],
+        ),
+        body: SafeArea(
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: EdgeInsets.fromLTRB(
+                AppSizes.p20, 
+                AppSizes.p20, 
+                AppSizes.p20, 
+                AppSizes.p20 + bottomPadding + 40,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSectionTitle('Thông tin cơ bản', isDark),
+                  SizedBox(height: AppSizes.p16),
 
-                // Course name
-                TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: 'Tên khóa học *',
-                  hintText: 'Nhập tên khóa học',
-                  prefixIcon: const Icon(Icons.book),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+                  
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      labelText: 'Tên khóa học *',
+                      hintText: 'Nhập tên khóa học',
+                      prefixIcon: const Icon(Icons.book),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Vui lòng nhập tên khóa học';
+                      }
+                      if (value.trim().length < 3) {
+                        return 'Tên khóa học phải có ít nhất 3 ký tự';
+                      }
+                      return null;
+                    },
+                    maxLength: 200,
                   ),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Vui lòng nhập tên khóa học';
-                  }
-                  if (value.trim().length < 3) {
-                    return 'Tên khóa học phải có ít nhất 3 ký tự';
-                  }
-                  return null;
-                },
-                maxLength: 200,
-              ),
-              SizedBox(height: AppSizes.p16),
+                  SizedBox(height: AppSizes.p16),
 
-              // Category dropdown
+              
               _isLoadingCategories
                   ? const LinearProgressIndicator()
                   : DropdownButtonFormField<String>(
@@ -440,7 +431,7 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
                     ),
               SizedBox(height: AppSizes.p16),
 
-              // Total hours and tuition fee in row
+              
               Row(
                 children: [
                   Expanded(
@@ -502,7 +493,7 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
               ),
               SizedBox(height: AppSizes.p16),
 
-              // Status switch
+              
               SwitchListTile(
                 title: const Text('Trạng thái khóa học'),
                 subtitle: Text(_isActive ? 'Đang mở' : 'Đã đóng'),
@@ -515,15 +506,15 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
               ),
               SizedBox(height: AppSizes.p24),
 
-              // Media section
+              
               _buildSectionTitle('Hình ảnh & Video', isDark),
               SizedBox(height: AppSizes.p16),
 
-              // Image picker
+              
               _buildImagePicker(isDark),
               SizedBox(height: AppSizes.p16),
 
-              // Video URL
+              
               TextFormField(
                 controller: _videoUrlController,
                 decoration: InputDecoration(
@@ -546,11 +537,11 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
               ),
               SizedBox(height: AppSizes.p24),
 
-              // Description section
+              
               _buildSectionTitle('Mô tả & Yêu cầu', isDark),
               SizedBox(height: AppSizes.p16),
 
-              // Description
+              
               TextFormField(
                 controller: _descriptionController,
                 decoration: InputDecoration(
@@ -566,7 +557,7 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
               ),
               SizedBox(height: AppSizes.p16),
 
-              // Entry requirement
+              
               TextFormField(
                 controller: _entryRequirementController,
                 decoration: InputDecoration(
@@ -582,7 +573,7 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
               ),
               SizedBox(height: AppSizes.p16),
 
-              // Exit requirement
+              
               TextFormField(
                 controller: _exitRequirementController,
                 decoration: InputDecoration(
@@ -598,7 +589,7 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
               ),
               SizedBox(height: AppSizes.p32),
 
-              // Save button
+              
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -633,14 +624,14 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
               ),
               SizedBox(height: AppSizes.p16),
 
-              // Cancel button
+              
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: (_isLoading || _isUploadingImage) ? null : () => Navigator.pop(context),
                   style: OutlinedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 16.h),
-                    side: const BorderSide(color: AppColors.gray400),
+                    side: const BorderSide(color: AppColors.neutral400),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(
                         AppSizes.radiusMedium,
@@ -658,6 +649,7 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
         ),
       ),
       ),
+    ),
     );
   }
 
@@ -668,10 +660,10 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
         height: 180.h,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : AppColors.gray100,
+          color: isDark ? AppColors.surfaceDark : AppColors.neutral100,
           borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
           border: Border.all(
-            color: isDark ? AppColors.gray600 : AppColors.gray300,
+            color: isDark ? AppColors.neutral600 : AppColors.neutral300,
             width: 1,
           ),
         ),
@@ -707,18 +699,15 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
             ),
           ),
           Positioned(
-            top: 8,
-            right: 8,
-            child: GestureDetector(
+            top: 4,
+            right: 4,
+            child: AdminIconAction(
+              icon: Icons.close,
+              iconColor: Colors.white,
+              iconSize: 18,
+              useCircleBackground: true,
+              circleBackgroundColor: AppColors.error,
               onTap: () => setState(() => _selectedImage = null),
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: AppColors.error,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.close, color: Colors.white, size: 18),
-              ),
             ),
           ),
         ],
@@ -726,10 +715,10 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
     }
 
     if (_imageUrl != null && _imageUrl!.isNotEmpty) {
-      final dioClient = getIt<DioClient>();
+      
       final fullUrl = _imageUrl!.startsWith('http') 
           ? _imageUrl! 
-          : '${dioClient.baseUrl}/files/$_imageUrl';
+          : '${Environment.baseUrl}/files/$_imageUrl';
       
       return Stack(
         children: [
@@ -744,18 +733,15 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
             ),
           ),
           Positioned(
-            top: 8,
-            right: 8,
-            child: GestureDetector(
+            top: 4,
+            right: 4,
+            child: AdminIconAction(
+              icon: Icons.close,
+              iconColor: Colors.white,
+              iconSize: 18,
+              useCircleBackground: true,
+              circleBackgroundColor: AppColors.error,
               onTap: () => setState(() => _imageUrl = null),
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: AppColors.error,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.close, color: Colors.white, size: 18),
-              ),
             ),
           ),
         ],
@@ -772,13 +758,13 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
         Icon(
           Icons.add_photo_alternate_outlined,
           size: 48.sp,
-          color: isDark ? AppColors.gray400 : AppColors.gray500,
+          color: isDark ? AppColors.neutral400 : AppColors.neutral500,
         ),
         SizedBox(height: AppSizes.p8),
         Text(
           'Nhấn để chọn hình ảnh',
           style: TextStyle(
-            color: isDark ? AppColors.gray400 : AppColors.gray500,
+            color: isDark ? AppColors.neutral400 : AppColors.neutral500,
             fontSize: 14.sp,
           ),
         ),
@@ -786,7 +772,7 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
         Text(
           'Hỗ trợ JPG, PNG (tối đa 5MB)',
           style: TextStyle(
-            color: isDark ? AppColors.gray500 : AppColors.gray400,
+            color: isDark ? AppColors.neutral500 : AppColors.neutral400,
             fontSize: 12.sp,
           ),
         ),

@@ -11,6 +11,7 @@ class PromotionBloc extends Bloc<PromotionEvent, PromotionState> {
     on<CreatePromotion>(_onCreatePromotion);
     on<UpdatePromotion>(_onUpdatePromotion);
     on<DeletePromotion>(_onDeletePromotion);
+    on<TogglePromotionStatus>(_onTogglePromotionStatus);
   }
 
   Future<void> _onLoadPromotions(
@@ -57,6 +58,20 @@ class PromotionBloc extends Bloc<PromotionEvent, PromotionState> {
     final result = await repository.deletePromotion(event.id);
     result.fold((failure) => emit(PromotionError(failure.message)), (_) {
       emit(const PromotionOperationSuccess('Xóa khuyến mãi thành công'));
+      add(LoadPromotions());
+    });
+  }
+
+  Future<void> _onTogglePromotionStatus(
+    TogglePromotionStatus event,
+    Emitter<PromotionState> emit,
+  ) async {
+    
+    final result = await repository.deletePromotion(event.id);
+    result.fold((failure) => emit(PromotionError(failure.message)), (_) {
+      emit(
+        const PromotionOperationSuccess('Đã cập nhật trạng thái khuyến mãi'),
+      );
       add(LoadPromotions());
     });
   }

@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import '../../domain/entities/quick_registration.dart';
 import '../../domain/entities/admin_class.dart';
 import '../../domain/entities/promotion.dart';
+import '../../domain/entities/cart_preview.dart';
 
 abstract class RegistrationState extends Equatable {
   const RegistrationState();
@@ -27,7 +28,6 @@ class RegistrationError extends RegistrationState {
   @override
   List<Object?> get props => [message];
 }
-
 
 class SelectedClassInfo {
   final String classId;
@@ -55,20 +55,28 @@ class SelectedClassInfo {
   int get hashCode => classId.hashCode;
 }
 
-
 class RegistrationInProgress extends RegistrationState {
-  final bool isNewStudent; 
-  final String? studentId; 
+  final bool isNewStudent;
+  final String? studentId;
   final String? studentName;
   final String? studentGroup;
   final String? phoneNumber;
   final String? email;
-  final List<SelectedClassInfo> selectedClasses; 
+  final List<SelectedClassInfo> selectedClasses;
   final double discount;
   final String? promotionCode;
   final Promotion? appliedPromotion;
   final PaymentMethod paymentMethod;
   final String? notes;
+
+  
+  final CartPreview? cartPreview;
+
+  
+  final bool isCalculatingPreview;
+
+  
+  final String? cartPreviewError;
 
   const RegistrationInProgress({
     this.isNewStudent = true,
@@ -83,30 +91,85 @@ class RegistrationInProgress extends RegistrationState {
     this.appliedPromotion,
     this.paymentMethod = PaymentMethod.cash,
     this.notes,
+    this.cartPreview,
+    this.isCalculatingPreview = false,
+    this.cartPreviewError,
   });
 
   
-  double get tuitionFee =>
-      selectedClasses.fold(0, (sum, c) => sum + c.tuitionFee);
-
-  double get totalAmount => tuitionFee - discount;
+  double get tuitionFee {
+    if (cartPreview != null) {
+      return cartPreview!.summary.totalOriginalPrice;
+    }
+    return selectedClasses.fold(0, (sum, c) => sum + c.tuitionFee);
+  }
 
   
+  double get totalDiscount {
+    if (cartPreview != null) {
+      return cartPreview!.summary.totalDiscountAmount;
+    }
+    return discount;
+  }
+
+  
+  double get totalAmount {
+    if (cartPreview != null) {
+      return cartPreview!.summary.finalAmount;
+    }
+    return tuitionFee - discount;
+  }
+
+  
+  double get totalTuitionFee {
+    if (cartPreview != null) {
+      return cartPreview!.summary.totalTuitionFee;
+    }
+    return selectedClasses.fold(0, (sum, c) => sum + c.tuitionFee);
+  }
+
+  
+  double get singleCourseDiscountAmount {
+    return cartPreview?.summary.totalSingleCourseDiscount ?? 0;
+  }
+
+  
+  bool get hasSingleCourseDiscount {
+    return cartPreview?.hasSingleCourseDiscount ?? false;
+  }
+
+  
+  double get comboDiscountAmount {
+    return cartPreview?.summary.totalComboDiscount ?? 0;
+  }
+
+  
+  List<ComboDiscountInfo> get appliedCombos {
+    return cartPreview?.summary.appliedCombos ?? [];
+  }
+
+  
+  double get returningDiscountAmount {
+    return cartPreview?.summary.returningDiscountAmount ?? 0;
+  }
+
+  
+  bool get hasAutoPromotions {
+    return cartPreview != null && cartPreview!.hasAnyDiscount;
+  }
+
   String? get className => selectedClasses.isEmpty
       ? null
       : selectedClasses.map((c) => c.className).join(', ');
 
-  
   String? get classId =>
       selectedClasses.isEmpty ? null : selectedClasses.first.classId;
 
-  
   String? get courseId =>
       selectedClasses.isEmpty ? null : selectedClasses.first.courseId;
   String? get courseName =>
       selectedClasses.isEmpty ? null : selectedClasses.first.courseName;
 
-  
   List<String> get selectedCourseIds => selectedClasses
       .where((c) => c.courseId != null)
       .map((c) => c.courseId!)
@@ -114,8 +177,6 @@ class RegistrationInProgress extends RegistrationState {
       .toList();
 
   bool get isValid {
-    
-    
     final hasValidStudent = isNewStudent
         ? (studentName != null &&
               studentName!.isNotEmpty &&
@@ -139,6 +200,9 @@ class RegistrationInProgress extends RegistrationState {
     appliedPromotion,
     paymentMethod,
     notes,
+    cartPreview,
+    isCalculatingPreview,
+    cartPreviewError,
   ];
 
   RegistrationInProgress copyWith({
@@ -154,8 +218,13 @@ class RegistrationInProgress extends RegistrationState {
     Promotion? appliedPromotion,
     PaymentMethod? paymentMethod,
     String? notes,
+    CartPreview? cartPreview,
+    bool? isCalculatingPreview,
+    String? cartPreviewError,
     bool clearPromotion = false,
     bool clearStudent = false,
+    bool clearCartPreview = false,
+    bool clearCartPreviewError = false,
   }) {
     return RegistrationInProgress(
       isNewStudent: isNewStudent ?? this.isNewStudent,
@@ -174,17 +243,21 @@ class RegistrationInProgress extends RegistrationState {
           : (appliedPromotion ?? this.appliedPromotion),
       paymentMethod: paymentMethod ?? this.paymentMethod,
       notes: notes ?? this.notes,
+      cartPreview: clearCartPreview ? null : (cartPreview ?? this.cartPreview),
+      isCalculatingPreview: isCalculatingPreview ?? this.isCalculatingPreview,
+      cartPreviewError: clearCartPreviewError
+          ? null
+          : (cartPreviewError ?? this.cartPreviewError),
     );
   }
 }
-
 
 class ClassFilterInfo {
   final String? courseId;
   final String? courseName;
   final String? teacherId;
   final String? teacherName;
-  final String? schedule; 
+  final String? schedule;
 
   const ClassFilterInfo({
     this.courseId,
@@ -195,15 +268,14 @@ class ClassFilterInfo {
   });
 }
 
-
 class ClassesLoaded extends RegistrationState {
   final List<AdminClass> classes;
   final RegistrationInProgress currentRegistration;
-  
+
   final List<Map<String, dynamic>> courses;
   final List<Map<String, dynamic>> teachers;
   final List<String> schedules;
-  
+
   final ClassFilterInfo? appliedFilter;
 
   const ClassesLoaded({
@@ -249,7 +321,6 @@ class ClassesLoaded extends RegistrationState {
   }
 }
 
-
 class PromotionsLoaded extends RegistrationState {
   final List<Promotion> promotions;
   final RegistrationInProgress currentRegistration;
@@ -262,18 +333,15 @@ class PromotionsLoaded extends RegistrationState {
   @override
   List<Object?> get props => [promotions, currentRegistration];
 
-  
   List<Promotion> get validPromotions {
     final selectedCourseIds = currentRegistration.selectedCourseIds;
     return promotions.where((p) {
-      
       if (!p.isValid) return false;
-      
+
       return p.canApplyForCourses(selectedCourseIds);
     }).toList();
   }
 }
-
 
 class RegistrationSubmitted extends RegistrationState {
   final QuickRegistration registration;
@@ -283,7 +351,6 @@ class RegistrationSubmitted extends RegistrationState {
   @override
   List<Object?> get props => [registration];
 }
-
 
 class RegistrationSubmitting extends RegistrationState {
   const RegistrationSubmitting();

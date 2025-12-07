@@ -8,8 +8,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../widgets/admin_icon_action.dart';
 import '../../../../core/widgets/skeleton_widget.dart';
-import '../../../../core/widgets/custom_image.dart';
 
 import '../bloc/admin_bloc.dart';
 import '../bloc/admin_event.dart';
@@ -116,7 +116,7 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
 
             return CustomScrollView(
               slivers: [
-                // AppBar với avatar
+                
                 SliverAppBar(
                   expandedHeight: 200.h,
                   pinned: true,
@@ -129,16 +129,17 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
                           end: Alignment.bottomCenter,
                           colors: [
                             AppColors.primary,
-                            AppColors.primary.withOpacity(0.8),
+                            AppColors.primary.withValues(alpha: 0.8),
                           ],
                         ),
                       ),
                       child: SafeArea(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             SizedBox(height: 40.h),
-                            // Avatar
+                            
                             Container(
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
@@ -148,16 +149,16 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.2),
+                                    color: Colors.black.withValues(alpha: 0.2),
                                     blurRadius: 10,
                                     offset: const Offset(0, 4),
                                   ),
                                 ],
                               ),
                               child: CircleAvatar(
-                                radius: 40.r,
-                                backgroundColor: AppColors.primary.withOpacity(
-                                  0.3,
+                                radius: 36.r,
+                                backgroundColor: AppColors.primary.withValues(
+                                  alpha: 0.3,
                                 ),
                                 backgroundImage:
                                     student.avatarUrl != null &&
@@ -174,14 +175,14 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 28.sp,
+                                          fontSize: 24.sp,
                                         ),
                                       )
                                     : null,
                               ),
                             ),
-                            SizedBox(height: 12.h),
-                            // Tên
+                            SizedBox(height: 8.h),
+                            
                             Padding(
                               padding: EdgeInsets.symmetric(
                                 horizontal: AppSizes.paddingMedium,
@@ -190,7 +191,7 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
                                 student.fullName,
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 20.sp,
+                                  fontSize: 18.sp,
                                   fontWeight: FontWeight.bold,
                                 ),
                                 textAlign: TextAlign.center,
@@ -199,14 +200,14 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
                               ),
                             ),
                             SizedBox(height: 4.h),
-                            // Badge số lớp
+                            
                             Container(
                               padding: EdgeInsets.symmetric(
                                 horizontal: 12,
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
+                                color: Colors.white.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
@@ -226,19 +227,18 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
                   actions: [
                     IconButton(
                       icon: const Icon(Icons.edit, color: Colors.white),
-                      onPressed: () {
+                      onPressed: () async {
                         if (_currentStudent != null) {
-                          Navigator.pushNamed(
+                          final bloc = context.read<AdminBloc>();
+                          final result = await Navigator.pushNamed(
                             context,
                             AppRouter.adminEditStudent,
                             arguments: _currentStudent,
-                          ).then((result) {
-                            if (result == true) {
-                              context.read<AdminBloc>().add(
-                                LoadStudentDetail(widget.studentId),
-                              );
-                            }
-                          });
+                          );
+                          if (!mounted) return;
+                          if (result == true) {
+                            bloc.add(LoadStudentDetail(widget.studentId));
+                          }
                         }
                       },
                     ),
@@ -272,88 +272,80 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
                   ],
                 ),
 
-                // Nội dung
+                
                 SliverToBoxAdapter(
-                  child: RefreshIndicator(
-                    color: AppColors.primary,
-                    onRefresh: () async {
-                      context.read<AdminBloc>().add(
-                        LoadStudentDetail(widget.studentId),
-                      );
-                    },
-                    child: Padding(
-                      padding: EdgeInsets.all(AppSizes.paddingMedium),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Nút liên hệ nhanh
-                          _buildQuickContactButtons(context, student),
+                  child: Padding(
+                    padding: EdgeInsets.all(AppSizes.paddingMedium),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        
+                        _buildQuickContactButtons(context, student),
 
-                          SizedBox(height: 24.h),
+                        SizedBox(height: 24.h),
 
-                          // Thông tin cá nhân
-                          _buildSection(
+                        
+                        _buildSection(
+                          context,
+                          theme,
+                          isDark,
+                          title: 'Thông tin cá nhân',
+                          icon: Icons.person,
+                          child: _buildPersonalInfoContent(
                             context,
                             theme,
                             isDark,
-                            title: 'Thông tin cá nhân',
-                            icon: Icons.person,
-                            child: _buildPersonalInfoContent(
-                              context,
-                              theme,
-                              isDark,
-                              student,
-                            ),
+                            student,
                           ),
+                        ),
 
-                          SizedBox(height: 16.h),
+                        SizedBox(height: 16.h),
 
-                          // Thông tin liên hệ
-                          _buildSection(
+                        
+                        _buildSection(
+                          context,
+                          theme,
+                          isDark,
+                          title: 'Thông tin liên hệ',
+                          icon: Icons.contact_phone,
+                          child: _buildContactInfoContent(
                             context,
                             theme,
                             isDark,
-                            title: 'Thông tin liên hệ',
-                            icon: Icons.contact_phone,
-                            child: _buildContactInfoContent(
-                              context,
-                              theme,
-                              isDark,
-                              student,
-                            ),
+                            student,
                           ),
+                        ),
 
-                          SizedBox(height: 16.h),
+                        SizedBox(height: 16.h),
 
-                          // Thông tin học tập
-                          _buildSection(
+                        
+                        _buildSection(
+                          context,
+                          theme,
+                          isDark,
+                          title: 'Thông tin học tập',
+                          icon: Icons.school,
+                          child: _buildEducationInfoContent(
                             context,
                             theme,
                             isDark,
-                            title: 'Thông tin học tập',
-                            icon: Icons.school,
-                            child: _buildEducationInfoContent(
-                              context,
-                              theme,
-                              isDark,
-                              student,
-                            ),
+                            student,
                           ),
+                        ),
 
-                          SizedBox(height: 24.h),
+                        SizedBox(height: 24.h),
 
-                          // Danh sách lớp học
-                          _buildSectionHeader(
-                            context,
-                            'Lớp học đăng ký (${classes.length})',
-                            classes.length > 3 ? () {} : () {},
-                          ),
-                          SizedBox(height: AppSizes.p12),
-                          _buildEnrolledClasses(context, isDark, classes),
+                        
+                        _buildSectionHeader(
+                          context,
+                          'Lớp học đăng ký (${classes.length})',
+                          classes.length > 3 ? () {} : () {},
+                        ),
+                        SizedBox(height: AppSizes.p12),
+                        _buildEnrolledClasses(context, isDark, classes),
 
-                          SizedBox(height: 24.h),
-                        ],
-                      ),
+                        SizedBox(height: 24.h),
+                      ],
                     ),
                   ),
                 ),
@@ -368,7 +360,7 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
   }
 
   Widget _buildLoadingSkeleton() {
-    return Padding(
+    return SingleChildScrollView(
       padding: EdgeInsets.all(AppSizes.paddingMedium),
       child: Column(
         children: [
@@ -384,7 +376,7 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
 
   Widget _buildErrorState(BuildContext context, String message) {
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: EdgeInsets.all(AppSizes.paddingLarge),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -409,7 +401,7 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
     );
   }
 
-  // ==================== QUICK CONTACT BUTTONS ====================
+  
   Widget _buildQuickContactButtons(BuildContext context, AdminStudent student) {
     return Row(
       children: [
@@ -434,7 +426,7 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
     );
   }
 
-  // ==================== SECTION BUILDER ====================
+  
   Widget _buildSection(
     BuildContext context,
     ThemeData theme,
@@ -449,7 +441,7 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
         borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -458,11 +450,11 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
+          
           Container(
             padding: EdgeInsets.all(AppSizes.p12),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(AppSizes.radiusMedium),
                 topRight: Radius.circular(AppSizes.radiusMedium),
@@ -482,14 +474,14 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
               ],
             ),
           ),
-          // Content
+          
           Padding(padding: EdgeInsets.all(AppSizes.p16), child: child),
         ],
       ),
     );
   }
 
-  // ==================== PERSONAL INFO ====================
+  
   Widget _buildPersonalInfoContent(
     BuildContext context,
     ThemeData theme,
@@ -539,7 +531,7 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
     );
   }
 
-  // ==================== CONTACT INFO ====================
+  
   Widget _buildContactInfoContent(
     BuildContext context,
     ThemeData theme,
@@ -568,7 +560,7 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
     );
   }
 
-  // ==================== EDUCATION INFO ====================
+  
   Widget _buildEducationInfoContent(
     BuildContext context,
     ThemeData theme,
@@ -612,7 +604,7 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
     );
   }
 
-  // ==================== INFO ROW ====================
+  
   Widget _buildInfoRow(
     ThemeData theme,
     bool isDark, {
@@ -630,7 +622,7 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
           Icon(
             icon,
             size: 18.sp,
-            color: isDark ? AppColors.gray400 : AppColors.gray600,
+            color: isDark ? AppColors.neutral400 : AppColors.neutral600,
           ),
           SizedBox(width: AppSizes.p12),
           Expanded(
@@ -640,7 +632,7 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
                 Text(
                   label,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: isDark ? AppColors.gray400 : AppColors.gray600,
+                    color: isDark ? AppColors.neutral400 : AppColors.neutral600,
                   ),
                 ),
                 SizedBox(height: 4),
@@ -656,9 +648,10 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
                       ),
                     ),
                     if (canCopy)
-                      IconButton(
-                        icon: Icon(Icons.copy, size: 16.sp),
-                        onPressed: () {
+                      AdminIconAction(
+                        icon: Icons.copy,
+                        iconSize: 16.sp,
+                        onTap: () {
                           Clipboard.setData(ClipboardData(text: value));
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
@@ -667,8 +660,6 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
                             ),
                           );
                         },
-                        constraints: BoxConstraints(),
-                        padding: EdgeInsets.all(4),
                       ),
                   ],
                 ),
@@ -680,7 +671,7 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
     );
   }
 
-  // ==================== SECTION HEADER ====================
+  
   Widget _buildSectionHeader(
     BuildContext context,
     String title,
@@ -699,7 +690,7 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
     );
   }
 
-  // ==================== ENROLLED CLASSES ====================
+  
   Widget _buildEnrolledClasses(
     BuildContext context,
     bool isDark,
@@ -709,7 +700,7 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
       return Container(
         padding: EdgeInsets.all(AppSizes.paddingMedium),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : AppColors.gray100,
+          color: isDark ? AppColors.surfaceDark : AppColors.neutral100,
           borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
         ),
         child: Center(
@@ -718,13 +709,13 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
               Icon(
                 Icons.class_outlined,
                 size: 48.sp,
-                color: isDark ? AppColors.gray600 : AppColors.gray400,
+                color: isDark ? AppColors.neutral600 : AppColors.neutral400,
               ),
               SizedBox(height: 8.h),
               Text(
                 'Chưa đăng ký lớp học nào',
                 style: TextStyle(
-                  color: isDark ? AppColors.gray400 : AppColors.gray600,
+                  color: isDark ? AppColors.neutral400 : AppColors.neutral600,
                 ),
               ),
             ],
@@ -750,7 +741,7 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
         borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -775,7 +766,7 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
                   width: 48.w,
                   height: 48.h,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Icon(
@@ -804,8 +795,8 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
                             Icons.schedule,
                             size: 14.sp,
                             color: isDark
-                                ? AppColors.gray400
-                                : AppColors.gray600,
+                                ? AppColors.neutral400
+                                : AppColors.neutral600,
                           ),
                           SizedBox(width: 4.w),
                           Expanded(
@@ -813,8 +804,8 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
                               classItem.schedule,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: isDark
-                                    ? AppColors.gray400
-                                    : AppColors.gray600,
+                                    ? AppColors.neutral400
+                                    : AppColors.neutral600,
                                 fontSize: AppSizes.textXs,
                               ),
                               maxLines: 1,
@@ -828,7 +819,7 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
                 ),
                 Icon(
                   Icons.chevron_right,
-                  color: isDark ? AppColors.gray400 : AppColors.gray600,
+                  color: isDark ? AppColors.neutral400 : AppColors.neutral600,
                 ),
               ],
             ),
@@ -839,7 +830,7 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
   }
 }
 
-// ==================== HELPER WIDGETS ====================
+
 
 class _ContactButton extends StatelessWidget {
   final IconData icon;

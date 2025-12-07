@@ -12,7 +12,7 @@ import '../../../domain/entities/course_detail.dart';
 import '../../bloc/admin_course_bloc.dart';
 import '../../bloc/admin_course_event.dart';
 import '../../bloc/admin_course_state.dart';
-
+import '../../widgets/admin_search_bar.dart';
 
 class AdminCourseListScreen extends StatelessWidget {
   const AdminCourseListScreen({super.key});
@@ -46,16 +46,13 @@ class _AdminCourseListContentState extends State<_AdminCourseListContent> {
   }
 
   List<CourseDetail> _filterAndSortCourses(List<CourseDetail> courses) {
-    
     var filtered = courses.where((course) {
-      
       final matchesSearch =
           _searchController.text.isEmpty ||
           course.name.toLowerCase().contains(
             _searchController.text.toLowerCase(),
           );
 
-      
       final matchesStatus =
           _selectedStatus == 'all' ||
           (_selectedStatus == 'active' && course.isActive) ||
@@ -64,7 +61,6 @@ class _AdminCourseListContentState extends State<_AdminCourseListContent> {
       return matchesSearch && matchesStatus;
     }).toList();
 
-    
     switch (_sortBy) {
       case 'tuitionFee':
         filtered.sort((a, b) => b.tuitionFee.compareTo(a.tuitionFee));
@@ -75,7 +71,7 @@ class _AdminCourseListContentState extends State<_AdminCourseListContent> {
       case 'students':
         filtered.sort((a, b) => b.totalStudents.compareTo(a.totalStudents));
         break;
-      default: 
+      default:
         filtered.sort((a, b) => a.name.compareTo(b.name));
     }
 
@@ -83,6 +79,7 @@ class _AdminCourseListContentState extends State<_AdminCourseListContent> {
   }
 
   void _deleteCourse(BuildContext context, CourseDetail course) async {
+    final bloc = context.read<AdminCourseBloc>();
     if (!course.canDelete) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -98,8 +95,11 @@ class _AdminCourseListContentState extends State<_AdminCourseListContent> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Xác nhận xóa'),
-        content: Text('Bạn có chắc muốn xóa khóa học "${course.name}"?'),
+        title: const Text('Xác nhận ngưng hoạt động'),
+        content: Text(
+          'Bạn có chắc muốn ngưng hoạt động khóa học "${course.name}"?\n\n'
+          'Lưu ý: Khóa học sẽ bị ẩn khỏi danh sách công khai nhưng dữ liệu vẫn được giữ lại.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -107,15 +107,19 @@ class _AdminCourseListContentState extends State<_AdminCourseListContent> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Xóa', style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.warning),
+            child: const Text(
+              'Ngưng hoạt động',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
     );
 
-    if (confirmed == true && mounted) {
-      context.read<AdminCourseBloc>().add(DeleteCourseEvent(course.id));
+    if (!mounted) return;
+    if (confirmed == true) {
+      bloc.add(DeleteCourseEvent(course.id));
     }
   }
 
@@ -153,49 +157,32 @@ class _AdminCourseListContentState extends State<_AdminCourseListContent> {
                 backgroundColor: AppColors.success,
               ),
             );
-            
+
             context.read<AdminCourseBloc>().add(const LoadCourses());
           }
         },
         builder: (context, state) {
           return Column(
             children: [
-              
-              Container(
+              Padding(
                 padding: EdgeInsets.all(AppSizes.p16),
-                color: isDark ? AppColors.gray800 : Colors.white,
-                child: TextField(
+                child: AdminSearchBar(
                   controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Tìm kiếm khóa học...',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() {});
-                            },
-                          )
-                        : null,
-                    border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppSizes.radiusMedium),
-                    ),
-                    filled: true,
-                    fillColor: isDark ? AppColors.gray700 : AppColors.gray100,
-                  ),
+                  hintText: 'Tìm kiếm khóa học...',
                   onChanged: (value) => setState(() {}),
+                  onClear: () {
+                    _searchController.clear();
+                    setState(() {});
+                  },
                 ),
               ),
 
-              
               Container(
                 padding: EdgeInsets.symmetric(
                   horizontal: AppSizes.p16,
                   vertical: AppSizes.p8,
                 ),
-                color: isDark ? AppColors.gray800 : Colors.white,
+                color: isDark ? AppColors.neutral800 : Colors.white,
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
@@ -222,7 +209,6 @@ class _AdminCourseListContentState extends State<_AdminCourseListContent> {
                 ),
               ),
 
-              
               Expanded(child: _buildCourseList(context, state, isDark)),
             ],
           );
@@ -295,7 +281,7 @@ class _AdminCourseListContentState extends State<_AdminCourseListContent> {
       label: Text(label),
       selected: isSelected,
       onSelected: (_) => onTap(),
-      selectedColor: AppColors.primary.withOpacity(0.2),
+      selectedColor: AppColors.primary.withValues(alpha: 0.2),
       checkmarkColor: AppColors.primary,
       labelStyle: TextStyle(
         color: isSelected ? AppColors.primary : null,
@@ -313,10 +299,16 @@ class _AdminCourseListContentState extends State<_AdminCourseListContent> {
 
     return Card(
       margin: EdgeInsets.only(bottom: AppSizes.p12),
-      elevation: 2,
+      elevation: isDark ? 0 : 1,
+      shadowColor: Colors.black.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+        side: BorderSide(
+          color: isDark ? AppColors.neutral700 : AppColors.neutral200,
+          width: 1,
+        ),
       ),
+      color: isDark ? AppColors.surfaceDark : Colors.white,
       child: Dismissible(
         key: Key(course.id),
         direction: course.canDelete
@@ -336,162 +328,158 @@ class _AdminCourseListContentState extends State<_AdminCourseListContent> {
           return false;
         },
         child: InkWell(
-          onTap: () {
-            Navigator.pushNamed(
+          onTap: () async {
+            debugPrint('🔵 Course tapped: ${course.id} - ${course.name}');
+            final bloc = context.read<AdminCourseBloc>();
+            final result = await Navigator.pushNamed(
               context,
-              AppRouter.adminCourseDetail,
-              arguments: course,
+              AppRouter.adminCourseDetailById,
+              arguments: course.id,
             );
+            debugPrint('🔵 Returned from course detail: $result');
+
+            if (!mounted) return;
+            if (result == true) {
+              bloc.add(const LoadCourses());
+            }
           },
           borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
           child: Padding(
-            padding: EdgeInsets.all(AppSizes.p12),
+            padding: EdgeInsets.all(AppSizes.p16),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
-                  child: course.imageUrl != null
-                      ? Image.network(
-                          course.imageUrl!,
-                          width: 80.w,
-                          height: 80.w,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              _buildPlaceholderImage(),
-                        )
-                      : _buildPlaceholderImage(),
+                // Course Image
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+                    child: course.imageUrl != null
+                        ? Image.network(
+                            course.imageUrl!,
+                            width: 72.w,
+                            height: 72.w,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                _buildPlaceholderImage(),
+                          )
+                        : _buildPlaceholderImage(),
+                  ),
                 ),
-                SizedBox(width: AppSizes.p12),
+                SizedBox(width: AppSizes.p16),
 
-                
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      
+                      // Title and Status Row
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
                             child: Text(
                               course.name,
                               style: TextStyle(
-                                fontSize: 16.sp,
+                                fontSize: 15.sp,
                                 fontWeight: FontWeight.w600,
                                 color: isDark
                                     ? Colors.white
                                     : AppColors.textPrimary,
+                                height: 1.3,
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          SizedBox(width: 8.w),
+                          // Status Badge with Switch
                           Container(
                             padding: EdgeInsets.symmetric(
                               horizontal: 8.w,
                               vertical: 4.h,
                             ),
                             decoration: BoxDecoration(
-                              color: _getStatusColor(course.isActive)
-                                  .withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(
-                                AppSizes.radiusSmall,
-                              ),
+                              color: course.isActive
+                                  ? AppColors.success.withValues(alpha: 0.1)
+                                  : AppColors.neutral200,
+                              borderRadius: BorderRadius.circular(20.r),
                             ),
-                            child: Text(
-                              course.statusText,
-                              style: TextStyle(
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.w600,
-                                color: _getStatusColor(course.isActive),
-                              ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  course.isActive ? 'Hoạt động' : 'Tạm dừng',
+                                  style: TextStyle(
+                                    fontSize: 11.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: course.isActive
+                                        ? AppColors.success
+                                        : AppColors.neutral500,
+                                  ),
+                                ),
+                                SizedBox(width: 4.w),
+                                SizedBox(
+                                  height: 20.h,
+                                  width: 32.w,
+                                  child: Transform.scale(
+                                    scale: 0.6,
+                                    child: Switch(
+                                      value: course.isActive,
+                                      activeColor: AppColors.success,
+                                      onChanged: course.canDelete
+                                          ? (value) {
+                                              context.read<AdminCourseBloc>().add(
+                                                ToggleCourseStatusEvent(
+                                                  course.id,
+                                                ),
+                                              );
+                                            }
+                                          : null,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
-                      SizedBox(height: 6.h),
-
-                      
-                      Row(
-                        children: [
-                          if (course.level != null) ...[
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 6.w,
-                                vertical: 2.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                course.level!,
-                                style: TextStyle(
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ),
-                            SizedBox(width: 6.w),
-                          ],
-                          if (course.categoryName != null)
-                            Expanded(
-                              child: Text(
-                                course.categoryName!,
-                                style: TextStyle(
-                                  fontSize: 11.sp,
-                                  color: AppColors.textSecondary,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
                         ],
                       ),
                       SizedBox(height: 8.h),
 
-                      
+                      // Stats Row
                       Row(
                         children: [
-                          Icon(
+                          _buildStatChip(
                             Icons.people_outline,
-                            size: 14.sp,
-                            color: AppColors.textSecondary,
-                          ),
-                          SizedBox(width: 4.w),
-                          Text(
                             '${course.totalStudents} HV',
-                            style: TextStyle(
-                              fontSize: 11.sp,
-                              color: AppColors.textSecondary,
-                            ),
+                            isDark,
                           ),
-                          SizedBox(width: 12.w),
-                          Icon(
+                          SizedBox(width: 8.w),
+                          _buildStatChip(
                             Icons.class_outlined,
-                            size: 14.sp,
-                            color: AppColors.textSecondary,
-                          ),
-                          SizedBox(width: 4.w),
-                          Text(
                             '${course.activeClasses}/${course.totalClasses} lớp',
-                            style: TextStyle(
-                              fontSize: 11.sp,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                          const Spacer(),
-                          Text(
-                            currencyFormat.format(course.tuitionFee),
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
-                            ),
+                            isDark,
                           ),
                         ],
+                      ),
+                      SizedBox(height: 8.h),
+
+                      // Price Row
+                      Text(
+                        currencyFormat.format(course.tuitionFee),
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                        ),
                       ),
                     ],
                   ),
@@ -504,16 +492,49 @@ class _AdminCourseListContentState extends State<_AdminCourseListContent> {
     );
   }
 
-  Color _getStatusColor(bool isActive) {
-    return isActive ? AppColors.success : AppColors.gray500;
+  Widget _buildStatChip(IconData icon, String text, bool isDark) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.neutral800 : AppColors.neutral100,
+        borderRadius: BorderRadius.circular(6.r),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 12.sp,
+            color: AppColors.textSecondary,
+          ),
+          SizedBox(width: 4.w),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 11.sp,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildPlaceholderImage() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      width: 80.w,
-      height: 80.w,
-      color: AppColors.gray200,
-      child: Icon(Icons.school, size: 40.sp, color: AppColors.gray400),
+      width: 72.w,
+      height: 72.w,
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.neutral800 : AppColors.neutral100,
+        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+      ),
+      child: Icon(
+        Icons.school,
+        size: 32.sp,
+        color: isDark ? AppColors.neutral500 : AppColors.neutral400,
+      ),
     );
   }
 

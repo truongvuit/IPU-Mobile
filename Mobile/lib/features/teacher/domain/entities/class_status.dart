@@ -26,7 +26,7 @@ extension ClassStatusExtension on ClassStatus {
       case ClassStatus.upcoming:
         return AppColors.info;
       case ClassStatus.completed:
-        return AppColors.gray500;
+        return AppColors.neutral500;
     }
   }
   

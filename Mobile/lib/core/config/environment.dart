@@ -1,11 +1,19 @@
+import 'package:flutter/foundation.dart';
+
+// Cấu hình môi trường ứng dụng
 class Environment {
   static const bool useMockData = false;
 
-  static const String baseUrl = 'http://localhost:8080';
+  // For Android Emulator: use 10.0.2.2 (maps to host's localhost)
+  // For Physical Device: use your PC's IP (e.g., 192.168.1.9)
+  // static const String baseUrl = 'http://192.168.1.9:8080';
+  static const String baseUrl = 'http://10.0.2.2:8080';
+
   static const String fullApiUrl = '$baseUrl/';
 
-  static const bool enableDebugLogging = true;
-  static const bool enableLogging = true;
+  // Logging chỉ bật trong debug mode để tránh lộ token và dữ liệu nhạy cảm
+  static bool get enableDebugLogging => kDebugMode;
+  static bool get enableLogging => kDebugMode;
   static const bool enableAnalytics = false;
   static const bool enableCrashReporting = false;
 

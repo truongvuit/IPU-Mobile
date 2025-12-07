@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 
+import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
 import '../../domain/entities/class_grade_summary.dart';
 import '../../domain/repositories/teacher_grades_repository.dart';
@@ -18,8 +19,14 @@ class TeacherGradesRepositoryImpl implements TeacherGradesRepository {
       final models = await dataSource.getClassGrades(classId);
       final entities = models.map((model) => model.toEntity()).toList();
       return Right(entities);
+    } on ServerException catch (e) {
+      
+      return Left(ServerFailure(message: e.message));
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      
+      return Left(
+        ServerFailure(message: 'Lỗi không xác định: ${e.toString()}'),
+      );
     }
   }
 }

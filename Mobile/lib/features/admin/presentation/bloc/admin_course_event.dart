@@ -39,6 +39,15 @@ class UpdateCourseEvent extends AdminCourseEvent {
   List<Object> get props => [id, request];
 }
 
+class ToggleCourseStatusEvent extends AdminCourseEvent {
+  final String id;
+
+  const ToggleCourseStatusEvent(this.id);
+
+  @override
+  List<Object> get props => [id];
+}
+
 class DeleteCourseEvent extends AdminCourseEvent {
   final String id;
 

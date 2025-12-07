@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 import '../../domain/entities/class_student.dart';
 import '../bloc/teacher_bloc.dart';
@@ -52,7 +52,7 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
       case 'upcoming':
         return AppColors.info;
       case 'completed':
-        return AppColors.gray500;
+        return AppColors.neutral500;
       default:
         return AppColors.primary;
     }
@@ -151,10 +151,10 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
                         width: double.infinity,
                         padding: EdgeInsets.all(AppSizes.p20),
                         decoration: BoxDecoration(
-                          color: isDark ? AppColors.gray800 : Colors.white,
+                          color: isDark ? AppColors.neutral800 : Colors.white,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
+                              color: Colors.black.withValues(alpha: 0.05),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -187,7 +187,7 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
                                   decoration: BoxDecoration(
                                     color: _getStatusColor(
                                       classDetail.status ?? 'ongoing',
-                                    ).withOpacity(0.1),
+                                    ).withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(
                                       AppSizes.radiusMedium,
                                     ),
@@ -247,7 +247,7 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
                       ),
 
                       Container(
-                        color: isDark ? AppColors.gray800 : Colors.white,
+                        color: isDark ? AppColors.neutral800 : Colors.white,
                         child: TabBar(
                           controller: _tabController,
                           labelColor: AppColors.primary,
@@ -389,22 +389,10 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
             child: OutlinedButton.icon(
               onPressed: () {
                 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('Vui lòng chọn buổi học từ Lịch dạy để điểm danh'),
-                    backgroundColor: AppColors.warning,
-                    action: SnackBarAction(
-                      label: 'Xem lịch',
-                      textColor: Colors.white,
-                      onPressed: () {
-                        Navigator.pushNamed(context, AppRouter.teacherSchedule);
-                      },
-                    ),
-                  ),
-                );
+                Navigator.pushNamed(context, AppRouter.teacherSchedule);
               },
-              icon: const Icon(Icons.checklist),
-              label: const Text('Điểm danh lớp học'),
+              icon: const Icon(Icons.calendar_month),
+              label: const Text('Mở lịch dạy'),
               style: OutlinedButton.styleFrom(
                 padding: EdgeInsets.symmetric(vertical: 14.h),
                 side: const BorderSide(color: AppColors.primary),
@@ -449,12 +437,12 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
             decoration: InputDecoration(
               hintText: 'Tìm kiếm theo tên, mã HV...',
               hintStyle: TextStyle(
-                color: isDark ? AppColors.gray500 : AppColors.textSecondary,
+                color: isDark ? AppColors.neutral500 : AppColors.textSecondary,
                 fontSize: 14.sp,
               ),
               prefixIcon: Icon(
                 Icons.search,
-                color: isDark ? AppColors.gray400 : AppColors.textSecondary,
+                color: isDark ? AppColors.neutral400 : AppColors.textSecondary,
                 size: 20.sp,
               ),
               suffixIcon: _studentSearchQuery.isNotEmpty
@@ -469,17 +457,17 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
                     )
                   : null,
               filled: true,
-              fillColor: isDark ? AppColors.gray800 : Colors.white,
+              fillColor: isDark ? AppColors.neutral800 : Colors.white,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12.r),
                 borderSide: BorderSide(
-                  color: isDark ? AppColors.gray700 : AppColors.gray200,
+                  color: isDark ? AppColors.neutral700 : AppColors.neutral200,
                 ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12.r),
                 borderSide: BorderSide(
-                  color: isDark ? AppColors.gray700 : AppColors.gray200,
+                  color: isDark ? AppColors.neutral700 : AppColors.neutral200,
                 ),
               ),
               focusedBorder: OutlineInputBorder(
@@ -520,7 +508,7 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
                   'Tổng: ${students.length}',
                   style: TextStyle(
                     fontSize: 12.sp,
-                    color: isDark ? AppColors.gray400 : AppColors.textSecondary,
+                    color: isDark ? AppColors.neutral400 : AppColors.textSecondary,
                   ),
                 ),
             ],
@@ -601,7 +589,7 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
           Container(
             padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.gray800 : Colors.white,
+              color: isDark ? AppColors.neutral800 : Colors.white,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
@@ -701,11 +689,11 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
     return Container(
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.gray800 : Colors.white,
+        color: isDark ? AppColors.neutral800 : Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -742,7 +730,7 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
     return Container(
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.gray800 : Colors.white,
+        color: isDark ? AppColors.neutral800 : Colors.white,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -935,7 +923,7 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
               _buildInfoRow(
                 Icons.calendar_today_outlined,
                 'Ngày tham gia',
-                DateFormat('dd/MM/yyyy').format(student.enrollmentDate),
+                DateFormatter.formatDate(student.enrollmentDate),
               ),
 
               SizedBox(height: AppSizes.p20),

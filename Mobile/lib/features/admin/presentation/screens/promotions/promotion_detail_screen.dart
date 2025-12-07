@@ -37,7 +37,7 @@ class _PromotionDetailContent extends StatelessWidget {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text(state.message)));
-          Navigator.pop(context, true); 
+          Navigator.pop(context, true);
         } else if (state is PromotionError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message), backgroundColor: Colors.red),
@@ -79,7 +79,6 @@ class _PromotionDetailContent extends StatelessWidget {
                     arguments: promotion,
                   );
                   if (result == true) {
-                    
                     if (context.mounted) {
                       context.read<PromotionBloc>().add(
                         promotion_events.LoadPromotions(),
@@ -122,7 +121,7 @@ class _PromotionDetailContent extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -131,17 +130,14 @@ class _PromotionDetailContent extends StatelessWidget {
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 8,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(30),
               border: Border.all(color: AppColors.primary),
             ),
             child: Text(
-              promotion.code.length > 20 
+              promotion.code.length > 20
                   ? '${promotion.code.substring(0, 20)}...'
                   : promotion.code,
               style: const TextStyle(
@@ -185,7 +181,10 @@ class _PromotionDetailContent extends StatelessWidget {
           'Giảm giá',
           promotion.discountType == DiscountType.percentage
               ? '${promotion.discountValue}%'
-              : NumberFormat.currency(locale: 'vi_VN', symbol: 'đ').format(promotion.discountValue),
+              : NumberFormat.currency(
+                  locale: 'vi_VN',
+                  symbol: 'đ',
+                ).format(promotion.discountValue),
         ),
         _buildInfoRow(
           Icons.calendar_today,
@@ -338,7 +337,7 @@ class _PromotionDetailContent extends StatelessWidget {
   Widget _buildApplicableCoursesSection(Promotion promotion) {
     final courseIds = promotion.applicableCourseIds;
     final courseNames = promotion.applicableCourseNames;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -358,12 +357,19 @@ class _PromotionDetailContent extends StatelessWidget {
           child: courseIds == null || courseIds.isEmpty
               ? Row(
                   children: [
-                    Icon(Icons.all_inclusive, color: AppColors.primary, size: 20),
+                    Icon(
+                      Icons.all_inclusive,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
                     const SizedBox(width: 12),
                     const Expanded(
                       child: Text(
                         'Tất cả khóa học',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   ],
@@ -373,11 +379,18 @@ class _PromotionDetailContent extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.menu_book, color: AppColors.primary, size: 20),
+                        Icon(
+                          Icons.menu_book,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
                         const SizedBox(width: 12),
                         Text(
                           '${courseIds.length} khóa học',
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ],
                     ),
@@ -386,8 +399,8 @@ class _PromotionDetailContent extends StatelessWidget {
                       spacing: 8,
                       runSpacing: 8,
                       children: List.generate(courseIds.length, (index) {
-                        
-                        final displayText = (courseNames != null && index < courseNames.length)
+                        final displayText =
+                            (courseNames != null && index < courseNames.length)
                             ? courseNames[index]
                             : 'Khóa học ${courseIds[index]}';
                         return Container(
@@ -396,7 +409,7 @@ class _PromotionDetailContent extends StatelessWidget {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.1),
+                            color: AppColors.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -418,24 +431,24 @@ class _PromotionDetailContent extends StatelessWidget {
   }
 
   void _showDeleteConfirmation(BuildContext context, Promotion promotion) {
+    final bloc = context.read<PromotionBloc>();
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Xóa khuyến mãi?'),
         content: Text(
           'Bạn có chắc chắn muốn xóa khuyến mãi "${promotion.title}" không?',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Hủy'),
           ),
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
-              context.read<PromotionBloc>().add(
-                promotion_events.DeletePromotion(promotion.id),
-              );
+              Navigator.pop(dialogContext);
+              bloc.add(promotion_events.DeletePromotion(promotion.id));
             },
             child: const Text('Xóa', style: TextStyle(color: Colors.red)),
           ),

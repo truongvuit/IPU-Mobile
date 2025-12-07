@@ -113,7 +113,7 @@ class _TeacherScheduleScreenState extends State<TeacherScheduleScreen> {
           ),
 
           Container(
-            color: isDark ? AppColors.gray800 : Colors.white,
+            color: isDark ? AppColors.neutral800 : Colors.white,
             child: TableCalendar(
               firstDay: DateTime.utc(2020, 1, 1),
               lastDay: DateTime.utc(2030, 12, 31),
@@ -219,11 +219,11 @@ class _TeacherScheduleScreenState extends State<TeacherScheduleScreen> {
                     padding: EdgeInsets.all(AppSizes.paddingMedium),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? AppColors.gray900
+                          ? AppColors.neutral900
                           : AppColors.backgroundAlt,
                       border: Border(
                         bottom: BorderSide(
-                          color: isDark ? AppColors.gray700 : AppColors.divider,
+                          color: isDark ? AppColors.neutral700 : AppColors.divider,
                           width: 1,
                         ),
                       ),
@@ -253,7 +253,7 @@ class _TeacherScheduleScreenState extends State<TeacherScheduleScreen> {
                               )
                             : null,
                         filled: true,
-                        fillColor: isDark ? AppColors.gray800 : Colors.white,
+                        fillColor: isDark ? AppColors.neutral800 : Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(
                             AppSizes.radiusSmall,
@@ -392,7 +392,7 @@ class _TeacherScheduleScreenState extends State<TeacherScheduleScreen> {
                                           alpha: 0.12,
                                         )
                                       : (isDark
-                                            ? AppColors.gray800
+                                            ? AppColors.neutral800
                                             : AppColors.backgroundAlt),
                                   borderRadius: BorderRadius.circular(
                                     AppSizes.radiusSmall,
@@ -467,7 +467,7 @@ class _TeacherScheduleScreenState extends State<TeacherScheduleScreen> {
                                       ),
                                       decoration: BoxDecoration(
                                         color: isDark
-                                            ? AppColors.gray900
+                                            ? AppColors.neutral900
                                             : Colors.white,
                                         borderRadius: BorderRadius.circular(
                                           AppSizes.radiusMedium,

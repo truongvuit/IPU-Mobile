@@ -73,7 +73,7 @@ class ClassStudentListItem extends StatelessWidget {
                   Text(
                     'Mã HV: ${student.displayCode}',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: isDark ? AppColors.gray400 : AppColors.gray500,
+                      color: isDark ? AppColors.neutral400 : AppColors.neutral500,
                       fontSize: 12.sp,
                     ),
                   ),

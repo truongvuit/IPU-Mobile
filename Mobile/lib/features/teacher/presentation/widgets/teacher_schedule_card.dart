@@ -23,7 +23,7 @@ class TeacherScheduleCard extends StatelessWidget {
       case 'upcoming':
         return AppColors.info;
       case 'completed':
-        return AppColors.gray500;
+        return AppColors.neutral500;
       default:
         return AppColors.primary;
     }
@@ -66,12 +66,12 @@ class TeacherScheduleCard extends StatelessWidget {
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.gray800 : Colors.white,
+        color: isDark ? AppColors.neutral800 : Colors.white,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
           color: isOngoing
               ? statusColor.withValues(alpha: 0.5)
-              : (isDark ? AppColors.gray700 : AppColors.gray200),
+              : (isDark ? AppColors.neutral700 : AppColors.neutral200),
           width: isOngoing ? 2 : 1,
         ),
         boxShadow: [
@@ -108,7 +108,7 @@ class TeacherScheduleCard extends StatelessWidget {
                 Icon(
                   Icons.chevron_right,
                   size: 24.sp,
-                  color: isDark ? AppColors.gray500 : AppColors.gray400,
+                  color: isDark ? AppColors.neutral500 : AppColors.neutral400,
                 ),
               ],
             ),
@@ -234,7 +234,7 @@ class TeacherScheduleCard extends StatelessWidget {
             Text(
               schedule.room,
               style: textTheme.bodyMedium?.copyWith(
-                color: isDark ? AppColors.gray300 : AppColors.textSecondary,
+                color: isDark ? AppColors.neutral300 : AppColors.textSecondary,
                 fontSize: 13.sp,
                 fontWeight: FontWeight.w500,
               ),

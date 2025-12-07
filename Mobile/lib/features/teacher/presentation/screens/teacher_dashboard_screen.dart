@@ -243,7 +243,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       margin: EdgeInsets.symmetric(horizontal: 16.w),
       padding: EdgeInsets.all(6.w),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.gray800 : AppColors.slate50,
+        color: isDark ? AppColors.neutral800 : AppColors.neutral50,
         borderRadius: BorderRadius.circular(14.r),
       ),
       child: Row(
@@ -273,7 +273,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                         fontWeight: FontWeight.w600,
                         color: isSelected
                             ? Colors.white
-                            : (isDark ? AppColors.gray400 : AppColors.gray600),
+                            : (isDark ? AppColors.neutral400 : AppColors.neutral600),
                       ),
                     ),
                     SizedBox(height: 2.h),
@@ -318,16 +318,16 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       margin: EdgeInsets.symmetric(horizontal: 16.w),
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.gray800 : AppColors.slate50,
+        color: isDark ? AppColors.neutral800 : AppColors.neutral50,
         borderRadius: BorderRadius.circular(10.r),
       ),
       child: Column(
         children: [
-          Icon(Icons.event_available, size: 36.sp, color: AppColors.gray400),
+          Icon(Icons.event_available, size: 36.sp, color: AppColors.neutral400),
           SizedBox(height: 6.h),
           Text(
             "Không có lịch dạy",
-            style: TextStyle(fontSize: 13.sp, color: AppColors.gray500),
+            style: TextStyle(fontSize: 13.sp, color: AppColors.neutral500),
           ),
         ],
       ),
@@ -345,7 +345,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       statusColor = AppColors.success;
       statusText = "Đang diễn ra";
     } else if (isCompleted) {
-      statusColor = AppColors.gray500;
+      statusColor = AppColors.neutral500;
       statusText = "Đã kết thúc";
     }
 
@@ -355,12 +355,12 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         margin: EdgeInsets.only(bottom: 8.h),
         padding: EdgeInsets.all(10.w),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.gray800 : Colors.white,
+          color: isDark ? AppColors.neutral800 : Colors.white,
           borderRadius: BorderRadius.circular(10.r),
           border: Border.all(
             color: isOngoing
                 ? AppColors.success.withValues(alpha: 0.5)
-                : (isDark ? AppColors.gray700 : AppColors.gray200),
+                : (isDark ? AppColors.neutral700 : AppColors.neutral200),
           ),
         ),
         child: Row(
@@ -385,7 +385,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                   ),
                   Text(
                     _formatTime(schedule.endTime),
-                    style: TextStyle(fontSize: 10.sp, color: AppColors.gray500),
+                    style: TextStyle(fontSize: 10.sp, color: AppColors.neutral500),
                   ),
                 ],
               ),
@@ -409,12 +409,12 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                   SizedBox(height: 3.h),
                   Row(
                     children: [
-                      Icon(Icons.location_on_outlined, size: 12.sp, color: AppColors.gray500),
+                      Icon(Icons.location_on_outlined, size: 12.sp, color: AppColors.neutral500),
                       SizedBox(width: 3.w),
                       Expanded(
                         child: Text(
                           schedule.room,
-                          style: TextStyle(fontSize: 11.sp, color: AppColors.gray500),
+                          style: TextStyle(fontSize: 11.sp, color: AppColors.neutral500),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -426,13 +426,13 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                     children: [
                       _buildBadge(statusText, statusColor, isDark),
                       SizedBox(width: 4.w),
-                      _buildBadge("Sessio...", AppColors.gray500, isDark, outlined: true),
+                      _buildBadge("Sessio...", AppColors.neutral500, isDark, outlined: true),
                     ],
                   ),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, size: 18.sp, color: AppColors.gray400),
+            Icon(Icons.chevron_right, size: 18.sp, color: AppColors.neutral400),
           ],
         ),
       ),
@@ -445,14 +445,14 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       decoration: BoxDecoration(
         color: outlined ? Colors.transparent : color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(10.r),
-        border: outlined ? Border.all(color: AppColors.gray300) : null,
+        border: outlined ? Border.all(color: AppColors.neutral300) : null,
       ),
       child: Text(
         text,
         style: TextStyle(
           fontSize: 9.sp,
           fontWeight: FontWeight.w600,
-          color: outlined ? AppColors.gray500 : color,
+          color: outlined ? AppColors.neutral500 : color,
         ),
       ),
     );

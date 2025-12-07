@@ -34,10 +34,10 @@ class CompactScheduleListItem extends StatelessWidget {
         margin: EdgeInsets.only(bottom: 8.h),
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.gray800 : Colors.white,
+          color: isDark ? AppColors.neutral800 : Colors.white,
           borderRadius: BorderRadius.circular(8.r),
           border: Border.all(
-            color: isDark ? AppColors.gray700 : AppColors.gray200,
+            color: isDark ? AppColors.neutral700 : AppColors.neutral200,
           ),
         ),
         child: Row(
@@ -46,7 +46,7 @@ class CompactScheduleListItem extends StatelessWidget {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(6.r),
               ),
               child: Text(
@@ -79,7 +79,7 @@ class CompactScheduleListItem extends StatelessWidget {
                   Text(
                     schedule.roomNumber ?? 'Phòng chưa xác định',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: isDark ? AppColors.gray400 : AppColors.gray600,
+                      color: isDark ? AppColors.neutral400 : AppColors.neutral600,
                       fontSize: 11.sp,
                     ),
                   ),
@@ -92,7 +92,7 @@ class CompactScheduleListItem extends StatelessWidget {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.gray700 : AppColors.slate100,
+                  color: isDark ? AppColors.neutral700 : AppColors.neutral100,
                   borderRadius: BorderRadius.circular(4.r),
                 ),
                 child: Row(
@@ -101,7 +101,7 @@ class CompactScheduleListItem extends StatelessWidget {
                     Icon(
                       Icons.people,
                       size: 12.sp,
-                      color: isDark ? AppColors.gray400 : AppColors.gray600,
+                      color: isDark ? AppColors.neutral400 : AppColors.neutral600,
                     ),
                     SizedBox(width: 2.w),
                     Text(
@@ -109,7 +109,7 @@ class CompactScheduleListItem extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 11.sp,
                         fontWeight: FontWeight.w500,
-                        color: isDark ? AppColors.gray400 : AppColors.gray600,
+                        color: isDark ? AppColors.neutral400 : AppColors.neutral600,
                       ),
                     ),
                   ],
@@ -122,7 +122,7 @@ class CompactScheduleListItem extends StatelessWidget {
             Icon(
               Icons.chevron_right,
               size: 18.sp,
-              color: isDark ? AppColors.gray600 : AppColors.gray400,
+              color: isDark ? AppColors.neutral600 : AppColors.neutral400,
             ),
           ],
         ),

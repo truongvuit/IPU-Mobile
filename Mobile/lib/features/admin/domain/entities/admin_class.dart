@@ -97,7 +97,7 @@ class AdminClass {
       sessions.isNotEmpty ? (completedSessionsCount / sessions.length) * 100 : 0;
 
   
-  String get sessionStatsText => '${completedSessionsCount}/${sessions.length} buổi';
+  String get sessionStatsText => '$completedSessionsCount/${sessions.length} buổi';
 
   factory AdminClass.fromJson(Map<String, dynamic> json) {
     return AdminClass(

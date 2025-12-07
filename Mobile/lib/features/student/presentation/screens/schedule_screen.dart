@@ -11,7 +11,6 @@ import '../widgets/schedule_detail_modal.dart';
 import '../../domain/entities/schedule.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../core/routing/app_router.dart';
 import '../../../../core/widgets/skeleton_widget.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 
@@ -29,31 +28,16 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   DateTime _selectedDate = DateTime.now();
   String _viewMode = 'list';
   Timer? _monthNavDebounce;
-  bool _hasLoadedData = false;
 
   @override
   void initState() {
     super.initState();
+    // Always load schedule on init to ensure data is fresh
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadDataIfNeeded();
+      if (mounted) {
+        context.read<StudentBloc>().add(LoadSchedule(_selectedDate));
+      }
     });
-  }
-
-  void _loadDataIfNeeded() {
-    if (!mounted || _hasLoadedData) return;
-    
-    final state = context.read<StudentBloc>().state;
-
-    
-    if (state is ScheduleLoaded) {
-      _hasLoadedData = true;
-      return;
-    }
-    
-    if (state is! StudentLoading) {
-      _hasLoadedData = true;
-      context.read<StudentBloc>().add(LoadSchedule(_selectedDate));
-    }
   }
 
   @override
@@ -111,11 +95,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             showMenuButton: widget.isTab,
             onMenuPressed: widget.onMenuPressed,
             onBackPressed: () {
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                AppRouter.studentDashboard,
-                (route) => false,
-              );
+              Navigator.pop(context);
             },
           ),
 
@@ -204,24 +184,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 return current is ScheduleLoaded ||
                     current is WeekScheduleLoaded ||
                     current is StudentLoading ||
-                    current is StudentError;
+                    current is StudentError ||
+                    current is StudentInitial;
               },
               builder: (context, state) {
-                if (state is StudentInitial ||
-                    (state is! ScheduleLoaded &&
-                        state is! StudentLoading &&
-                        !_hasLoadedData)) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted && !_hasLoadedData) {
-                      _hasLoadedData = true;
-                      context.read<StudentBloc>().add(
-                        LoadSchedule(_selectedDate),
-                      );
-                    }
-                  });
-                }
-
-                if (state is StudentLoading) {
+                if (state is StudentLoading || state is StudentInitial) {
                   return ListView.builder(
                     padding: EdgeInsets.all(AppSizes.paddingMedium),
                     itemCount: 5,
@@ -290,12 +257,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       : _buildListView(state.schedules, isDark, isDesktop);
                 }
 
-                return ListView.builder(
-                  padding: EdgeInsets.all(AppSizes.paddingMedium),
-                  itemCount: 5,
-                  itemBuilder: (context, index) => Padding(
-                    padding: EdgeInsets.only(bottom: AppSizes.paddingSmall),
-                    child: SkeletonWidget.rectangular(height: 100.h),
+                // Fallback loading state
+                return Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.primary,
                   ),
                 );
               },

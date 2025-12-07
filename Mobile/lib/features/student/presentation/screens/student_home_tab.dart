@@ -74,18 +74,87 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
   Widget _buildTodayFocus(bool isDark, bool isDesktop) {
     return BlocBuilder<StudentBloc, StudentState>(
       builder: (context, state) {
+        
+        if (state is StudentLoading || state is StudentInitial) {
+          return Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Tập trung hôm nay',
+                  style: TextStyle(
+                    fontSize: isDesktop ? 18.sp : 16.sp,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+                SizedBox(height: 12.h),
+                Container(
+                  height: 100.h,
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    borderRadius: BorderRadius.circular(16.r),
+                  ),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        
+        if (state is StudentError) {
+          return Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Container(
+              padding: EdgeInsets.all(16.w),
+              decoration: BoxDecoration(
+                color: AppColors.error.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.error_outline, color: AppColors.error, size: 24.sp),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Text(
+                      'Không thể tải lịch học',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: AppColors.error,
+                        fontFamily: 'Lexend',
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      context.read<StudentBloc>().add(const LoadDashboard());
+                    },
+                    child: Text('Thử lại', style: TextStyle(fontSize: 12.sp)),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
         List<Schedule> todaySchedules = [];
 
         if (state is DashboardLoaded) {
           todaySchedules = state.todaySchedules;
         }
 
-        
         if (todaySchedules.isEmpty) {
           return const SizedBox.shrink();
         }
 
-        
         final now = DateTime.now();
         Schedule? nextSchedule;
         for (var s in todaySchedules) {
@@ -99,7 +168,6 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
           return const SizedBox.shrink();
         }
 
-        
         final startHour = nextSchedule.startTime.hour.toString().padLeft(
           2,
           '0',
@@ -150,6 +218,89 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
   Widget _buildLearningProgress(bool isDark, bool isDesktop) {
     return BlocBuilder<StudentBloc, StudentState>(
       builder: (context, state) {
+        
+        if (state is StudentLoading || state is StudentInitial) {
+          return Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Tiến độ học tập',
+                  style: TextStyle(
+                    fontSize: isDesktop ? 18.sp : 16.sp,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: List.generate(3, (_) => Container(
+                    width: 80.w,
+                    height: 80.h,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE5E7EB),
+                      shape: BoxShape.circle,
+                    ),
+                  )),
+                ),
+              ],
+            ),
+          );
+        }
+
+        
+        if (state is StudentError) {
+          return Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Tiến độ học tập',
+                  style: TextStyle(
+                    fontSize: isDesktop ? 18.sp : 16.sp,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+                SizedBox(height: 12.h),
+                Container(
+                  padding: EdgeInsets.all(16.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error_outline, color: AppColors.error, size: 24.sp),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Text(
+                          'Không thể tải tiến độ học tập',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            color: AppColors.error,
+                            fontFamily: 'Lexend',
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          context.read<StudentBloc>().add(const LoadDashboard());
+                        },
+                        child: Text('Thử lại', style: TextStyle(fontSize: 12.sp)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
         double courseProgress = 0.0;
         double attendanceProgress = 0.0;
         double assignmentProgress = 0.0;
@@ -223,9 +374,107 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
   Widget _buildPerformanceSnapshot(bool isDark, bool isDesktop) {
     return BlocBuilder<StudentBloc, StudentState>(
       builder: (context, state) {
+        
+        if (state is StudentLoading || state is StudentInitial) {
+          return Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Thành tích',
+                  style: TextStyle(
+                    fontSize: isDesktop ? 18.sp : 16.sp,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: AspectRatio(
+                        aspectRatio: isDesktop ? 1.4 : 0.9,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE5E7EB),
+                            borderRadius: BorderRadius.circular(16.r),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: AspectRatio(
+                        aspectRatio: isDesktop ? 1.4 : 0.9,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE5E7EB),
+                            borderRadius: BorderRadius.circular(16.r),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        }
+
+        
+        if (state is StudentError) {
+          return Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Thành tích',
+                  style: TextStyle(
+                    fontSize: isDesktop ? 18.sp : 16.sp,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+                SizedBox(height: 12.h),
+                Container(
+                  padding: EdgeInsets.all(16.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error_outline, color: AppColors.error, size: 24.sp),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Text(
+                          'Không thể tải thành tích',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            color: AppColors.error,
+                            fontFamily: 'Lexend',
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          context.read<StudentBloc>().add(const LoadDashboard());
+                        },
+                        child: Text('Thử lại', style: TextStyle(fontSize: 12.sp)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
         double gpa = 0.0;
         int activeCourses = 0;
-        int totalCredits = 0;
         int onlineCount = 0;
         int offlineCount = 0;
 
@@ -243,7 +492,6 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
         if (profile != null) {
           gpa = profile.gpa;
           activeCourses = profile.activeCourses;
-          totalCredits = profile.totalCredits;
         }
 
         for (var c in classes) {
@@ -263,8 +511,6 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
         } else {
           classSubtitle = 'Chưa đăng ký lớp nào';
         }
-
-        int studyHours = totalCredits > 0 ? (totalCredits * 2) : 0;
 
         return Padding(
           padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -461,6 +707,90 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
   Widget _buildUpcomingClassesCarousel(bool isDark, bool isDesktop) {
     return BlocBuilder<StudentBloc, StudentState>(
       builder: (context, state) {
+        
+        if (state is StudentLoading || state is StudentInitial) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 12.h),
+                child: Text(
+                  'Lớp học sắp tới',
+                  style: TextStyle(
+                    fontSize: isDesktop ? 20.sp : 18.sp,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    fontFamily: 'Lexend',
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: isDesktop ? 200.h : 180.h,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+
+        
+        if (state is StudentError) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 12.h),
+                child: Text(
+                  'Lớp học sắp tới',
+                  style: TextStyle(
+                    fontSize: isDesktop ? 20.sp : 18.sp,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    fontFamily: 'Lexend',
+                  ),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: Container(
+                  padding: EdgeInsets.all(16.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error_outline, color: AppColors.error, size: 24.sp),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Text(
+                          'Không thể tải danh sách lớp học',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            color: AppColors.error,
+                            fontFamily: 'Lexend',
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          context.read<StudentBloc>().add(const LoadDashboard());
+                        },
+                        child: Text('Thử lại', style: TextStyle(fontSize: 12.sp)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+
         List<StudentClass> upcomingClasses = [];
 
         if (state is DashboardLoaded) {

@@ -77,6 +77,15 @@ class LoadGradesByCourse extends StudentEvent {
   List<Object?> get props => [courseId];
 }
 
+class LoadGradesByClass extends StudentEvent {
+  final String classId;
+
+  const LoadGradesByClass(this.classId);
+
+  @override
+  List<Object?> get props => [classId];
+}
+
 class LoadProfile extends StudentEvent {
   const LoadProfile();
 }
@@ -96,15 +105,6 @@ class UpdateProfile extends StudentEvent {
 
   @override
   List<Object?> get props => [fullName, phoneNumber, address, avatarPath];
-}
-
-class EnrollCourse extends StudentEvent {
-  final String courseId;
-
-  const EnrollCourse(this.courseId);
-
-  @override
-  List<Object?> get props => [courseId];
 }
 
 class SubmitRating extends StudentEvent {
@@ -136,7 +136,6 @@ class LoadReviewHistory extends StudentEvent {
   const LoadReviewHistory();
 }
 
-
 class LoadClassReview extends StudentEvent {
   final String classId;
 
@@ -144,4 +143,43 @@ class LoadClassReview extends StudentEvent {
 
   @override
   List<Object?> get props => [classId];
+}
+
+// ==================== CART EVENTS ====================
+
+/// Add a course (with its class) to cart
+class AddCourseToCart extends StudentEvent {
+  final String courseId;
+  final String courseName;
+  final int classId;
+  final String className;
+  final double price;
+  final String? imageUrl;
+
+  const AddCourseToCart({
+    required this.courseId,
+    required this.courseName,
+    required this.classId,
+    required this.className,
+    required this.price,
+    this.imageUrl,
+  });
+
+  @override
+  List<Object?> get props => [courseId, classId, courseName, className, price];
+}
+
+/// Remove a course from cart by classId
+class RemoveFromCart extends StudentEvent {
+  final int classId;
+
+  const RemoveFromCart(this.classId);
+
+  @override
+  List<Object?> get props => [classId];
+}
+
+/// Clear all items from cart
+class ClearCart extends StudentEvent {
+  const ClearCart();
 }

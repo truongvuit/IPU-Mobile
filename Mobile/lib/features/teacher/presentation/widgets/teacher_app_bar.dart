@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
@@ -39,7 +39,7 @@ class TeacherAppBar extends StatelessWidget implements PreferredSizeWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium, vertical: AppSizes.paddingSmall),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.gray800 : Colors.white,
+        color: isDark ? AppColors.neutral800 : Colors.white,
       ),
       child: SafeArea(
         child: Row(

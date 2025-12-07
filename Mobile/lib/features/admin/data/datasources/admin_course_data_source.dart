@@ -14,5 +14,9 @@ abstract class AdminCourseDataSource {
     UpdateCourseRequest request,
   );
 
+  
+  Future<void> toggleCourseStatus(String id);
+
+  
   Future<void> deleteCourse(String id);
 }

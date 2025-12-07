@@ -14,10 +14,11 @@ import '../bloc/admin_bloc.dart';
 import '../bloc/admin_event.dart';
 import '../bloc/admin_state.dart';
 import '../widgets/simple_admin_app_bar.dart';
+import '../widgets/admin_search_bar.dart';
+import '../widgets/admin_filter_button.dart';
 
 import 'admin_teacher_form_screen.dart';
 import '../../../../core/routing/app_router.dart';
-
 
 class AdminTeacherListScreen extends StatefulWidget {
   const AdminTeacherListScreen({super.key});
@@ -30,11 +31,9 @@ class _AdminTeacherListScreenState extends State<AdminTeacherListScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
-  
   final List<String> _selectedQualifications = [];
   final List<String> _selectedSubjects = [];
 
-  
   List<Map<String, dynamic>> _degreeTypes = [];
   List<Map<String, dynamic>> _categories = [];
   bool _isLoadingFilters = true;
@@ -42,13 +41,12 @@ class _AdminTeacherListScreenState extends State<AdminTeacherListScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     _loadFilterData();
   }
 
   Future<void> _loadFilterData() async {
     try {
-      
       final bloc = context.read<AdminBloc>();
       final degrees = await bloc.adminRepository.getDegreeTypes();
       final categories = await bloc.adminRepository.getCategories();
@@ -97,7 +95,6 @@ class _AdminTeacherListScreenState extends State<AdminTeacherListScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -113,14 +110,15 @@ class _AdminTeacherListScreenState extends State<AdminTeacherListScreen> {
                     ),
                   ],
                 ),
-                Divider(color: isDark ? AppColors.gray700 : AppColors.gray200),
+                Divider(
+                  color: isDark ? AppColors.neutral700 : AppColors.neutral200,
+                ),
 
                 Expanded(
                   child: SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        
                         Text(
                           'Trình độ',
                           style: theme.textTheme.titleMedium?.copyWith(
@@ -162,8 +160,8 @@ class _AdminTeacherListScreenState extends State<AdminTeacherListScreen> {
                                       color: isSelected
                                           ? AppColors.primary
                                           : (isDark
-                                                ? AppColors.gray300
-                                                : AppColors.gray700),
+                                                ? AppColors.neutral300
+                                                : AppColors.neutral700),
                                       fontWeight: isSelected
                                           ? FontWeight.bold
                                           : FontWeight.normal,
@@ -174,7 +172,6 @@ class _AdminTeacherListScreenState extends State<AdminTeacherListScreen> {
 
                         SizedBox(height: AppSizes.p24),
 
-                        
                         Text(
                           'Môn dạy',
                           style: theme.textTheme.titleMedium?.copyWith(
@@ -216,8 +213,8 @@ class _AdminTeacherListScreenState extends State<AdminTeacherListScreen> {
                                       color: isSelected
                                           ? AppColors.primary
                                           : (isDark
-                                                ? AppColors.gray300
-                                                : AppColors.gray700),
+                                                ? AppColors.neutral300
+                                                : AppColors.neutral700),
                                       fontWeight: isSelected
                                           ? FontWeight.bold
                                           : FontWeight.normal,
@@ -230,7 +227,6 @@ class _AdminTeacherListScreenState extends State<AdminTeacherListScreen> {
                   ),
                 ),
 
-                
                 SizedBox(height: AppSizes.p16),
                 Row(
                   children: [
@@ -283,7 +279,6 @@ class _AdminTeacherListScreenState extends State<AdminTeacherListScreen> {
 
   List<AdminTeacher> _filterTeachers(List<AdminTeacher> teachers) {
     return teachers.where((teacher) {
-      
       if (_searchQuery.isNotEmpty) {
         final query = _searchQuery.toLowerCase();
         final matchesName = teacher.fullName.toLowerCase().contains(query);
@@ -291,24 +286,22 @@ class _AdminTeacherListScreenState extends State<AdminTeacherListScreen> {
         if (!matchesName && !matchesPhone) return false;
       }
 
-      
       if (_selectedQualifications.isNotEmpty) {
-        
-        
-        
-        if (teacher.qualifications == null) return false;
+        if (teacher.qualificationsList.isEmpty) return false;
 
         bool matchesQual = false;
         for (final qual in _selectedQualifications) {
-          if (teacher.qualifications?.contains(qual) ?? false) {
-            matchesQual = true;
-            break;
+          for (final tQual in teacher.qualificationsList) {
+            if (tQual.degreeName?.contains(qual) ?? false) {
+              matchesQual = true;
+              break;
+            }
           }
+          if (matchesQual) break;
         }
         if (!matchesQual) return false;
       }
 
-      
       if (_selectedSubjects.isNotEmpty) {
         bool matchesSubject = false;
         for (final subject in _selectedSubjects) {
@@ -338,101 +331,36 @@ class _AdminTeacherListScreenState extends State<AdminTeacherListScreen> {
       appBar: const SimpleAdminAppBar(title: 'Quản lý Giảng viên'),
       body: Column(
         children: [
-          
           Padding(
             padding: EdgeInsets.all(AppSizes.paddingMedium),
             child: Row(
               children: [
                 Expanded(
-                  child: TextField(
+                  child: AdminSearchBar(
                     controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Tìm kiếm theo tên, SĐT',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppSizes.radiusMedium,
-                        ),
-                        borderSide: BorderSide.none,
-                      ),
-                      filled: true,
-                      fillColor: isDark
-                          ? AppColors.surfaceDark
-                          : AppColors.backgroundAlt,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: AppSizes.p16,
-                      ),
-                    ),
+                    hintText: 'Tìm kiếm theo tên, SĐT',
                     onChanged: (value) {
                       setState(() {
                         _searchQuery = value;
                       });
                     },
+                    onClear: () {
+                      setState(() {
+                        _searchQuery = '';
+                      });
+                    },
                   ),
                 ),
                 SizedBox(width: AppSizes.p12),
-                InkWell(
+                AdminFilterButton(
+                  hasActiveFilter: activeFiltersCount > 0,
+                  activeFilterCount: activeFiltersCount,
                   onTap: _showFilterBottomSheet,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-                  child: Container(
-                    padding: EdgeInsets.all(AppSizes.p12),
-                    decoration: BoxDecoration(
-                      color: activeFiltersCount > 0
-                          ? AppColors.primary
-                          : (isDark
-                                ? AppColors.surfaceDark
-                                : AppColors.surface),
-                      borderRadius: BorderRadius.circular(
-                        AppSizes.radiusMedium,
-                      ),
-                      border: activeFiltersCount > 0
-                          ? null
-                          : Border.all(
-                              color: isDark
-                                  ? AppColors.gray700
-                                  : AppColors.gray300,
-                            ),
-                    ),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Icon(
-                          Icons.filter_list,
-                          color: activeFiltersCount > 0
-                              ? Colors.white
-                              : (isDark
-                                    ? AppColors.gray300
-                                    : AppColors.gray700),
-                        ),
-                        if (activeFiltersCount > 0)
-                          Positioned(
-                            top: -8,
-                            right: -8,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Text(
-                                activeFiltersCount.toString(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
                 ),
               ],
             ),
           ),
 
-          
           if (activeFiltersCount > 0)
             Container(
               height: 40.h,
@@ -479,7 +407,6 @@ class _AdminTeacherListScreenState extends State<AdminTeacherListScreen> {
               ),
             ),
 
-          
           Expanded(
             child: BlocBuilder<AdminBloc, AdminState>(
               builder: (context, state) {
@@ -525,18 +452,23 @@ class _AdminTeacherListScreenState extends State<AdminTeacherListScreen> {
         ],
       ),
 
-      
       floatingActionButton: PermissionGate(
         requiredPermission: Permission.createTeacher,
         child: FloatingActionButton(
           heroTag: 'teacher_list_fab',
-          onPressed: () {
-            Navigator.push(
+          onPressed: () async {
+            final bloc = context.read<AdminBloc>();
+            final result = await Navigator.push<bool>(
               context,
               MaterialPageRoute(
                 builder: (context) => const AdminTeacherFormScreen(),
               ),
             );
+
+            if (!mounted) return;
+            if (result == true) {
+              bloc.add(LoadTeacherList(searchQuery: _searchQuery));
+            }
           },
           backgroundColor: AppColors.primary,
           child: const Icon(Icons.add, color: Colors.white),
@@ -553,7 +485,7 @@ class _AdminTeacherListScreenState extends State<AdminTeacherListScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
         side: BorderSide(
-          color: isDark ? AppColors.gray800 : AppColors.gray100,
+          color: isDark ? AppColors.neutral800 : AppColors.neutral100,
           width: 1,
         ),
       ),
@@ -564,7 +496,7 @@ class _AdminTeacherListScreenState extends State<AdminTeacherListScreen> {
             AppRouter.adminTeacherDetail,
             arguments: teacher,
           ).then((_) {
-            
+            if (!mounted) return;
             context.read<AdminBloc>().add(
               LoadTeacherList(searchQuery: _searchQuery),
             );
@@ -575,7 +507,6 @@ class _AdminTeacherListScreenState extends State<AdminTeacherListScreen> {
           padding: EdgeInsets.all(AppSizes.p16),
           child: Row(
             children: [
-              
               ClipOval(
                 child: CustomImage(
                   imageUrl: teacher.avatarUrl ?? '',
@@ -586,12 +517,10 @@ class _AdminTeacherListScreenState extends State<AdminTeacherListScreen> {
               ),
               SizedBox(width: AppSizes.p12),
 
-              
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    
                     Row(
                       children: [
                         Expanded(
@@ -605,7 +534,7 @@ class _AdminTeacherListScreenState extends State<AdminTeacherListScreen> {
                           ),
                         ),
                         SizedBox(width: AppSizes.p8),
-                        
+
                         Icon(Icons.star, size: 16.sp, color: AppColors.warning),
                         SizedBox(width: 4.w),
                         Text(
@@ -614,21 +543,22 @@ class _AdminTeacherListScreenState extends State<AdminTeacherListScreen> {
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w600,
                             color: isDark
-                                ? AppColors.gray300
-                                : AppColors.gray700,
+                                ? AppColors.neutral300
+                                : AppColors.neutral700,
                           ),
                         ),
                       ],
                     ),
                     SizedBox(height: 6.h),
 
-                    
                     Row(
                       children: [
                         Icon(
                           Icons.class_outlined,
                           size: 14.sp,
-                          color: isDark ? AppColors.gray500 : AppColors.gray600,
+                          color: isDark
+                              ? AppColors.neutral500
+                              : AppColors.neutral600,
                         ),
                         SizedBox(width: 4.w),
                         Text(
@@ -636,15 +566,17 @@ class _AdminTeacherListScreenState extends State<AdminTeacherListScreen> {
                           style: TextStyle(
                             fontSize: 13.sp,
                             color: isDark
-                                ? AppColors.gray400
-                                : AppColors.gray600,
+                                ? AppColors.neutral400
+                                : AppColors.neutral600,
                           ),
                         ),
                         SizedBox(width: AppSizes.p16),
                         Icon(
                           Icons.people_outline,
                           size: 14.sp,
-                          color: isDark ? AppColors.gray500 : AppColors.gray600,
+                          color: isDark
+                              ? AppColors.neutral500
+                              : AppColors.neutral600,
                         ),
                         SizedBox(width: 4.w),
                         Text(
@@ -652,8 +584,8 @@ class _AdminTeacherListScreenState extends State<AdminTeacherListScreen> {
                           style: TextStyle(
                             fontSize: 13.sp,
                             color: isDark
-                                ? AppColors.gray400
-                                : AppColors.gray600,
+                                ? AppColors.neutral400
+                                : AppColors.neutral600,
                           ),
                         ),
                       ],

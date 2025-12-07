@@ -22,12 +22,13 @@ abstract class StudentRepository {
 
   Future<Either<Failure, List<Grade>>> getMyGrades();
   Future<Either<Failure, List<Grade>>> getGradesByCourse(String courseId);
+  Future<Either<Failure, Grade?>> getGradesByClass(String classId);
 
   Future<Either<Failure, StudentProfile>> getProfile();
   Future<Either<Failure, StudentProfile>> updateProfile(StudentProfile profile);
   Future<Either<Failure, String>> uploadAvatar(String path);
 
-  Future<Either<Failure, void>> enrollCourse(String courseId);
+  
   Future<Either<Failure, void>> submitRating({
     required String classId,
     required int overallRating,
@@ -38,6 +39,5 @@ abstract class StudentRepository {
 
   Future<Either<Failure, List<Review>>> getReviewHistory();
 
-  
   Future<Either<Failure, Review?>> getClassReview(String classId);
 }

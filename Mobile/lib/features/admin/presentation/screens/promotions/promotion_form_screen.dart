@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:trungtamngoaingu/features/admin/admin.dart';
 import '../../../../../core/di/injector.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/validators/business_rules.dart';
 import '../../bloc/promotion_bloc.dart';
 import '../../bloc/promotion_event.dart';
 import '../../bloc/promotion_state.dart';
@@ -56,7 +57,6 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
   late PromotionType _promotionType;
   late bool _requireAllCourses;
 
-  
   List<String> _selectedCourseIds = [];
   List<String> _selectedCourseNames = [];
 
@@ -134,6 +134,17 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
+      final dateRangeError = DateValidators.validateDateRange(
+        _startDate,
+        _endDate,
+      );
+      if (dateRangeError != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(dateRangeError), backgroundColor: Colors.red),
+        );
+        return;
+      }
+
       final discountValue = double.tryParse(_discountValueController.text) ?? 0;
       final usageLimit = int.tryParse(_usageLimitController.text);
       final minOrderValue = double.tryParse(_minOrderValueController.text);
@@ -188,13 +199,14 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
             ),
             child: Column(
               children: [
-                
                 Container(
                   padding: EdgeInsets.all(16.w),
                   decoration: BoxDecoration(
                     border: Border(
                       bottom: BorderSide(
-                        color: isDark ? AppColors.gray700 : AppColors.gray200,
+                        color: isDark
+                            ? AppColors.neutral700
+                            : AppColors.neutral200,
                       ),
                     ),
                   ),
@@ -217,7 +229,6 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
                   ),
                 ),
 
-                
                 Expanded(
                   child: ListView.builder(
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -253,8 +264,8 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
                           style: TextStyle(
                             fontSize: 12.sp,
                             color: isDark
-                                ? AppColors.gray400
-                                : AppColors.gray600,
+                                ? AppColors.neutral400
+                                : AppColors.neutral600,
                           ),
                         ),
                         secondary: Container(
@@ -277,14 +288,15 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
                   ),
                 ),
 
-                
                 Container(
                   padding: EdgeInsets.all(16.w),
                   decoration: BoxDecoration(
                     color: isDark ? AppColors.surfaceDark : Colors.white,
                     border: Border(
                       top: BorderSide(
-                        color: isDark ? AppColors.gray700 : AppColors.gray200,
+                        color: isDark
+                            ? AppColors.neutral700
+                            : AppColors.neutral200,
                       ),
                     ),
                   ),
@@ -354,7 +366,7 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
             ScaffoldMessenger.of(
               context,
             ).showSnackBar(SnackBar(content: Text(state.message)));
-            Navigator.pop(context, true); 
+            Navigator.pop(context, true);
           } else if (state is PromotionError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -371,15 +383,20 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                
                 TextFormField(
                   controller: _codeController,
+                  readOnly: _isEditing,
+                  enabled: !_isEditing,
                   decoration: InputDecoration(
                     labelText: 'Mã khuyến mãi (Code)',
                     hintText: 'VD: SUMMER2024',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.r),
                     ),
+                    filled: _isEditing,
+                    fillColor: _isEditing
+                        ? AppColors.neutral100.withValues(alpha: 0.5)
+                        : null,
                   ),
                   textCapitalization: TextCapitalization.characters,
                   validator: (value) =>
@@ -388,19 +405,24 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
                 SizedBox(height: 16.h),
                 TextFormField(
                   controller: _titleController,
+                  readOnly: _isEditing,
+                  enabled: !_isEditing,
                   decoration: InputDecoration(
                     labelText: 'Tiêu đề',
                     hintText: 'VD: Khuyến mãi mùa hè',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.r),
                     ),
+                    filled: _isEditing,
+                    fillColor: _isEditing
+                        ? AppColors.neutral100.withValues(alpha: 0.5)
+                        : null,
                   ),
                   validator: (value) =>
                       value?.isEmpty == true ? 'Vui lòng nhập tiêu đề' : null,
                 ),
                 SizedBox(height: 16.h),
 
-                
                 TextFormField(
                   controller: _descriptionController,
                   decoration: InputDecoration(
@@ -413,12 +435,11 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
                 ),
                 SizedBox(height: 16.h),
 
-                
                 Row(
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<DiscountType>(
-                        value: _discountType,
+                        initialValue: _discountType,
                         decoration: InputDecoration(
                           labelText: 'Loại giảm giá',
                           border: OutlineInputBorder(
@@ -428,6 +449,10 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
                             horizontal: 12.w,
                             vertical: 12.h,
                           ),
+                          filled: _isEditing,
+                          fillColor: _isEditing
+                              ? AppColors.neutral100.withValues(alpha: 0.5)
+                              : null,
                         ),
                         isExpanded: true,
                         items: const [
@@ -440,11 +465,13 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
                             child: Text('Số tiền'),
                           ),
                         ],
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() => _discountType = value);
-                          }
-                        },
+                        onChanged: _isEditing
+                            ? null
+                            : (value) {
+                                if (value != null) {
+                                  setState(() => _discountType = value);
+                                }
+                              },
                       ),
                     ),
                     SizedBox(width: 12.w),
@@ -462,11 +489,14 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
                           if (value == null || value.isEmpty) {
                             return 'Nhập giá trị';
                           }
-                          final numVal = double.tryParse(value);
-                          if (numVal == null) return 'Không hợp lệ';
-                          if (_discountType == DiscountType.percentage &&
-                              numVal > 100) {
-                            return 'Max 100%';
+                          if (_discountType == DiscountType.percentage) {
+                            return NumericValidators.validateDiscountPercent(
+                              value,
+                            );
+                          } else {
+                            final numVal = double.tryParse(value);
+                            if (numVal == null) return 'Không hợp lệ';
+                            if (numVal < 0) return 'Giá trị không thể âm';
                           }
                           return null;
                         },
@@ -476,7 +506,6 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
                 ),
                 SizedBox(height: 16.h),
 
-                
                 Row(
                   children: [
                     Expanded(
@@ -534,7 +563,6 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
                 ),
                 SizedBox(height: 16.h),
 
-                
                 Row(
                   children: [
                     Expanded(
@@ -567,15 +595,18 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
                 ),
                 SizedBox(height: 16.h),
 
-                
                 DropdownButtonFormField<PromotionType>(
-                  value: _promotionType,
+                  initialValue: _promotionType,
                   isExpanded: true,
                   decoration: InputDecoration(
                     labelText: 'Loại khuyến mãi',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.r),
                     ),
+                    filled: _isEditing,
+                    fillColor: _isEditing
+                        ? AppColors.neutral100.withValues(alpha: 0.5)
+                        : null,
                   ),
                   items: [
                     DropdownMenuItem(
@@ -595,24 +626,25 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
                       ),
                     ),
                   ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        _promotionType = value;
-                        _requireAllCourses = value == PromotionType.combo;
-                      });
-                    }
-                  },
+                  onChanged: _isEditing
+                      ? null
+                      : (value) {
+                          if (value != null) {
+                            setState(() {
+                              _promotionType = value;
+                              _requireAllCourses = value == PromotionType.combo;
+                            });
+                          }
+                        },
                 ),
                 SizedBox(height: 16.h),
 
-                
                 Text(
                   'Khóa học áp dụng',
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w500,
-                    color: isDark ? AppColors.gray300 : AppColors.gray700,
+                    color: isDark ? AppColors.neutral300 : AppColors.neutral700,
                   ),
                 ),
                 SizedBox(height: 8.h),
@@ -626,14 +658,15 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
                     return Container(
                       decoration: BoxDecoration(
                         border: Border.all(
-                          color: isDark ? AppColors.gray600 : AppColors.gray300,
+                          color: isDark
+                              ? AppColors.neutral600
+                              : AppColors.neutral300,
                         ),
                         borderRadius: BorderRadius.circular(8.r),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          
                           if (_selectedCourseNames.isNotEmpty)
                             Container(
                               padding: EdgeInsets.all(12.w),
@@ -675,14 +708,13 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
                                 style: TextStyle(
                                   fontSize: 13.sp,
                                   color: isDark
-                                      ? AppColors.gray400
-                                      : AppColors.gray500,
+                                      ? AppColors.neutral400
+                                      : AppColors.neutral500,
                                   fontStyle: FontStyle.italic,
                                 ),
                               ),
                             ),
 
-                          
                           InkWell(
                             onTap: state is AdminCourseLoading
                                 ? null
@@ -693,8 +725,8 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
                                 border: Border(
                                   top: BorderSide(
                                     color: isDark
-                                        ? AppColors.gray600
-                                        : AppColors.gray300,
+                                        ? AppColors.neutral600
+                                        : AppColors.neutral300,
                                   ),
                                 ),
                               ),
@@ -737,9 +769,8 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
                 ),
                 SizedBox(height: 16.h),
 
-                
                 DropdownButtonFormField<PromotionStatus>(
-                  value: _status,
+                  initialValue: _status,
                   decoration: InputDecoration(
                     labelText: 'Trạng thái',
                     border: OutlineInputBorder(
@@ -758,7 +789,6 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
                 ),
                 SizedBox(height: 32.h),
 
-                
                 ElevatedButton(
                   onPressed: _submit,
                   style: ElevatedButton.styleFrom(

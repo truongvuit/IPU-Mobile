@@ -55,7 +55,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ? AppColors.backgroundDark
           : AppColors.backgroundLight,
       appBar: AppBar(
-        backgroundColor: isDark ? AppColors.gray900 : Colors.white,
+        backgroundColor: isDark ? AppColors.neutral900 : Colors.white,
         elevation: 0,
         leading: IconButton(
           icon: Icon(
@@ -105,15 +105,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             );
           }
         },
-        child: SingleChildScrollView(
-          padding: EdgeInsets.only(
-            left: AppSizes.paddingMedium,
-            right: AppSizes.paddingMedium,
-            top: AppSizes.paddingMedium,
-            bottom:
-                MediaQuery.of(context).viewInsets.bottom +
-                AppSizes.paddingMedium,
-          ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.only(
+              left: AppSizes.paddingMedium,
+              right: AppSizes.paddingMedium,
+              top: AppSizes.paddingMedium,
+              bottom:
+                  MediaQuery.of(context).viewInsets.bottom +
+                  AppSizes.paddingMedium,
+            ),
           child: Form(
             key: _formKey,
             child: Column(
@@ -268,6 +269,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ],
             ),
           ),
+        ),
         ),
       ),
     );

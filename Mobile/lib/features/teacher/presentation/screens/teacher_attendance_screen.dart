@@ -31,9 +31,16 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
   AttendanceSession? _currentSession;
 
   
+  
   bool get isSessionCompleted {
     
     if (widget.args.viewOnly) return true;
+    
+    
+    if (_currentSession != null && _currentSession!.isCompleted) {
+      return true;
+    }
+    
     
     final sessionDate = widget.args.sessionDate;
     if (sessionDate == null) return false;
@@ -242,7 +249,7 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14.sp,
-                color: isDark ? AppColors.gray400 : AppColors.textSecondary,
+                color: isDark ? AppColors.neutral400 : AppColors.textSecondary,
               ),
             ),
             SizedBox(height: 24.h),
@@ -266,10 +273,10 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.gray800 : Colors.white,
+        color: isDark ? AppColors.neutral800 : Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -322,7 +329,7 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
                 Text(
                   className,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: isDark ? AppColors.gray400 : AppColors.gray600,
+                    color: isDark ? AppColors.neutral400 : AppColors.neutral600,
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w500,
                   ),
@@ -358,7 +365,7 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
 
     return Container(
       padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
-      color: isDark ? AppColors.gray800 : Colors.white,
+      color: isDark ? AppColors.neutral800 : Colors.white,
       child: Row(
         children: [
           Container(
@@ -412,7 +419,7 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.gray700 : AppColors.slate100,
+                  color: isDark ? AppColors.neutral700 : AppColors.neutral100,
                   borderRadius: BorderRadius.circular(10.r),
                 ),
                 child: Row(
@@ -420,7 +427,7 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
                   children: [
                     Icon(
                       Icons.room_outlined,
-                      color: isDark ? AppColors.gray300 : AppColors.gray600,
+                      color: isDark ? AppColors.neutral300 : AppColors.neutral600,
                       size: 16.sp,
                     ),
                     SizedBox(width: 8.w),
@@ -428,7 +435,7 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
                       child: Text(
                         room,
                         style: TextStyle(
-                          color: isDark ? AppColors.gray300 : AppColors.gray700,
+                          color: isDark ? AppColors.neutral300 : AppColors.neutral700,
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w500,
                         ),
@@ -477,7 +484,7 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
-                fillColor: isDark ? AppColors.gray700 : AppColors.slate100,
+                fillColor: isDark ? AppColors.neutral700 : AppColors.neutral100,
                 contentPadding: EdgeInsets.symmetric(
                   vertical: 0,
                   horizontal: 16.w,
@@ -578,10 +585,10 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.gray800 : Colors.white,
+        color: isDark ? AppColors.neutral800 : Colors.white,
         borderRadius: BorderRadius.circular(10.r),
         border: Border.all(
-          color: isDark ? AppColors.gray700 : AppColors.gray200,
+          color: isDark ? AppColors.neutral700 : AppColors.neutral200,
         ),
       ),
       child: Column(
@@ -600,7 +607,7 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
             label,
             style: TextStyle(
               fontSize: 10.sp,
-              color: isDark ? AppColors.gray400 : AppColors.gray600,
+              color: isDark ? AppColors.neutral400 : AppColors.neutral600,
             ),
           ),
         ],
@@ -624,10 +631,10 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
       margin: EdgeInsets.only(bottom: 8.h),
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.gray800 : Colors.white,
+        color: isDark ? AppColors.neutral800 : Colors.white,
         borderRadius: BorderRadius.circular(10.r),
         border: Border.all(
-          color: isDark ? AppColors.gray700 : AppColors.gray200,
+          color: isDark ? AppColors.neutral700 : AppColors.neutral200,
         ),
       ),
       child: Row(
@@ -657,23 +664,28 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
           
           InkWell(
             onTap: () => _toggleAttendance(record.studentId),
-            borderRadius: BorderRadius.circular(6.r),
+            borderRadius: BorderRadius.circular(10.r),
             child: Container(
-              width: 22.w,
-              height: 22.w,
-              decoration: BoxDecoration(
-                color: isPresent ? AppColors.success : Colors.transparent,
-                borderRadius: BorderRadius.circular(6.r),
-                border: Border.all(
-                  color: isPresent
-                      ? AppColors.success
-                      : (isDark ? AppColors.gray600 : AppColors.gray400),
-                  width: 2,
+              width: 44.w,
+              height: 44.h,
+              alignment: Alignment.center,
+              child: Container(
+                width: 24.w,
+                height: 24.w,
+                decoration: BoxDecoration(
+                  color: isPresent ? AppColors.success : Colors.transparent,
+                  borderRadius: BorderRadius.circular(6.r),
+                  border: Border.all(
+                    color: isPresent
+                        ? AppColors.success
+                        : (isDark ? AppColors.neutral600 : AppColors.neutral400),
+                    width: 2,
+                  ),
                 ),
+                child: isPresent
+                    ? Icon(Icons.check, color: Colors.white, size: 16.sp)
+                    : null,
               ),
-              child: isPresent
-                  ? Icon(Icons.check, color: Colors.white, size: 14.sp)
-                  : null,
             ),
           ),
         ],
@@ -687,10 +699,10 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.gray800 : Colors.white,
+        color: isDark ? AppColors.neutral800 : Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),
@@ -708,7 +720,7 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
               padding: EdgeInsets.symmetric(vertical: 16.h),
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
-              disabledBackgroundColor: AppColors.gray400,
+              disabledBackgroundColor: AppColors.neutral400,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12.r),
               ),
@@ -787,7 +799,7 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14.sp,
-                color: isDark ? AppColors.gray400 : AppColors.textSecondary,
+                color: isDark ? AppColors.neutral400 : AppColors.textSecondary,
               ),
             ),
             SizedBox(height: 24.h),

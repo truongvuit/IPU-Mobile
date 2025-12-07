@@ -10,7 +10,7 @@ import '../../../../core/widgets/skeleton_widget.dart';
 import '../bloc/admin_bloc.dart';
 import '../../domain/entities/class_session.dart';
 import '../../data/datasources/admin_api_datasource.dart';
-
+import '../widgets/simple_admin_app_bar.dart';
 
 class AdminSessionDetailScreen extends StatefulWidget {
   final int sessionId;
@@ -77,26 +77,34 @@ class _AdminSessionDetailScreenState extends State<AdminSessionDetailScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.backgroundDark
-          : AppColors.backgroundLight,
-      appBar: AppBar(
-        title: Text('Buổi ${widget.sessionNumber}'),
-        actions: [
-          if (_session != null)
-            IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: () => _showEditNoteDialog(),
-              tooltip: 'Sửa ghi chú',
-            ),
-        ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          Navigator.pop(context, _session);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: isDark
+            ? AppColors.backgroundDark
+            : AppColors.backgroundLight,
+        appBar: SimpleAdminAppBar(
+          title: 'Buổi ${widget.sessionNumber}',
+          actions: [
+            if (_session != null)
+              IconButton(
+                icon: const Icon(Icons.edit),
+                onPressed: () => _showEditNoteDialog(),
+                tooltip: 'Sửa ghi chú',
+              ),
+          ],
+        ),
+        body: _isLoading
+            ? _buildLoading()
+            : _error != null
+            ? _buildError()
+            : _buildContent(theme, isDark),
       ),
-      body: _isLoading
-          ? _buildLoading()
-          : _error != null
-          ? _buildError()
-          : _buildContent(theme, isDark),
     );
   }
 
@@ -147,11 +155,9 @@ class _AdminSessionDetailScreenState extends State<AdminSessionDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            
             if (_session != null) _buildSessionInfoCard(theme, isDark),
             SizedBox(height: AppSizes.paddingMedium),
 
-            
             _buildAttendanceStats(
               theme,
               isDark,
@@ -161,7 +167,6 @@ class _AdminSessionDetailScreenState extends State<AdminSessionDetailScreen> {
             ),
             SizedBox(height: AppSizes.paddingMedium),
 
-            
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -174,14 +179,13 @@ class _AdminSessionDetailScreenState extends State<AdminSessionDetailScreen> {
                 Text(
                   '${entries.length} học viên',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: isDark ? AppColors.gray400 : AppColors.gray600,
+                    color: isDark ? AppColors.neutral400 : AppColors.neutral600,
                   ),
                 ),
               ],
             ),
             SizedBox(height: AppSizes.p12),
 
-            
             if (entries.isEmpty)
               Container(
                 padding: EdgeInsets.all(AppSizes.paddingLarge),
@@ -195,13 +199,17 @@ class _AdminSessionDetailScreenState extends State<AdminSessionDetailScreen> {
                       Icon(
                         Icons.people_outline,
                         size: 48.sp,
-                        color: isDark ? AppColors.gray400 : AppColors.gray600,
+                        color: isDark
+                            ? AppColors.neutral400
+                            : AppColors.neutral600,
                       ),
                       SizedBox(height: AppSizes.p12),
                       Text(
                         'Chưa có dữ liệu điểm danh',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: isDark ? AppColors.gray400 : AppColors.gray600,
+                          color: isDark
+                              ? AppColors.neutral400
+                              : AppColors.neutral600,
                         ),
                       ),
                     ],
@@ -250,7 +258,9 @@ class _AdminSessionDetailScreenState extends State<AdminSessionDetailScreen> {
         statusIcon = Icons.cancel;
         break;
       case SessionStatus.notCompleted:
-        statusColor = _session!.isPast ? AppColors.warning : AppColors.gray500;
+        statusColor = _session!.isPast
+            ? AppColors.warning
+            : AppColors.neutral500;
         statusIcon = _session!.isPast ? Icons.warning : Icons.pending;
         break;
     }
@@ -297,7 +307,9 @@ class _AdminSessionDetailScreenState extends State<AdminSessionDetailScreen> {
                     Text(
                       dayFormat.format(_session!.date),
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: isDark ? AppColors.gray400 : AppColors.gray600,
+                        color: isDark
+                            ? AppColors.neutral400
+                            : AppColors.neutral600,
                       ),
                     ),
                   ],
@@ -462,7 +474,7 @@ class _AdminSessionDetailScreenState extends State<AdminSessionDetailScreen> {
       );
 
       if (mounted) {
-        Navigator.pop(context); 
+        Navigator.pop(context);
         setState(() {
           _session = updatedSession;
         });
@@ -483,7 +495,6 @@ class _AdminSessionDetailScreenState extends State<AdminSessionDetailScreen> {
     }
   }
 }
-
 
 class _StatCard extends StatelessWidget {
   final IconData icon;
@@ -524,7 +535,7 @@ class _StatCard extends StatelessWidget {
           Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: isDark ? AppColors.gray400 : AppColors.gray600,
+              color: isDark ? AppColors.neutral400 : AppColors.neutral600,
               fontSize: 11.sp,
             ),
             textAlign: TextAlign.center,
@@ -534,7 +545,6 @@ class _StatCard extends StatelessWidget {
     );
   }
 }
-
 
 class _AttendanceItem extends StatelessWidget {
   final StudentAttendanceEntry student;
@@ -559,7 +569,6 @@ class _AttendanceItem extends StatelessWidget {
             padding: EdgeInsets.symmetric(vertical: AppSizes.p12),
             child: Row(
               children: [
-                
                 CircleAvatar(
                   radius: 20.r,
                   backgroundColor: AppColors.primary.withValues(alpha: 0.1),
@@ -574,7 +583,6 @@ class _AttendanceItem extends StatelessWidget {
                 ),
                 SizedBox(width: AppSizes.p12),
 
-                
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -590,8 +598,8 @@ class _AttendanceItem extends StatelessWidget {
                           student.note!,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: isDark
-                                ? AppColors.gray400
-                                : AppColors.gray600,
+                                ? AppColors.neutral400
+                                : AppColors.neutral600,
                             fontStyle: FontStyle.italic,
                           ),
                           maxLines: 1,
@@ -601,7 +609,6 @@ class _AttendanceItem extends StatelessWidget {
                   ),
                 ),
 
-                
                 Container(
                   padding: EdgeInsets.symmetric(
                     horizontal: AppSizes.p12,
@@ -642,7 +649,7 @@ class _AttendanceItem extends StatelessWidget {
           if (!isLast)
             Divider(
               height: 1,
-              color: isDark ? AppColors.gray700 : AppColors.gray200,
+              color: isDark ? AppColors.neutral700 : AppColors.neutral200,
             ),
         ],
       ),

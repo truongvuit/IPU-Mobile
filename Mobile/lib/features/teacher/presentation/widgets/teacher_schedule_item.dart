@@ -24,7 +24,7 @@ class TeacherScheduleItem extends StatelessWidget {
     return Container(
       margin: EdgeInsets.only(bottom: isDesktop ? AppSizes.p12 + 2 : AppSizes.p12),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.gray800 : Colors.white,
+        color: isDark ? AppColors.neutral800 : Colors.white,
         borderRadius: BorderRadius.circular(isDesktop ? AppSizes.radiusMedium + 2 : AppSizes.radiusMedium),
         border: Border.all(
           color: AppColors.primary.withValues(alpha: 0.15),

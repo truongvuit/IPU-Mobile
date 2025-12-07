@@ -28,11 +28,6 @@ class _QuickRegistrationClassSelectionScreenState
   final _searchController = TextEditingController();
   Set<String> _selectedClassIds = {};
 
-  
-  String? _selectedCourseId;
-  String? _selectedTeacherId;
-  String? _selectedSchedule;
-
   @override
   void initState() {
     super.initState();
@@ -68,24 +63,14 @@ class _QuickRegistrationClassSelectionScreenState
       return true;
     }).toList();
 
-    
-    if (_selectedCourseId != null && _selectedCourseId!.isNotEmpty) {
-      filtered = filtered.where((c) => c.courseId == _selectedCourseId).toList();
-    }
-    if (_selectedTeacherId != null && _selectedTeacherId!.isNotEmpty) {
-      filtered = filtered.where((c) => c.teacherId == _selectedTeacherId).toList();
-    }
-    if (_selectedSchedule != null && _selectedSchedule!.isNotEmpty) {
-      filtered = filtered.where((c) => c.schedule == _selectedSchedule).toList();
-    }
-
-    
     switch (_tabController.index) {
-      case 0: 
-        return filtered.where((c) => c.status != ClassStatus.completed).toList();
-      case 1: 
+      case 0:
+        return filtered
+            .where((c) => c.status != ClassStatus.completed)
+            .toList();
+      case 1:
         return filtered.where((c) => c.status == ClassStatus.upcoming).toList();
-      case 2: 
+      case 2:
         return filtered.where((c) => c.status == ClassStatus.ongoing).toList();
       default:
         return filtered;
@@ -135,198 +120,317 @@ class _QuickRegistrationClassSelectionScreenState
   }
 
   void _showFilterBottomSheet(ClassesLoaded state) {
+    final bloc = context.read<RegistrationBloc>();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setStateModal) {
-          final theme = Theme.of(context);
-          final isDark = theme.brightness == Brightness.dark;
+      builder: (modalContext) => BlocProvider.value(
+        value: bloc,
+        child: BlocBuilder<RegistrationBloc, RegistrationState>(
+          builder: (context, blocState) {
+            final theme = Theme.of(context);
+            final isDark = theme.brightness == Brightness.dark;
 
-          return Container(
-            height: MediaQuery.of(context).size.height * 0.7,
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.surfaceDark : AppColors.surface,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.radiusLarge)),
-            ),
-            padding: EdgeInsets.all(AppSizes.paddingMedium),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Bộ lọc', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                    IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
-                  ],
+            final currentFilter = (blocState is ClassesLoaded)
+                ? blocState.appliedFilter
+                : null;
+            final selectedCourseId = currentFilter?.courseId;
+            final selectedTeacherId = currentFilter?.teacherId;
+            final selectedSchedule = currentFilter?.schedule;
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.7,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.surfaceDark : AppColors.surface,
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(AppSizes.radiusLarge),
                 ),
-                Divider(color: isDark ? AppColors.gray700 : AppColors.gray200),
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Khóa học', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        SizedBox(height: AppSizes.p12),
-                        Wrap(
-                          spacing: AppSizes.p8,
-                          runSpacing: AppSizes.p8,
-                          children: [
-                            FilterChip(
-                              label: const Text('Tất cả'),
-                              selected: _selectedCourseId == null,
-                              onSelected: (selected) {
-                                setStateModal(() { _selectedCourseId = null; });
-                                setState(() {});
-                              },
-                              selectedColor: AppColors.primary.withValues(alpha: 0.2),
-                              checkmarkColor: AppColors.primary,
+              ),
+              padding: EdgeInsets.all(AppSizes.paddingMedium),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Bộ lọc',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                  Divider(
+                    color: isDark ? AppColors.neutral700 : AppColors.neutral200,
+                  ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Khóa học',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
                             ),
-                            ...state.courses.map((course) {
-                              final courseId = course['id']?.toString();
-                              final courseName = course['name']?.toString() ?? '';
-                              final isSelected = _selectedCourseId == courseId;
-                              return FilterChip(
-                                label: Text(courseName),
-                                selected: isSelected,
+                          ),
+                          SizedBox(height: AppSizes.p12),
+                          Wrap(
+                            spacing: AppSizes.p8,
+                            runSpacing: AppSizes.p8,
+                            children: [
+                              FilterChip(
+                                label: const Text('Tất cả'),
+                                selected: selectedCourseId == null,
                                 onSelected: (selected) {
-                                  setStateModal(() { _selectedCourseId = selected ? courseId : null; });
-                                  setState(() {});
+                                  context.read<RegistrationBloc>().add(
+                                    FilterClasses(
+                                      courseId: null,
+                                      teacherId: selectedTeacherId,
+                                      schedule: selectedSchedule,
+                                    ),
+                                  );
                                 },
-                                selectedColor: AppColors.primary.withValues(alpha: 0.2),
-                                checkmarkColor: AppColors.primary,
-                                labelStyle: TextStyle(
-                                  color: isSelected ? AppColors.primary : (isDark ? AppColors.gray300 : AppColors.gray700),
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                selectedColor: AppColors.primary.withValues(
+                                  alpha: 0.2,
                                 ),
-                              );
-                            }),
-                          ],
-                        ),
+                                checkmarkColor: AppColors.primary,
+                              ),
+                              ...state.courses.map((course) {
+                                final courseId = course['id']?.toString();
+                                final courseName =
+                                    course['name']?.toString() ?? '';
+                                final isSelected = selectedCourseId == courseId;
+                                return FilterChip(
+                                  label: Text(courseName),
+                                  selected: isSelected,
+                                  onSelected: (selected) {
+                                    context.read<RegistrationBloc>().add(
+                                      FilterClasses(
+                                        courseId: selected ? courseId : null,
+                                        teacherId: selectedTeacherId,
+                                        schedule: selectedSchedule,
+                                      ),
+                                    );
+                                  },
+                                  selectedColor: AppColors.primary.withValues(
+                                    alpha: 0.2,
+                                  ),
+                                  checkmarkColor: AppColors.primary,
+                                  labelStyle: TextStyle(
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : (isDark
+                                              ? AppColors.neutral300
+                                              : AppColors.neutral700),
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                  ),
+                                );
+                              }),
+                            ],
+                          ),
 
-                        SizedBox(height: AppSizes.p24),
+                          SizedBox(height: AppSizes.p24),
 
-                        Text('Giảng viên', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        SizedBox(height: AppSizes.p12),
-                        Wrap(
-                          spacing: AppSizes.p8,
-                          runSpacing: AppSizes.p8,
-                          children: [
-                            FilterChip(
-                              label: const Text('Tất cả'),
-                              selected: _selectedTeacherId == null,
-                              onSelected: (selected) { setStateModal(() { _selectedTeacherId = null; }); setState(() {}); },
-                              selectedColor: AppColors.primary.withValues(alpha: 0.2),
-                              checkmarkColor: AppColors.primary,
+                          Text(
+                            'Giảng viên',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
                             ),
-                            ...state.teachers.map((teacher) {
-                              final teacherId = teacher['id']?.toString();
-                              final teacherName = teacher['name']?.toString() ?? '';
-                              final isSelected = _selectedTeacherId == teacherId;
-                              return FilterChip(
-                                label: Text(teacherName),
-                                selected: isSelected,
-                                onSelected: (selected) { setStateModal(() { _selectedTeacherId = selected ? teacherId : null; }); setState(() {}); },
-                                selectedColor: AppColors.primary.withValues(alpha: 0.2),
-                                checkmarkColor: AppColors.primary,
-                                labelStyle: TextStyle(
-                                  color: isSelected ? AppColors.primary : (isDark ? AppColors.gray300 : AppColors.gray700),
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
+                          SizedBox(height: AppSizes.p12),
+                          Wrap(
+                            spacing: AppSizes.p8,
+                            runSpacing: AppSizes.p8,
+                            children: [
+                              FilterChip(
+                                label: const Text('Tất cả'),
+                                selected: selectedTeacherId == null,
+                                onSelected: (selected) {
+                                  context.read<RegistrationBloc>().add(
+                                    FilterClasses(
+                                      courseId: selectedCourseId,
+                                      teacherId: null,
+                                      schedule: selectedSchedule,
+                                    ),
+                                  );
+                                },
+                                selectedColor: AppColors.primary.withValues(
+                                  alpha: 0.2,
                                 ),
-                              );
-                            }),
-                          ],
-                        ),
+                                checkmarkColor: AppColors.primary,
+                              ),
+                              ...state.teachers.map((teacher) {
+                                final teacherId = teacher['id']?.toString();
+                                final teacherName =
+                                    teacher['name']?.toString() ?? '';
+                                final isSelected =
+                                    selectedTeacherId == teacherId;
+                                return FilterChip(
+                                  label: Text(teacherName),
+                                  selected: isSelected,
+                                  onSelected: (selected) {
+                                    context.read<RegistrationBloc>().add(
+                                      FilterClasses(
+                                        courseId: selectedCourseId,
+                                        teacherId: selected ? teacherId : null,
+                                        schedule: selectedSchedule,
+                                      ),
+                                    );
+                                  },
+                                  selectedColor: AppColors.primary.withValues(
+                                    alpha: 0.2,
+                                  ),
+                                  checkmarkColor: AppColors.primary,
+                                  labelStyle: TextStyle(
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : (isDark
+                                              ? AppColors.neutral300
+                                              : AppColors.neutral700),
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                  ),
+                                );
+                              }),
+                            ],
+                          ),
 
-                        SizedBox(height: AppSizes.p24),
+                          SizedBox(height: AppSizes.p24),
 
-                        Text('Lịch học', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        SizedBox(height: AppSizes.p12),
-                        Wrap(
-                          spacing: AppSizes.p8,
-                          runSpacing: AppSizes.p8,
-                          children: [
-                            FilterChip(
-                              label: const Text('Tất cả'),
-                              selected: _selectedSchedule == null,
-                              onSelected: (selected) { setStateModal(() { _selectedSchedule = null; }); setState(() {}); },
-                              selectedColor: AppColors.primary.withValues(alpha: 0.2),
-                              checkmarkColor: AppColors.primary,
+                          Text(
+                            'Lịch học',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
                             ),
-                            ...state.schedules.map((schedule) {
-                              final isSelected = _selectedSchedule == schedule;
-                              return FilterChip(
-                                label: Text(schedule),
-                                selected: isSelected,
-                                onSelected: (selected) { setStateModal(() { _selectedSchedule = selected ? schedule : null; }); setState(() {}); },
-                                selectedColor: AppColors.primary.withValues(alpha: 0.2),
-                                checkmarkColor: AppColors.primary,
-                                labelStyle: TextStyle(
-                                  color: isSelected ? AppColors.primary : (isDark ? AppColors.gray300 : AppColors.gray700),
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
+                          SizedBox(height: AppSizes.p12),
+                          Wrap(
+                            spacing: AppSizes.p8,
+                            runSpacing: AppSizes.p8,
+                            children: [
+                              FilterChip(
+                                label: const Text('Tất cả'),
+                                selected: selectedSchedule == null,
+                                onSelected: (selected) {
+                                  context.read<RegistrationBloc>().add(
+                                    FilterClasses(
+                                      courseId: selectedCourseId,
+                                      teacherId: selectedTeacherId,
+                                      schedule: null,
+                                    ),
+                                  );
+                                },
+                                selectedColor: AppColors.primary.withValues(
+                                  alpha: 0.2,
                                 ),
-                              );
-                            }),
-                          ],
-                        ),
-                      ],
+                                checkmarkColor: AppColors.primary,
+                              ),
+                              ...state.schedules.map((schedule) {
+                                final isSelected = selectedSchedule == schedule;
+                                return FilterChip(
+                                  label: Text(schedule),
+                                  selected: isSelected,
+                                  onSelected: (selected) {
+                                    context.read<RegistrationBloc>().add(
+                                      FilterClasses(
+                                        courseId: selectedCourseId,
+                                        teacherId: selectedTeacherId,
+                                        schedule: selected ? schedule : null,
+                                      ),
+                                    );
+                                  },
+                                  selectedColor: AppColors.primary.withValues(
+                                    alpha: 0.2,
+                                  ),
+                                  checkmarkColor: AppColors.primary,
+                                  labelStyle: TextStyle(
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : (isDark
+                                              ? AppColors.neutral300
+                                              : AppColors.neutral700),
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                  ),
+                                );
+                              }),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
 
-                SizedBox(height: AppSizes.p16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {
-                          setStateModal(() { _selectedCourseId = null; _selectedTeacherId = null; _selectedSchedule = null; });
-                          setState(() {});
-                          context.read<RegistrationBloc>().add(const ClearClassFilter());
-                        },
-                        style: OutlinedButton.styleFrom(
-                          padding: EdgeInsets.symmetric(vertical: AppSizes.p16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusMedium)),
+                  SizedBox(height: AppSizes.p16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            context.read<RegistrationBloc>().add(
+                              const ClearClassFilter(),
+                            );
+                          },
+                          style: OutlinedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(
+                              vertical: AppSizes.p16,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppSizes.radiusMedium,
+                              ),
+                            ),
+                          ),
+                          child: const Text('Xóa bộ lọc'),
                         ),
-                        child: const Text('Xóa bộ lọc'),
                       ),
-                    ),
-                    SizedBox(width: AppSizes.p16),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          context.read<RegistrationBloc>().add(FilterClasses(
-                            courseId: _selectedCourseId,
-                            teacherId: _selectedTeacherId,
-                            schedule: _selectedSchedule,
-                          ));
-                          Navigator.pop(context);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(vertical: AppSizes.p16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusMedium)),
+                      SizedBox(width: AppSizes.p16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(
+                              vertical: AppSizes.p16,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppSizes.radiusMedium,
+                              ),
+                            ),
+                          ),
+                          child: const Text('Đóng'),
                         ),
-                        child: const Text('Áp dụng'),
                       ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        },
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
 
-  int get _activeFiltersCount {
+  int _getActiveFiltersCount(ClassFilterInfo? filter) {
+    if (filter == null) return 0;
     int count = 0;
-    if (_selectedCourseId != null) count++;
-    if (_selectedTeacherId != null) count++;
-    if (_selectedSchedule != null) count++;
+    if (filter.courseId != null) count++;
+    if (filter.teacherId != null) count++;
+    if (filter.schedule != null) count++;
     return count;
   }
 
@@ -336,18 +440,34 @@ class _QuickRegistrationClassSelectionScreenState
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+      backgroundColor: isDark
+          ? AppColors.backgroundDark
+          : AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('Chọn Lớp học'),
+        title: Text(
+          'Chọn Lớp học',
+          style: TextStyle(
+            fontSize: 18.sp,
+            fontWeight: FontWeight.w700,
+            fontFamily: 'Lexend',
+          ),
+        ),
+        elevation: 0,
         bottom: TabBar(
           controller: _tabController,
           onTap: (_) => setState(() {}),
-          tabs: const [Tab(text: 'Tất cả'), Tab(text: 'Sắp mở'), Tab(text: 'Đang học')],
+          tabs: const [
+            Tab(text: 'Tất cả'),
+            Tab(text: 'Sắp mở'),
+            Tab(text: 'Đang học'),
+          ],
         ),
       ),
       body: BlocBuilder<RegistrationBloc, RegistrationState>(
         builder: (context, state) {
-          if (state is RegistrationLoading) return const Center(child: CircularProgressIndicator());
+          if (state is RegistrationLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
           if (state is RegistrationError) {
             return Center(
               child: Padding(
@@ -355,11 +475,20 @@ class _QuickRegistrationClassSelectionScreenState
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.error_outline, size: AppSizes.iconXLarge, color: AppColors.error),
+                    Icon(
+                      Icons.error_outline,
+                      size: AppSizes.iconXLarge,
+                      color: AppColors.error,
+                    ),
                     SizedBox(height: AppSizes.paddingMedium),
                     Text(state.message, textAlign: TextAlign.center),
                     SizedBox(height: AppSizes.paddingMedium),
-                    ElevatedButton(onPressed: () => context.read<RegistrationBloc>().add(const LoadAvailableClasses()), child: const Text('Thử lại')),
+                    ElevatedButton(
+                      onPressed: () => context.read<RegistrationBloc>().add(
+                        const LoadAvailableClasses(),
+                      ),
+                      child: const Text('Thử lại'),
+                    ),
                   ],
                 ),
               ),
@@ -374,119 +503,302 @@ class _QuickRegistrationClassSelectionScreenState
                 if (_selectedClassIds.isNotEmpty)
                   Container(
                     width: double.infinity,
-                    padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium, vertical: AppSizes.p8),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppSizes.paddingMedium,
+                      vertical: AppSizes.p8,
+                    ),
                     color: AppColors.primary.withValues(alpha: 0.1),
                     child: Row(
                       children: [
-                        Icon(Icons.check_circle, color: AppColors.primary, size: AppSizes.iconSmall),
+                        Icon(
+                          Icons.check_circle,
+                          color: AppColors.primary,
+                          size: AppSizes.iconSmall,
+                        ),
                         SizedBox(width: AppSizes.p8),
-                        Text('Đã chọn ${_selectedClassIds.length} lớp học', style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600)),
+                        Text(
+                          'Đã chọn ${_selectedClassIds.length} lớp học',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                         const Spacer(),
-                        TextButton(onPressed: () { context.read<RegistrationBloc>().add(const ClearAllClasses()); setState(() { _selectedClassIds.clear(); }); }, child: const Text('Bỏ chọn tất cả')),
+                        TextButton(
+                          onPressed: () {
+                            context.read<RegistrationBloc>().add(
+                              const ClearAllClasses(),
+                            );
+                            setState(() {
+                              _selectedClassIds.clear();
+                            });
+                          },
+                          child: const Text('Bỏ chọn tất cả'),
+                        ),
                       ],
                     ),
                   ),
 
-                
                 Container(
                   padding: EdgeInsets.all(AppSizes.paddingMedium),
                   color: isDark ? AppColors.surfaceDark : AppColors.surface,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: (_) => setState(() {}),
-                          decoration: InputDecoration(
-                            hintText: 'Tìm kiếm lớp học, giảng viên...',
-                            prefixIcon: const Icon(Icons.search),
-                            filled: true,
-                            fillColor: isDark ? AppColors.gray700 : AppColors.gray100,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppSizes.radiusMedium), borderSide: BorderSide.none),
-                            contentPadding: EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: AppSizes.p12),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: AppSizes.p12),
-                      InkWell(
-                        onTap: () => _showFilterBottomSheet(state),
-                        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-                        child: Container(
-                          padding: EdgeInsets.all(AppSizes.p12),
-                          decoration: BoxDecoration(
-                            color: _activeFiltersCount > 0 ? AppColors.primary : (isDark ? AppColors.gray700 : AppColors.gray100),
-                            borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-                          ),
-                          child: Stack(
-                            clipBehavior: Clip.none,
+                  child: Builder(
+                    builder: (context) {
+                      final filter = state.appliedFilter;
+                      final activeFiltersCount = _getActiveFiltersCount(filter);
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (state.courses.isNotEmpty)
+                            Container(
+                              margin: EdgeInsets.only(bottom: AppSizes.p12),
+                              child: DropdownButtonFormField<String>(
+                                value: filter?.courseId,
+                                decoration: InputDecoration(
+                                  labelText: 'Lọc theo khóa học',
+                                  prefixIcon: const Icon(Icons.school_outlined),
+                                  filled: true,
+                                  fillColor: isDark
+                                      ? AppColors.neutral700
+                                      : AppColors.neutral100,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppSizes.radiusMedium,
+                                    ),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: AppSizes.p16,
+                                    vertical: AppSizes.p12,
+                                  ),
+                                ),
+                                hint: const Text('Tất cả khóa học'),
+                                isExpanded: true,
+                                items: [
+                                  const DropdownMenuItem<String>(
+                                    value: null,
+                                    child: Text('Tất cả khóa học'),
+                                  ),
+                                  ...state.courses.map((course) {
+                                    final courseId = course['id']?.toString();
+                                    final courseName =
+                                        course['name']?.toString() ?? '';
+                                    return DropdownMenuItem<String>(
+                                      value: courseId,
+                                      child: Text(
+                                        courseName,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    );
+                                  }),
+                                ],
+                                onChanged: (value) {
+                                  context.read<RegistrationBloc>().add(
+                                    FilterClasses(
+                                      courseId: value,
+                                      teacherId: filter?.teacherId,
+                                      schedule: filter?.schedule,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+
+                          Row(
                             children: [
-                              Icon(Icons.filter_list, color: _activeFiltersCount > 0 ? Colors.white : (isDark ? AppColors.gray300 : AppColors.gray600)),
-                              if (_activeFiltersCount > 0)
-                                Positioned(top: -8, right: -8, child: Container(padding: const EdgeInsets.all(4), decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle), child: Text(_activeFiltersCount.toString(), style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)))),
+                              Expanded(
+                                child: TextField(
+                                  controller: _searchController,
+                                  onChanged: (_) => setState(() {}),
+                                  decoration: InputDecoration(
+                                    hintText: 'Tìm kiếm lớp học, giảng viên...',
+                                    prefixIcon: const Icon(Icons.search),
+                                    filled: true,
+                                    fillColor: isDark
+                                        ? AppColors.neutral700
+                                        : AppColors.neutral100,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppSizes.radiusMedium,
+                                      ),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: AppSizes.p16,
+                                      vertical: AppSizes.p12,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: AppSizes.p12),
+                              InkWell(
+                                onTap: () => _showFilterBottomSheet(state),
+                                borderRadius: BorderRadius.circular(
+                                  AppSizes.radiusMedium,
+                                ),
+                                child: Container(
+                                  padding: EdgeInsets.all(AppSizes.p12),
+                                  decoration: BoxDecoration(
+                                    color: activeFiltersCount > 0
+                                        ? AppColors.primary
+                                        : (isDark
+                                              ? AppColors.neutral700
+                                              : AppColors.neutral100),
+                                    borderRadius: BorderRadius.circular(
+                                      AppSizes.radiusMedium,
+                                    ),
+                                  ),
+                                  child: Stack(
+                                    clipBehavior: Clip.none,
+                                    children: [
+                                      Icon(
+                                        Icons.filter_list,
+                                        color: activeFiltersCount > 0
+                                            ? Colors.white
+                                            : (isDark
+                                                  ? AppColors.neutral300
+                                                  : AppColors.neutral600),
+                                      ),
+                                      if (activeFiltersCount > 0)
+                                        Positioned(
+                                          top: -8,
+                                          right: -8,
+                                          child: Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: const BoxDecoration(
+                                              color: Colors.red,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Text(
+                                              activeFiltersCount.toString(),
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
-                        ),
-                      ),
-                    ],
+                        ],
+                      );
+                    },
                   ),
                 ),
 
-                
-                if (_activeFiltersCount > 0)
-                  Container(
-                    height: 40.h,
-                    margin: EdgeInsets.only(bottom: AppSizes.p8),
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
-                      children: [
-                        if (_selectedCourseId != null)
-                          Padding(
-                            padding: EdgeInsets.only(right: AppSizes.p8),
-                            child: Chip(
-                              label: Text(state.courses.firstWhere((c) => c['id'].toString() == _selectedCourseId, orElse: () => {'name': 'Khóa học'})['name']?.toString() ?? 'Khóa học'),
-                              deleteIcon: const Icon(Icons.close, size: 16),
-                              onDeleted: () {
-                                setState(() { _selectedCourseId = null; });
-                                context.read<RegistrationBloc>().add(FilterClasses(courseId: null, teacherId: _selectedTeacherId, schedule: _selectedSchedule));
-                              },
-                              backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                              labelStyle: TextStyle(color: AppColors.primary, fontSize: 12.sp),
-                              side: BorderSide.none,
-                            ),
-                          ),
-                        if (_selectedTeacherId != null)
-                          Padding(
-                            padding: EdgeInsets.only(right: AppSizes.p8),
-                            child: Chip(
-                              label: Text(state.teachers.firstWhere((t) => t['id'].toString() == _selectedTeacherId, orElse: () => {'name': 'Giảng viên'})['name']?.toString() ?? 'Giảng viên'),
-                              deleteIcon: const Icon(Icons.close, size: 16),
-                              onDeleted: () { setState(() { _selectedTeacherId = null; }); context.read<RegistrationBloc>().add(FilterClasses(courseId: _selectedCourseId, teacherId: null, schedule: _selectedSchedule)); },
-                              backgroundColor: AppColors.info.withValues(alpha: 0.1),
-                              labelStyle: TextStyle(color: AppColors.info, fontSize: 12.sp),
-                              side: BorderSide.none,
-                            ),
-                          ),
-                        if (_selectedSchedule != null)
-                          Padding(
-                            padding: EdgeInsets.only(right: AppSizes.p8),
-                            child: Chip(
-                              label: Text(_selectedSchedule!),
-                              deleteIcon: const Icon(Icons.close, size: 16),
-                              onDeleted: () { setState(() { _selectedSchedule = null; }); context.read<RegistrationBloc>().add(FilterClasses(courseId: _selectedCourseId, teacherId: _selectedTeacherId, schedule: null)); },
-                              backgroundColor: AppColors.success.withValues(alpha: 0.1),
-                              labelStyle: TextStyle(color: AppColors.success, fontSize: 12.sp),
-                              side: BorderSide.none,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
+                Builder(
+                  builder: (context) {
+                    final filter = state.appliedFilter;
+                    final activeFiltersCount = _getActiveFiltersCount(filter);
 
-                
+                    if (activeFiltersCount == 0) return const SizedBox.shrink();
+
+                    return Container(
+                      height: 40.h,
+                      margin: EdgeInsets.only(bottom: AppSizes.p8),
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppSizes.paddingMedium,
+                        ),
+                        children: [
+                          if (filter?.courseId != null)
+                            Padding(
+                              padding: EdgeInsets.only(right: AppSizes.p8),
+                              child: Chip(
+                                label: Text(filter?.courseName ?? 'Khóa học'),
+                                deleteIcon: const Icon(Icons.close, size: 16),
+                                onDeleted: () {
+                                  context.read<RegistrationBloc>().add(
+                                    FilterClasses(
+                                      courseId: null,
+                                      teacherId: filter?.teacherId,
+                                      schedule: filter?.schedule,
+                                    ),
+                                  );
+                                },
+                                backgroundColor: AppColors.primary.withValues(
+                                  alpha: 0.1,
+                                ),
+                                labelStyle: TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 12.sp,
+                                ),
+                                side: BorderSide.none,
+                              ),
+                            ),
+                          if (filter?.teacherId != null)
+                            Padding(
+                              padding: EdgeInsets.only(right: AppSizes.p8),
+                              child: Chip(
+                                label: Text(
+                                  filter?.teacherName ?? 'Giảng viên',
+                                ),
+                                deleteIcon: const Icon(Icons.close, size: 16),
+                                onDeleted: () {
+                                  context.read<RegistrationBloc>().add(
+                                    FilterClasses(
+                                      courseId: filter?.courseId,
+                                      teacherId: null,
+                                      schedule: filter?.schedule,
+                                    ),
+                                  );
+                                },
+                                backgroundColor: AppColors.info.withValues(
+                                  alpha: 0.1,
+                                ),
+                                labelStyle: TextStyle(
+                                  color: AppColors.info,
+                                  fontSize: 12.sp,
+                                ),
+                                side: BorderSide.none,
+                              ),
+                            ),
+                          if (filter?.schedule != null)
+                            Padding(
+                              padding: EdgeInsets.only(right: AppSizes.p8),
+                              child: Chip(
+                                label: Text(filter!.schedule!),
+                                deleteIcon: const Icon(Icons.close, size: 16),
+                                onDeleted: () {
+                                  context.read<RegistrationBloc>().add(
+                                    FilterClasses(
+                                      courseId: filter.courseId,
+                                      teacherId: filter.teacherId,
+                                      schedule: null,
+                                    ),
+                                  );
+                                },
+                                backgroundColor: AppColors.success.withValues(
+                                  alpha: 0.1,
+                                ),
+                                labelStyle: TextStyle(
+                                  color: AppColors.success,
+                                  fontSize: 12.sp,
+                                ),
+                                side: BorderSide.none,
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+
                 Expanded(
                   child: filteredClasses.isEmpty
-                      ? const Center(child: EmptyStateWidget(icon: Icons.class_, message: 'Không tìm thấy lớp học'))
+                      ? const Center(
+                          child: EmptyStateWidget(
+                            icon: Icons.class_,
+                            message: 'Không tìm thấy lớp học',
+                          ),
+                        )
                       : ListView.builder(
                           padding: EdgeInsets.all(AppSizes.paddingMedium),
                           itemCount: filteredClasses.length,
@@ -494,23 +806,55 @@ class _QuickRegistrationClassSelectionScreenState
                             final classItem = filteredClasses[index];
                             return Padding(
                               padding: EdgeInsets.only(bottom: AppSizes.p12),
-                              child: ClassSelectionCard(classItem: classItem, isSelected: _selectedClassIds.contains(classItem.id), onTap: () => _toggleClass(classItem)),
+                              child: ClassSelectionCard(
+                                classItem: classItem,
+                                isSelected: _selectedClassIds.contains(
+                                  classItem.id,
+                                ),
+                                onTap: () => _toggleClass(classItem),
+                              ),
                             );
                           },
                         ),
                 ),
 
-                
                 Container(
                   padding: EdgeInsets.all(AppSizes.paddingMedium),
-                  decoration: BoxDecoration(color: isDark ? AppColors.surfaceDark : AppColors.surface, boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, -2))]),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.surfaceDark : AppColors.surface,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, -2),
+                      ),
+                    ],
+                  ),
                   child: SafeArea(
                     child: SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: _confirmSelection,
-                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, padding: EdgeInsets.symmetric(vertical: AppSizes.paddingMedium), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusMedium))),
-                        child: Text(_selectedClassIds.isEmpty ? 'Xác nhận' : 'Xác nhận (${_selectedClassIds.length} lớp)', style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          padding: EdgeInsets.symmetric(
+                            vertical: AppSizes.paddingMedium,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              AppSizes.radiusMedium,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          _selectedClassIds.isEmpty
+                              ? 'Xác nhận'
+                              : 'Xác nhận (${_selectedClassIds.length} lớp)',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ),
                   ),

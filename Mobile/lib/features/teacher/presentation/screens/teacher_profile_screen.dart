@@ -1,28 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/widgets/custom_image.dart';
 import '../../../../core/widgets/skeleton_widget.dart';
+import '../../../../core/utils/date_formatter.dart';
 import '../bloc/teacher_bloc.dart';
 import '../bloc/teacher_event.dart';
 import '../bloc/teacher_state.dart';
 import '../widgets/teacher_app_bar.dart';
 
 
-class TeacherProfileScreen extends StatelessWidget {
+class TeacherProfileScreen extends StatefulWidget {
   const TeacherProfileScreen({super.key});
+
+  @override
+  State<TeacherProfileScreen> createState() => _TeacherProfileScreenState();
+}
+
+class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    
+    context.read<TeacherBloc>().add(LoadTeacherProfile());
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDesktop = MediaQuery.of(context).size.width >= 1024;
-    final dateFormat = DateFormat('dd/MM/yyyy');
-
-    context.read<TeacherBloc>().add(LoadTeacherProfile());
 
     return Column(
       children: [
@@ -97,7 +106,6 @@ class TeacherProfileScreen extends StatelessWidget {
                         
                         _buildPersonalSection(
                           profile,
-                          dateFormat,
                           isDark,
                           isDesktop,
                         ),
@@ -352,10 +360,10 @@ class TeacherProfileScreen extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(isDesktop ? AppSizes.p16 : AppSizes.p12),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.gray800 : Colors.white,
+        color: isDark ? AppColors.neutral800 : Colors.white,
         borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
         border: Border.all(
-          color: isDark ? AppColors.gray700 : AppColors.divider,
+          color: isDark ? AppColors.neutral700 : AppColors.divider,
           width: 1,
         ),
         boxShadow: [
@@ -414,10 +422,10 @@ class TeacherProfileScreen extends StatelessWidget {
         width: double.infinity,
         padding: EdgeInsets.all(isDesktop ? AppSizes.p24 : AppSizes.p16),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.gray800 : Colors.white,
+          color: isDark ? AppColors.neutral800 : Colors.white,
           borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
           border: Border.all(
-            color: isDark ? AppColors.gray700 : AppColors.divider,
+            color: isDark ? AppColors.neutral700 : AppColors.divider,
             width: 1,
           ),
           boxShadow: [
@@ -498,7 +506,6 @@ class TeacherProfileScreen extends StatelessWidget {
 
   Widget _buildPersonalSection(
     dynamic profile,
-    DateFormat dateFormat,
     bool isDark,
     bool isDesktop,
   ) {
@@ -508,10 +515,10 @@ class TeacherProfileScreen extends StatelessWidget {
         width: double.infinity,
         padding: EdgeInsets.all(isDesktop ? AppSizes.p24 : AppSizes.p16),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.gray800 : Colors.white,
+          color: isDark ? AppColors.neutral800 : Colors.white,
           borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
           border: Border.all(
-            color: isDark ? AppColors.gray700 : AppColors.divider,
+            color: isDark ? AppColors.neutral700 : AppColors.divider,
             width: 1,
           ),
           boxShadow: [
@@ -549,7 +556,7 @@ class TeacherProfileScreen extends StatelessWidget {
               _buildInfoRow(
                 Icons.cake_outlined,
                 'Ngày sinh',
-                dateFormat.format(profile.dateOfBirth!),
+                DateFormatter.formatDate(profile.dateOfBirth!),
                 isDark,
                 isDesktop,
               ),
@@ -593,10 +600,10 @@ class TeacherProfileScreen extends StatelessWidget {
         width: double.infinity,
         padding: EdgeInsets.all(isDesktop ? AppSizes.p24 : AppSizes.p16),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.gray800 : Colors.white,
+          color: isDark ? AppColors.neutral800 : Colors.white,
           borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
           border: Border.all(
-            color: isDark ? AppColors.gray700 : AppColors.divider,
+            color: isDark ? AppColors.neutral700 : AppColors.divider,
             width: 1,
           ),
           boxShadow: [

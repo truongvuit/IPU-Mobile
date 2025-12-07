@@ -46,10 +46,10 @@ class StudentGridItem extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.all(12.w),
           decoration: BoxDecoration(
-            color: isDark ? AppColors.gray800 : Colors.white,
+            color: isDark ? AppColors.neutral800 : Colors.white,
             borderRadius: BorderRadius.circular(12.r),
             border: Border.all(
-              color: isDark ? AppColors.gray700 : AppColors.gray200,
+              color: isDark ? AppColors.neutral700 : AppColors.neutral200,
             ),
             boxShadow: [
               BoxShadow(
@@ -117,7 +117,7 @@ class StudentGridItem extends StatelessWidget {
                           student.studentCode,
                           style: textTheme.bodySmall?.copyWith(
                             color: isDark
-                                ? AppColors.gray400
+                                ? AppColors.neutral400
                                 : AppColors.textSecondary,
                             fontSize: 11.sp,
                           ),
@@ -140,7 +140,7 @@ class StudentGridItem extends StatelessWidget {
                       value: student.averageScore?.toStringAsFixed(1) ?? '--',
                       color: student.averageScore != null
                           ? _getScoreColor(student.averageScore!)
-                          : AppColors.gray500,
+                          : AppColors.neutral500,
                     ),
                     _buildCompactStat(
                       icon: Icons.check_circle_rounded,

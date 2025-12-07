@@ -108,14 +108,13 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
         });
       }
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Lỗi khi chọn ảnh: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lỗi khi chọn ảnh: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
   }
 
@@ -148,8 +147,10 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDesktop = MediaQuery.of(context).size.width >= 1024;
     final dateFormat = DateFormat('dd/MM/yyyy');
+    final keyboardInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: isDark
           ? const Color(0xFF111827)
           : const Color(0xFFF9FAFB),
@@ -234,227 +235,232 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
                   );
                 }
 
-                return SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(
-                    isDesktop ? AppSizes.p32 : AppSizes.paddingMedium,
-                    AppSizes.paddingMedium,
-                    isDesktop ? AppSizes.p32 : AppSizes.paddingMedium,
-                    AppSizes.paddingMedium,
-                  ),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: isDesktop ? 600 : double.infinity,
-                      ),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildAvatarSection(isDark, isDesktop),
-                            SizedBox(height: AppSizes.p32),
+                return SafeArea(
+                  top: false,
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.fromLTRB(
+                      isDesktop ? AppSizes.p32 : AppSizes.paddingMedium,
+                      AppSizes.paddingMedium,
+                      isDesktop ? AppSizes.p32 : AppSizes.paddingMedium,
+                      AppSizes.paddingMedium + keyboardInset,
+                    ),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: isDesktop ? 600 : double.infinity,
+                        ),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildAvatarSection(isDark, isDesktop),
+                              SizedBox(height: AppSizes.p32),
 
-                            _buildSectionHeader(
-                              'Thông tin cơ bản',
-                              Icons.person_outline,
-                              isDark,
-                              isDesktop,
-                            ),
-                            SizedBox(height: AppSizes.p16),
-
-                            _buildTextField(
-                              controller: _nameController,
-                              label: 'Họ và tên',
-                              icon: Icons.badge_outlined,
-                              required: true,
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Vui lòng nhập họ tên';
-                                }
-                                return null;
-                              },
-                              isDark: isDark,
-                              isDesktop: isDesktop,
-                            ),
-                            SizedBox(height: AppSizes.p16),
-
-                            InkWell(
-                              onTap: () => _selectDate(context),
-                              child: InputDecorator(
-                                decoration: _inputDecoration(
-                                  'Ngày sinh',
-                                  Icons.cake_outlined,
-                                  isDark,
-                                  isDesktop,
-                                ),
-                                child: Text(
-                                  _selectedDate != null
-                                      ? dateFormat.format(_selectedDate!)
-                                      : 'Chọn ngày sinh',
-                                  style: TextStyle(
-                                    fontSize: isDesktop
-                                        ? AppSizes.textBase
-                                        : AppSizes.textSm,
-                                    color: _selectedDate != null
-                                        ? (isDark
-                                              ? Colors.white
-                                              : AppColors.textPrimary)
-                                        : AppColors.textSecondary,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: AppSizes.p16),
-
-                            DropdownButtonFormField<String>(
-                              value: _selectedGender,
-                              style: TextStyle(
-                                fontSize: isDesktop
-                                    ? AppSizes.textBase
-                                    : AppSizes.textSm,
-                                color: isDark
-                                    ? Colors.white
-                                    : AppColors.textPrimary,
-                              ),
-                              decoration: _inputDecoration(
-                                'Giới tính',
-                                Icons.wc_outlined,
+                              _buildSectionHeader(
+                                'Thông tin cơ bản',
+                                Icons.person_outline,
                                 isDark,
                                 isDesktop,
                               ),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'Nam',
-                                  child: Text('Nam'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'Nữ',
-                                  child: Text('Nữ'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'Khác',
-                                  child: Text('Khác'),
-                                ),
-                              ],
-                              onChanged: (value) {
-                                setState(() => _selectedGender = value);
-                              },
-                            ),
-                            SizedBox(height: AppSizes.p24),
+                              SizedBox(height: AppSizes.p16),
 
-                            _buildSectionHeader(
-                              'Thông tin liên hệ',
-                              Icons.contact_phone_outlined,
-                              isDark,
-                              isDesktop,
-                            ),
-                            SizedBox(height: AppSizes.p16),
+                              _buildTextField(
+                                controller: _nameController,
+                                label: 'Họ và tên',
+                                icon: Icons.badge_outlined,
+                                required: true,
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'Vui lòng nhập họ tên';
+                                  }
+                                  return null;
+                                },
+                                isDark: isDark,
+                                isDesktop: isDesktop,
+                              ),
+                              SizedBox(height: AppSizes.p16),
 
-                            _buildTextField(
-                              controller: _emailController,
-                              label: 'Email',
-                              icon: Icons.email_outlined,
-                              keyboardType: TextInputType.emailAddress,
-                              validator: InputValidators.email,
-                              isDark: isDark,
-                              isDesktop: isDesktop,
-                            ),
-                            SizedBox(height: AppSizes.p16),
-
-                            _buildTextField(
-                              controller: _phoneController,
-                              label: 'Số điện thoại',
-                              icon: Icons.phone_outlined,
-                              keyboardType: TextInputType.phone,
-                              validator: InputValidators.phone,
-                              isDark: isDark,
-                              isDesktop: isDesktop,
-                            ),
-                            SizedBox(height: AppSizes.p16),
-
-                            _buildTextField(
-                              controller: _addressController,
-                              label: 'Địa chỉ',
-                              icon: Icons.location_on_outlined,
-                              maxLines: 2,
-                              validator: InputValidators.address,
-                              isDark: isDark,
-                              isDesktop: isDesktop,
-                            ),
-                            SizedBox(height: AppSizes.p24),
-
-                            _buildSectionHeader(
-                              'Thông tin chuyên môn',
-                              Icons.workspace_premium_outlined,
-                              isDark,
-                              isDesktop,
-                            ),
-                            SizedBox(height: AppSizes.p16),
-
-                            _buildTextField(
-                              controller: _specializationController,
-                              label: 'Chuyên môn',
-                              icon: Icons.school_outlined,
-                              hint: 'VD: IELTS, TOEIC, Giao tiếp',
-                              isDark: isDark,
-                              isDesktop: isDesktop,
-                            ),
-                            SizedBox(height: AppSizes.p32),
-
-                            BlocBuilder<TeacherBloc, TeacherState>(
-                              builder: (context, btnState) {
-                                final isLoading = btnState is TeacherLoading;
-                                return SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton(
-                                    onPressed: isLoading ? null : _saveProfile,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.primary,
-                                      foregroundColor: Colors.white,
-                                      padding: EdgeInsets.symmetric(
-                                        vertical: isDesktop
-                                            ? AppSizes.p20
-                                            : AppSizes.p16,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          AppSizes.radiusMedium,
-                                        ),
-                                      ),
-                                      elevation: 2,
-                                    ),
-                                    child: isLoading
-                                        ? SizedBox(
-                                            height: isDesktop ? 24.h : 20.h,
-                                            width: isDesktop ? 24.h : 20.h,
-                                            child:
-                                                const CircularProgressIndicator(
-                                                  color: Colors.white,
-                                                  strokeWidth: 2,
-                                                ),
-                                          )
-                                        : Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              const Icon(Icons.save_outlined),
-                                              SizedBox(width: AppSizes.p8),
-                                              Text(
-                                                'Lưu thay đổi',
-                                                style: TextStyle(
-                                                  fontSize: isDesktop
-                                                      ? AppSizes.textLg
-                                                      : AppSizes.textBase,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                              InkWell(
+                                onTap: () => _selectDate(context),
+                                child: InputDecorator(
+                                  decoration: _inputDecoration(
+                                    'Ngày sinh',
+                                    Icons.cake_outlined,
+                                    isDark,
+                                    isDesktop,
                                   ),
-                                );
-                              },
-                            ),
-                          ],
+                                  child: Text(
+                                    _selectedDate != null
+                                        ? dateFormat.format(_selectedDate!)
+                                        : 'Chọn ngày sinh',
+                                    style: TextStyle(
+                                      fontSize: isDesktop
+                                          ? AppSizes.textBase
+                                          : AppSizes.textSm,
+                                      color: _selectedDate != null
+                                          ? (isDark
+                                                ? Colors.white
+                                                : AppColors.textPrimary)
+                                          : AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: AppSizes.p16),
+
+                              DropdownButtonFormField<String>(
+                                initialValue: _selectedGender,
+                                style: TextStyle(
+                                  fontSize: isDesktop
+                                      ? AppSizes.textBase
+                                      : AppSizes.textSm,
+                                  color: isDark
+                                      ? Colors.white
+                                      : AppColors.textPrimary,
+                                ),
+                                decoration: _inputDecoration(
+                                  'Giới tính',
+                                  Icons.wc_outlined,
+                                  isDark,
+                                  isDesktop,
+                                ),
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 'Nam',
+                                    child: Text('Nam'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'Nữ',
+                                    child: Text('Nữ'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'Khác',
+                                    child: Text('Khác'),
+                                  ),
+                                ],
+                                onChanged: (value) {
+                                  setState(() => _selectedGender = value);
+                                },
+                              ),
+                              SizedBox(height: AppSizes.p24),
+
+                              _buildSectionHeader(
+                                'Thông tin liên hệ',
+                                Icons.contact_phone_outlined,
+                                isDark,
+                                isDesktop,
+                              ),
+                              SizedBox(height: AppSizes.p16),
+
+                              _buildTextField(
+                                controller: _emailController,
+                                label: 'Email',
+                                icon: Icons.email_outlined,
+                                keyboardType: TextInputType.emailAddress,
+                                validator: InputValidators.email,
+                                isDark: isDark,
+                                isDesktop: isDesktop,
+                              ),
+                              SizedBox(height: AppSizes.p16),
+
+                              _buildTextField(
+                                controller: _phoneController,
+                                label: 'Số điện thoại',
+                                icon: Icons.phone_outlined,
+                                keyboardType: TextInputType.phone,
+                                validator: InputValidators.phone,
+                                isDark: isDark,
+                                isDesktop: isDesktop,
+                              ),
+                              SizedBox(height: AppSizes.p16),
+
+                              _buildTextField(
+                                controller: _addressController,
+                                label: 'Địa chỉ',
+                                icon: Icons.location_on_outlined,
+                                maxLines: 2,
+                                validator: InputValidators.address,
+                                isDark: isDark,
+                                isDesktop: isDesktop,
+                              ),
+                              SizedBox(height: AppSizes.p24),
+
+                              _buildSectionHeader(
+                                'Thông tin chuyên môn',
+                                Icons.workspace_premium_outlined,
+                                isDark,
+                                isDesktop,
+                              ),
+                              SizedBox(height: AppSizes.p16),
+
+                              _buildTextField(
+                                controller: _specializationController,
+                                label: 'Chuyên môn',
+                                icon: Icons.school_outlined,
+                                hint: 'VD: IELTS, TOEIC, Giao tiếp',
+                                isDark: isDark,
+                                isDesktop: isDesktop,
+                              ),
+                              SizedBox(height: AppSizes.p32),
+
+                              BlocBuilder<TeacherBloc, TeacherState>(
+                                builder: (context, btnState) {
+                                  final isLoading = btnState is TeacherLoading;
+                                  return SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton(
+                                      onPressed: isLoading
+                                          ? null
+                                          : _saveProfile,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.primary,
+                                        foregroundColor: Colors.white,
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: isDesktop
+                                              ? AppSizes.p20
+                                              : AppSizes.p16,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            AppSizes.radiusMedium,
+                                          ),
+                                        ),
+                                        elevation: 2,
+                                      ),
+                                      child: isLoading
+                                          ? SizedBox(
+                                              height: isDesktop ? 24.h : 20.h,
+                                              width: isDesktop ? 24.h : 20.h,
+                                              child:
+                                                  const CircularProgressIndicator(
+                                                    color: Colors.white,
+                                                    strokeWidth: 2,
+                                                  ),
+                                            )
+                                          : Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                const Icon(Icons.save_outlined),
+                                                SizedBox(width: AppSizes.p8),
+                                                Text(
+                                                  'Lưu thay đổi',
+                                                  style: TextStyle(
+                                                    fontSize: isDesktop
+                                                        ? AppSizes.textLg
+                                                        : AppSizes.textBase,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -519,7 +525,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
                   ),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: isDark ? AppColors.gray800 : Colors.white,
+                    color: isDark ? AppColors.neutral800 : Colors.white,
                     width: 2,
                   ),
                   boxShadow: [
@@ -626,19 +632,19 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
       prefixIcon: Icon(icon, size: isDesktop ? 24.sp : 20.sp),
       filled: true,
       fillColor: isDark
-          ? AppColors.gray900.withValues(alpha: 0.5)
+          ? AppColors.neutral900.withValues(alpha: 0.5)
           : AppColors.backgroundAlt,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
         borderSide: BorderSide(
-          color: isDark ? AppColors.gray700 : AppColors.divider,
+          color: isDark ? AppColors.neutral700 : AppColors.divider,
           width: 1,
         ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
         borderSide: BorderSide(
-          color: isDark ? AppColors.gray700 : AppColors.divider,
+          color: isDark ? AppColors.neutral700 : AppColors.divider,
           width: 1,
         ),
       ),

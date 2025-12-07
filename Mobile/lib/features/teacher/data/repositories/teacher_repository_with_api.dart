@@ -2,17 +2,19 @@ import 'package:dartz/dartz.dart';
 import '../../domain/entities/teacher_class.dart';
 import '../../domain/entities/class_student.dart';
 import '../../domain/entities/attendance.dart';
-import '../../domain/entities/student_score.dart';
 import '../../domain/entities/teacher_schedule.dart';
 import '../../domain/entities/teacher_profile.dart';
 import '../../domain/repositories/teacher_repository.dart';
 import '../datasources/teacher_api_datasource.dart';
+import '../datasources/teacher_local_datasource.dart';
+import '../models/teacher_profile_model.dart';
 import '../../../../core/errors/exceptions.dart';
 
 class TeacherRepositoryWithApi implements TeacherRepository {
   final TeacherApiDataSource apiDataSource;
+  final TeacherLocalDataSource? localDataSource;
 
-  TeacherRepositoryWithApi({required this.apiDataSource});
+  TeacherRepositoryWithApi({required this.apiDataSource, this.localDataSource});
 
   @override
   Future<Either<String, TeacherProfile>> getProfile() async {
@@ -28,14 +30,32 @@ class TeacherRepositoryWithApi implements TeacherRepository {
 
   @override
   Future<Either<String, void>> updateProfile(TeacherProfile profile) async {
-    return Left('Not implemented');
+    try {
+      await apiDataSource.updateProfile(
+        TeacherProfileModel.fromEntity(profile),
+      );
+      return const Right(null);
+    } on ServerException catch (e) {
+      return Left(e.message);
+    } catch (e) {
+      return Left('Không thể cập nhật hồ sơ: ${e.toString()}');
+    }
   }
 
   @override
   Future<Either<String, List<TeacherClass>>> getMyClasses() async {
     try {
       final result = await apiDataSource.getMyClasses();
-      return Right(result);
+      
+      final activeClasses = result.where((cls) {
+        final statusLower = (cls.status ?? '').toLowerCase();
+        return statusLower == 'active' ||
+            statusLower == 'ongoing' ||
+            statusLower == 'inprogress' ||
+            statusLower == 'in_progress' ||
+            statusLower == 'đang học';
+      }).toList();
+      return Right(activeClasses);
     } on ServerException catch (e) {
       return Left(e.message);
     } catch (e) {
@@ -73,7 +93,14 @@ class TeacherRepositoryWithApi implements TeacherRepository {
   Future<Either<String, ClassStudent>> getStudentDetail(
     String studentId,
   ) async {
-    return Left('Not implemented');
+    try {
+      final result = await apiDataSource.getStudentDetail(int.parse(studentId));
+      return Right(result);
+    } on ServerException catch (e) {
+      return Left(e.message);
+    } catch (e) {
+      return Left('Không thể tải thông tin học viên: $e');
+    }
   }
 
   @override
@@ -81,7 +108,7 @@ class TeacherRepositoryWithApi implements TeacherRepository {
     String classId,
   ) async {
     
-    return const Left('Use getAttendanceSession with sessionId instead');
+    return const Left('Vui lòng chọn buổi học cụ thể từ lịch dạy');
   }
 
   @override
@@ -89,8 +116,6 @@ class TeacherRepositoryWithApi implements TeacherRepository {
     String classId,
     DateTime date,
   ) async {
-    
-    
     try {
       final sessionId = int.tryParse(classId);
       if (sessionId == null) {
@@ -131,7 +156,9 @@ class TeacherRepositoryWithApi implements TeacherRepository {
     String? note,
   ) async {
     
-    return const Left('Use batchRecordAttendance instead');
+    return const Left(
+      'Chức năng này đã được thay thế. Vui lòng sử dụng điểm danh hàng loạt.',
+    );
   }
 
   @override
@@ -154,55 +181,47 @@ class TeacherRepositoryWithApi implements TeacherRepository {
   }
 
   @override
-  Future<Either<String, void>> submitAttendance(String sessionId) async {
-    
-    return const Right(null);
-  }
-
-  @override
-  Future<Either<String, List<StudentScore>>> getClassScores(
-    String classId,
-  ) async {
-    return Left('Not implemented');
-  }
-
-  @override
-  Future<Either<String, List<StudentScore>>> getStudentScores(
-    String studentId,
-    String classId,
-  ) async {
-    return Left('Not implemented');
-  }
-
-  @override
-  Future<Either<String, void>> submitScore(StudentScore score) async {
-    return Left('Not implemented');
-  }
-
-  @override
-  Future<Either<String, void>> updateScore(StudentScore score) async {
-    return Left('Not implemented');
-  }
-
-  @override
-  Future<Either<String, void>> batchSubmitScores(
-    String classId,
-    String examType,
-    String examName,
-    DateTime examDate,
-    List<Map<String, dynamic>> scores,
-  ) async {
-    return Left('Not implemented');
-  }
-
-  @override
   Future<Either<String, List<TeacherSchedule>>> getWeekSchedule(
     DateTime date,
   ) async {
     try {
+      
+      if (localDataSource != null && localDataSource!.isCacheValid()) {
+        final cachedSchedules = await localDataSource!.getCachedSchedules();
+        if (cachedSchedules != null && cachedSchedules.isNotEmpty) {
+          
+          final weekStart = date.subtract(Duration(days: date.weekday - 1));
+          final weekEnd = weekStart.add(const Duration(days: 7));
+          final filteredSchedules = cachedSchedules.where((s) {
+            return s.startTime.isAfter(
+                  weekStart.subtract(const Duration(days: 1)),
+                ) &&
+                s.startTime.isBefore(weekEnd);
+          }).toList();
+
+          if (filteredSchedules.isNotEmpty) {
+            return Right(filteredSchedules.cast<TeacherSchedule>());
+          }
+        }
+      }
+
+      
       final result = await apiDataSource.getWeekSchedule(date);
+
+      
+      if (localDataSource != null && result.isNotEmpty) {
+        await localDataSource!.cacheSchedules(result);
+      }
+
       return Right(result);
     } on ServerException catch (e) {
+      
+      if (localDataSource != null) {
+        final cachedSchedules = await localDataSource!.getCachedSchedules();
+        if (cachedSchedules != null && cachedSchedules.isNotEmpty) {
+          return Right(cachedSchedules.cast<TeacherSchedule>());
+        }
+      }
       return Left(e.message);
     } catch (e) {
       return Left(e.toString());
@@ -214,7 +233,7 @@ class TeacherRepositoryWithApi implements TeacherRepository {
     final result = await getWeekSchedule(DateTime.now());
     return result.map((schedules) {
       final now = DateTime.now();
-      
+
       return schedules.where((s) {
         return s.startTime.year == now.year &&
             s.startTime.month == now.month &&

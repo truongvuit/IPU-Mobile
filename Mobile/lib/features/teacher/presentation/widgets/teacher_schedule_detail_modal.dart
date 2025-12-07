@@ -40,7 +40,7 @@ class TeacherScheduleDetailModal extends StatelessWidget {
         maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.gray800 : Colors.white,
+        color: isDark ? AppColors.neutral800 : Colors.white,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(AppSizes.radiusLarge),
           topRight: Radius.circular(AppSizes.radiusLarge),
@@ -55,7 +55,7 @@ class TeacherScheduleDetailModal extends StatelessWidget {
             width: 40.w,
             height: 4.h,
             decoration: BoxDecoration(
-              color: isDark ? AppColors.gray600 : AppColors.gray300,
+              color: isDark ? AppColors.neutral600 : AppColors.neutral300,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -66,7 +66,7 @@ class TeacherScheduleDetailModal extends StatelessWidget {
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
-                  color: isDark ? AppColors.gray700 : AppColors.divider,
+                  color: isDark ? AppColors.neutral700 : AppColors.divider,
                   width: 1,
                 ),
               ),
@@ -225,7 +225,7 @@ class TeacherScheduleDetailModal extends StatelessWidget {
                       padding: EdgeInsets.all(AppSizes.p12),
                       decoration: BoxDecoration(
                         color: isDark
-                            ? AppColors.gray900.withValues(alpha: 0.5)
+                            ? AppColors.neutral900.withValues(alpha: 0.5)
                             : AppColors.backgroundAlt,
                         borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
                       ),
@@ -287,10 +287,10 @@ class TeacherScheduleDetailModal extends StatelessWidget {
                             padding: EdgeInsets.symmetric(
                               vertical: isDesktop ? AppSizes.p16 : AppSizes.p12,
                             ),
-                            backgroundColor: schedule.isCompleted ? AppColors.gray400 : AppColors.primary,
+                            backgroundColor: schedule.isCompleted ? AppColors.neutral400 : AppColors.primary,
                             foregroundColor: Colors.white,
-                            disabledBackgroundColor: AppColors.gray300,
-                            disabledForegroundColor: AppColors.gray500,
+                            disabledBackgroundColor: AppColors.neutral300,
+                            disabledForegroundColor: AppColors.neutral500,
                           ),
                         ),
                       ),
@@ -321,11 +321,11 @@ class TeacherScheduleDetailModal extends StatelessWidget {
         padding: EdgeInsets.all(isDesktop ? AppSizes.p16 : AppSizes.p12),
         decoration: BoxDecoration(
           color: isDark
-              ? AppColors.gray900.withValues(alpha: 0.5)
+              ? AppColors.neutral900.withValues(alpha: 0.5)
               : AppColors.backgroundAlt,
           borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
           border: Border.all(
-            color: isDark ? AppColors.gray700 : AppColors.divider,
+            color: isDark ? AppColors.neutral700 : AppColors.divider,
             width: 1,
           ),
         ),

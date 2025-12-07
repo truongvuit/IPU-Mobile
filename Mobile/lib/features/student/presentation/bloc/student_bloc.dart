@@ -1,5 +1,5 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import '../../domain/repositories/student_repository.dart';
 import '../../domain/entities/student_class.dart';
 import '../../domain/entities/schedule.dart';
@@ -10,38 +10,52 @@ import 'student_state.dart';
 
 class StudentBloc extends Bloc<StudentEvent, StudentState> {
   final StudentRepository repository;
-  
-  
+
   StudentProfile? _cachedProfile;
   StudentProfile? get cachedProfile => _cachedProfile;
 
+  // Cart state - persisted across screen navigation
+  final List<CartItem> _cartItems = [];
+
   StudentBloc({required this.repository}) : super(const StudentInitial()) {
-    on<LoadDashboard>(_onLoadDashboard);
-    on<LoadAllCourses>(_onLoadAllCourses);
-    on<SearchCourses>(_onSearchCourses);
+    on<LoadDashboard>(_onLoadDashboard, transformer: droppable());
+    on<LoadAllCourses>(_onLoadAllCourses, transformer: droppable());
+    on<LoadMyClasses>(_onLoadMyClasses, transformer: droppable());
+
+    on<LoadSchedule>(_onLoadSchedule, transformer: restartable());
+    on<LoadWeekSchedule>(_onLoadWeekSchedule, transformer: restartable());
+    on<LoadMyGrades>(_onLoadMyGrades, transformer: droppable());
+    on<LoadProfile>(_onLoadProfile, transformer: droppable());
+    on<LoadGradesByCourse>(_onLoadGradesByCourse, transformer: droppable());
+    on<LoadGradesByClass>(_onLoadGradesByClass, transformer: droppable());
+    on<LoadReviewHistory>(_onLoadReviewHistory, transformer: droppable());
+    on<LoadClassReview>(_onLoadClassReview, transformer: droppable());
+
+    on<SearchCourses>(_onSearchCourses, transformer: restartable());
+
     on<LoadCourseDetail>(_onLoadCourseDetail);
-    on<LoadMyClasses>(_onLoadMyClasses);
     on<LoadClassDetail>(_onLoadClassDetail);
-    on<LoadSchedule>(_onLoadSchedule);
-    on<LoadWeekSchedule>(_onLoadWeekSchedule);
-    on<LoadMyGrades>(_onLoadMyGrades);
-    on<LoadGradesByCourse>(_onLoadGradesByCourse);
-    on<LoadProfile>(_onLoadProfile);
     on<UpdateProfile>(_onUpdateProfile);
-    on<EnrollCourse>(_onEnrollCourse);
     on<SubmitRating>(_onSubmitRating);
-    on<LoadReviewHistory>(_onLoadReviewHistory);
-    on<LoadClassReview>(_onLoadClassReview);
+
+    // Cart events
+    on<AddCourseToCart>(_onAddCourseToCart);
+    on<RemoveFromCart>(_onRemoveFromCart);
+    on<ClearCart>(_onClearCart);
   }
 
   Future<void> _onLoadDashboard(
     LoadDashboard event,
     Emitter<StudentState> emit,
   ) async {
-    emit(const StudentLoading(action: 'Đang tải dashboard...'));
+    final currentState = state;
+    if (currentState is DashboardLoaded) {
+      emit(currentState.copyWith(isRefreshing: true));
+    } else {
+      emit(const StudentLoading(action: 'Đang tải dashboard...'));
+    }
 
     try {
-      
       final classesResultFuture = repository.getUpcomingClasses();
       final profileResultFuture = repository.getProfile();
       final todayScheduleFuture = repository.getScheduleByDate(DateTime.now());
@@ -50,26 +64,32 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
       final profileResult = await profileResultFuture;
       final todayScheduleResult = await todayScheduleFuture;
 
-      
       final profile = profileResult.fold((_) => null, (profile) => profile);
       if (profile != null) {
         _cachedProfile = profile;
       }
-      debugPrint('StudentBloc: LoadDashboard - profile loaded: ${profile?.fullName ?? "NULL"}, cached: ${_cachedProfile?.fullName ?? "NULL"}');
+
+      String? profileError;
+      if (profileResult.isLeft() && _cachedProfile == null) {
+        profileError = profileResult.fold((f) => f.message, (_) => null);
+      }
 
       if (classesResult.isLeft()) {
-        emit(
-          StudentError(
-            classesResult.fold(
-              (failure) => failure.message,
-              (_) => 'Unknown error',
-            ),
-          ),
+        final errorMsg = classesResult.fold(
+          (f) => f.message,
+          (_) => 'Unknown error',
         );
+
+        if (currentState is DashboardLoaded) {
+          emit(
+            currentState.copyWith(isRefreshing: false, errorMessage: errorMsg),
+          );
+        } else {
+          emit(StudentError(errorMsg));
+        }
         return;
       }
 
-      
       final today = DateTime.now();
       final todaySchedules = todayScheduleResult.fold(
         (_) => <Schedule>[],
@@ -91,10 +111,18 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
           ),
           profile: _cachedProfile,
           todaySchedules: todaySchedules,
+          errorMessage: profileError,
         ),
       );
     } catch (e) {
-      emit(StudentError('${StudentMessages.errorLoadDashboard}: $e'));
+      final errorMsg = '${StudentMessages.errorLoadDashboard}: $e';
+      if (currentState is DashboardLoaded) {
+        emit(
+          currentState.copyWith(isRefreshing: false, errorMessage: errorMsg),
+        );
+      } else {
+        emit(StudentError(errorMsg));
+      }
     }
   }
 
@@ -102,17 +130,37 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     LoadAllCourses event,
     Emitter<StudentState> emit,
   ) async {
-    emit(const StudentLoading(action: 'Đang tải khóa học...'));
+    final currentState = state;
+    if (currentState is CoursesLoaded) {
+      emit(currentState.copyWith(isRefreshing: true));
+    } else {
+      emit(const StudentLoading(action: 'Đang tải khóa học...'));
+    }
 
     try {
       final result = await repository.getAllCourses();
 
-      result.fold(
-        (failure) => emit(StudentError(failure.message)),
-        (courses) => emit(CoursesLoaded(courses)),
-      );
+      result.fold((failure) {
+        if (currentState is CoursesLoaded) {
+          emit(
+            currentState.copyWith(
+              isRefreshing: false,
+              errorMessage: failure.message,
+            ),
+          );
+        } else {
+          emit(StudentError(failure.message));
+        }
+      }, (courses) => emit(CoursesLoaded(courses)));
     } catch (e) {
-      emit(StudentError('${StudentMessages.errorLoadCourses}: $e'));
+      final errorMsg = '${StudentMessages.errorLoadCourses}: $e';
+      if (currentState is CoursesLoaded) {
+        emit(
+          currentState.copyWith(isRefreshing: false, errorMessage: errorMsg),
+        );
+      } else {
+        emit(StudentError(errorMsg));
+      }
     }
   }
 
@@ -156,17 +204,37 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     LoadMyClasses event,
     Emitter<StudentState> emit,
   ) async {
-    emit(const StudentLoading());
+    final currentState = state;
+    if (currentState is ClassesLoaded) {
+      emit(currentState.copyWith(isRefreshing: true));
+    } else {
+      emit(const StudentLoading());
+    }
 
     try {
       final result = await repository.getMyClasses();
 
-      result.fold(
-        (failure) => emit(StudentError(failure.message)),
-        (classes) => emit(ClassesLoaded(classes)),
-      );
+      result.fold((failure) {
+        if (currentState is ClassesLoaded) {
+          emit(
+            currentState.copyWith(
+              isRefreshing: false,
+              errorMessage: failure.message,
+            ),
+          );
+        } else {
+          emit(StudentError(failure.message));
+        }
+      }, (classes) => emit(ClassesLoaded(classes)));
     } catch (e) {
-      emit(StudentError('Không thể tải danh sách lớp học: $e'));
+      final errorMsg = 'Không thể tải danh sách lớp học: $e';
+      if (currentState is ClassesLoaded) {
+        emit(
+          currentState.copyWith(isRefreshing: false, errorMessage: errorMsg),
+        );
+      } else {
+        emit(StudentError(errorMsg));
+      }
     }
   }
 
@@ -192,19 +260,42 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     LoadSchedule event,
     Emitter<StudentState> emit,
   ) async {
-    emit(const StudentLoading());
+    final currentState = state;
+    if (currentState is ScheduleLoaded) {
+      emit(currentState.copyWith(isRefreshing: true));
+    } else {
+      emit(const StudentLoading());
+    }
 
     try {
       final result = await repository.getScheduleByDate(event.date);
 
       result.fold(
-        (failure) => emit(StudentError(failure.message)),
+        (failure) {
+          if (currentState is ScheduleLoaded) {
+            emit(
+              currentState.copyWith(
+                isRefreshing: false,
+                errorMessage: failure.message,
+              ),
+            );
+          } else {
+            emit(StudentError(failure.message));
+          }
+        },
         (schedules) => emit(
           ScheduleLoaded(schedules: schedules, selectedDate: event.date),
         ),
       );
     } catch (e) {
-      emit(StudentError('Không thể tải lịch học: $e'));
+      final errorMsg = 'Không thể tải lịch học: $e';
+      if (currentState is ScheduleLoaded) {
+        emit(
+          currentState.copyWith(isRefreshing: false, errorMessage: errorMsg),
+        );
+      } else {
+        emit(StudentError(errorMsg));
+      }
     }
   }
 
@@ -212,19 +303,42 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     LoadWeekSchedule event,
     Emitter<StudentState> emit,
   ) async {
-    emit(const StudentLoading());
+    final currentState = state;
+    if (currentState is WeekScheduleLoaded) {
+      emit(currentState.copyWith(isRefreshing: true));
+    } else {
+      emit(const StudentLoading());
+    }
 
     try {
       final result = await repository.getWeekSchedule(event.startDate);
 
       result.fold(
-        (failure) => emit(StudentError(failure.message)),
+        (failure) {
+          if (currentState is WeekScheduleLoaded) {
+            emit(
+              currentState.copyWith(
+                isRefreshing: false,
+                errorMessage: failure.message,
+              ),
+            );
+          } else {
+            emit(StudentError(failure.message));
+          }
+        },
         (schedules) => emit(
           WeekScheduleLoaded(schedules: schedules, startDate: event.startDate),
         ),
       );
     } catch (e) {
-      emit(StudentError('Không thể tải lịch tuần: $e'));
+      final errorMsg = 'Không thể tải lịch tuần: $e';
+      if (currentState is WeekScheduleLoaded) {
+        emit(
+          currentState.copyWith(isRefreshing: false, errorMessage: errorMsg),
+        );
+      } else {
+        emit(StudentError(errorMsg));
+      }
     }
   }
 
@@ -232,17 +346,37 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     LoadMyGrades event,
     Emitter<StudentState> emit,
   ) async {
-    emit(const StudentLoading());
+    final currentState = state;
+    if (currentState is GradesLoaded) {
+      emit(currentState.copyWith(isRefreshing: true));
+    } else {
+      emit(const StudentLoading());
+    }
 
     try {
       final result = await repository.getMyGrades();
 
-      result.fold(
-        (failure) => emit(StudentError(failure.message)),
-        (grades) => emit(GradesLoaded(grades)),
-      );
+      result.fold((failure) {
+        if (currentState is GradesLoaded) {
+          emit(
+            currentState.copyWith(
+              isRefreshing: false,
+              errorMessage: failure.message,
+            ),
+          );
+        } else {
+          emit(StudentError(failure.message));
+        }
+      }, (grades) => emit(GradesLoaded(grades)));
     } catch (e) {
-      emit(StudentError('Không thể tải điểm số: $e'));
+      final errorMsg = 'Không thể tải điểm số: $e';
+      if (currentState is GradesLoaded) {
+        emit(
+          currentState.copyWith(isRefreshing: false, errorMessage: errorMsg),
+        );
+      } else {
+        emit(StudentError(errorMsg));
+      }
     }
   }
 
@@ -250,18 +384,89 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     LoadGradesByCourse event,
     Emitter<StudentState> emit,
   ) async {
-    emit(const StudentLoading());
+    final currentState = state;
+    if (currentState is CourseGradesLoaded &&
+        currentState.courseId == event.courseId) {
+      emit(currentState.copyWith(isRefreshing: true));
+    } else {
+      emit(const StudentLoading());
+    }
 
     try {
       final result = await repository.getGradesByCourse(event.courseId);
 
       result.fold(
-        (failure) => emit(StudentError(failure.message)),
+        (failure) {
+          if (currentState is CourseGradesLoaded &&
+              currentState.courseId == event.courseId) {
+            emit(
+              currentState.copyWith(
+                isRefreshing: false,
+                errorMessage: failure.message,
+              ),
+            );
+          } else {
+            emit(StudentError(failure.message));
+          }
+        },
         (grades) =>
             emit(CourseGradesLoaded(grades: grades, courseId: event.courseId)),
       );
     } catch (e) {
-      emit(StudentError('Không thể tải điểm khóa học: $e'));
+      final errorMsg = 'Không thể tải điểm khóa học: $e';
+      if (currentState is CourseGradesLoaded &&
+          currentState.courseId == event.courseId) {
+        emit(
+          currentState.copyWith(isRefreshing: false, errorMessage: errorMsg),
+        );
+      } else {
+        emit(StudentError(errorMsg));
+      }
+    }
+  }
+
+  Future<void> _onLoadGradesByClass(
+    LoadGradesByClass event,
+    Emitter<StudentState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is ClassGradesLoaded &&
+        currentState.classId == event.classId) {
+      emit(currentState.copyWith(isRefreshing: true));
+    } else {
+      emit(const StudentLoading());
+    }
+
+    try {
+      final result = await repository.getGradesByClass(event.classId);
+
+      result.fold(
+        (failure) {
+          if (currentState is ClassGradesLoaded &&
+              currentState.classId == event.classId) {
+            emit(
+              currentState.copyWith(
+                isRefreshing: false,
+                errorMessage: failure.message,
+              ),
+            );
+          } else {
+            emit(StudentError(failure.message));
+          }
+        },
+        (grade) =>
+            emit(ClassGradesLoaded(grade: grade, classId: event.classId)),
+      );
+    } catch (e) {
+      final errorMsg = 'Không thể tải điểm lớp: $e';
+      if (currentState is ClassGradesLoaded &&
+          currentState.classId == event.classId) {
+        emit(
+          currentState.copyWith(isRefreshing: false, errorMessage: errorMsg),
+        );
+      } else {
+        emit(StudentError(errorMsg));
+      }
     }
   }
 
@@ -269,17 +474,37 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     LoadProfile event,
     Emitter<StudentState> emit,
   ) async {
-    emit(const StudentLoading());
+    final currentState = state;
+    if (currentState is ProfileLoaded) {
+      emit(currentState.copyWith(isRefreshing: true));
+    } else {
+      emit(const StudentLoading());
+    }
 
     try {
       final result = await repository.getProfile();
 
-      result.fold(
-        (failure) => emit(StudentError(failure.message)),
-        (profile) => emit(ProfileLoaded(profile)),
-      );
+      result.fold((failure) {
+        if (currentState is ProfileLoaded) {
+          emit(
+            currentState.copyWith(
+              isRefreshing: false,
+              errorMessage: failure.message,
+            ),
+          );
+        } else {
+          emit(StudentError(failure.message));
+        }
+      }, (profile) => emit(ProfileLoaded(profile)));
     } catch (e) {
-      emit(StudentError('Không thể tải hồ sơ: $e'));
+      final errorMsg = 'Không thể tải hồ sơ: $e';
+      if (currentState is ProfileLoaded) {
+        emit(
+          currentState.copyWith(isRefreshing: false, errorMessage: errorMsg),
+        );
+      } else {
+        emit(StudentError(errorMsg));
+      }
     }
   }
 
@@ -333,23 +558,6 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     }
   }
 
-  Future<void> _onEnrollCourse(
-    EnrollCourse event,
-    Emitter<StudentState> emit,
-  ) async {
-    emit(const StudentLoading());
-
-    try {
-      final result = await repository.enrollCourse(event.courseId);
-      result.fold(
-        (failure) => emit(StudentError(failure.message)),
-        (_) => emit(const CourseEnrolled()),
-      );
-    } catch (e) {
-      emit(StudentError('Không thể đăng ký khóa học: $e'));
-    }
-  }
-
   Future<void> _onSubmitRating(
     SubmitRating event,
     Emitter<StudentState> emit,
@@ -377,20 +585,39 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     LoadReviewHistory event,
     Emitter<StudentState> emit,
   ) async {
-    emit(const StudentLoading());
+    final currentState = state;
+    if (currentState is ReviewHistoryLoaded) {
+      emit(currentState.copyWith(isRefreshing: true));
+    } else {
+      emit(const StudentLoading());
+    }
 
     try {
       final result = await repository.getReviewHistory();
-      result.fold(
-        (failure) => emit(StudentError(failure.message)),
-        (reviews) => emit(ReviewHistoryLoaded(reviews)),
-      );
+      result.fold((failure) {
+        if (currentState is ReviewHistoryLoaded) {
+          emit(
+            currentState.copyWith(
+              isRefreshing: false,
+              errorMessage: failure.message,
+            ),
+          );
+        } else {
+          emit(StudentError(failure.message));
+        }
+      }, (reviews) => emit(ReviewHistoryLoaded(reviews)));
     } catch (e) {
-      emit(StudentError('Không thể tải lịch sử đánh giá: $e'));
+      final errorMsg = 'Không thể tải lịch sử đánh giá: $e';
+      if (currentState is ReviewHistoryLoaded) {
+        emit(
+          currentState.copyWith(isRefreshing: false, errorMessage: errorMsg),
+        );
+      } else {
+        emit(StudentError(errorMsg));
+      }
     }
   }
 
-  
   Future<void> _onLoadClassReview(
     LoadClassReview event,
     Emitter<StudentState> emit,
@@ -398,26 +625,53 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     emit(const StudentLoading());
 
     try {
-      final result = await repository.getReviewHistory();
+      final result = await repository.getClassReview(event.classId);
       result.fold(
         (failure) =>
             emit(ClassReviewLoaded(review: null, classId: event.classId)),
-        (reviews) {
-          
-          final classIdInt = int.tryParse(event.classId) ?? 0;
-          final existingReview = reviews
-              .where((r) => r.classId == classIdInt)
-              .toList();
-          emit(
-            ClassReviewLoaded(
-              review: existingReview.isNotEmpty ? existingReview.first : null,
-              classId: event.classId,
-            ),
-          );
-        },
+        (review) =>
+            emit(ClassReviewLoaded(review: review, classId: event.classId)),
       );
     } catch (e) {
       emit(ClassReviewLoaded(review: null, classId: event.classId));
     }
   }
+
+  // ==================== CART HANDLERS ====================
+
+  void _onAddCourseToCart(AddCourseToCart event, Emitter<StudentState> emit) {
+    // Check if already in cart
+    if (_cartItems.any((item) => item.classId == event.classId)) {
+      return; // Already in cart
+    }
+
+    _cartItems.add(
+      CartItem(
+        courseId: event.courseId,
+        courseName: event.courseName,
+        classId: event.classId,
+        className: event.className,
+        price: event.price,
+        imageUrl: event.imageUrl,
+      ),
+    );
+
+    emit(StudentCartUpdated(cartItems: List.from(_cartItems)));
+  }
+
+  void _onRemoveFromCart(RemoveFromCart event, Emitter<StudentState> emit) {
+    _cartItems.removeWhere((item) => item.classId == event.classId);
+    emit(StudentCartUpdated(cartItems: List.from(_cartItems)));
+  }
+
+  void _onClearCart(ClearCart event, Emitter<StudentState> emit) {
+    _cartItems.clear();
+    emit(StudentCartUpdated(cartItems: []));
+  }
+
+  // Getter for current cart items (useful for UI)
+  List<CartItem> get cartItems => List.unmodifiable(_cartItems);
+  int get cartItemCount => _cartItems.length;
+  bool isInCart(int classId) =>
+      _cartItems.any((item) => item.classId == classId);
 }

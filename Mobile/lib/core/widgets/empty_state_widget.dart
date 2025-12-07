@@ -31,14 +31,14 @@ class EmptyStateWidget extends StatelessWidget {
               padding: EdgeInsets.all(AppSizes.p24),
               decoration: BoxDecoration(
                 color: isDark 
-                    ? AppColors.gray800 
-                    : AppColors.gray100,
+                    ? AppColors.neutral800 
+                    : AppColors.neutral100,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
                 size: 48.sp,
-                color: isDark ? AppColors.gray400 : AppColors.gray500,
+                color: isDark ? AppColors.neutral400 : AppColors.neutral500,
               ),
             ),
             SizedBox(height: AppSizes.p16),
@@ -47,7 +47,7 @@ class EmptyStateWidget extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: AppSizes.textLg,
-                color: isDark ? AppColors.gray400 : AppColors.gray600,
+                color: isDark ? AppColors.neutral400 : AppColors.neutral600,
                 fontFamily: 'Lexend',
               ),
             ),

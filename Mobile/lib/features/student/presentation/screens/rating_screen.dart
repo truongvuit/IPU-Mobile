@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../widgets/student_app_bar.dart';
@@ -23,7 +24,8 @@ class RatingScreen extends StatefulWidget {
   State<RatingScreen> createState() => _RatingScreenState();
 }
 
-class _RatingScreenState extends State<RatingScreen> {
+class _RatingScreenState extends State<RatingScreen>
+    with SingleTickerProviderStateMixin {
   int _overallRating = 0;
   int _facilityRating = 0;
   int _teacherRating = 0;
@@ -32,23 +34,65 @@ class _RatingScreenState extends State<RatingScreen> {
   final List<File> _selectedImages = [];
   Timer? _debounce;
   Review? _existingReview;
-  bool _isViewMode = false; 
+  bool _isViewMode = false;
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+
+  Map<String, String> _getRatingInfo(int rating) {
+    switch (rating) {
+      case 1:
+        return {'emoji': '😞', 'text': 'Rất không hài lòng', 'color': 'red'};
+      case 2:
+        return {'emoji': '😕', 'text': 'Không hài lòng', 'color': 'orange'};
+      case 3:
+        return {'emoji': '😐', 'text': 'Bình thường', 'color': 'yellow'};
+      case 4:
+        return {'emoji': '😊', 'text': 'Hài lòng', 'color': 'lightGreen'};
+      case 5:
+        return {'emoji': '🤩', 'text': 'Rất hài lòng', 'color': 'green'};
+      default:
+        return {'emoji': '⭐', 'text': 'Chọn đánh giá của bạn', 'color': 'grey'};
+    }
+  }
+
+  Color _getRatingColor(int rating) {
+    switch (rating) {
+      case 1:
+        return Colors.red;
+      case 2:
+        return Colors.orange;
+      case 3:
+        return Colors.amber;
+      case 4:
+        return Colors.lightGreen;
+      case 5:
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  } 
 
   final List<String> _availableTags = [
-    '📚 Nội dung phong phú',
-    '👨‍🏫 Giáo viên tận tâm',
-    '⏰ Thời gian hợp lý',
-    '💰 Giá trị xứng đáng',
-    '🎯 Đạt mục tiêu',
-    '🤝 Hỗ trợ tốt',
-    '📖 Tài liệu chất lượng',
-    '🎓 Học được nhiều',
+    'Nội dung phong phú',
+    'Giáo viên tận tâm',
+    'Thời gian hợp lý',
+    'Giá trị xứng đáng',
+    'Đạt mục tiêu',
+    'Hỗ trợ tốt',
+    'Tài liệu chất lượng',
+    'Học được nhiều',
   ];
 
   @override
   void initState() {
     super.initState();
-    
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.elasticOut),
+    );
     context.read<StudentBloc>().add(LoadClassReview(widget.classId));
   }
 
@@ -73,6 +117,7 @@ class _RatingScreenState extends State<RatingScreen> {
   void dispose() {
     _commentController.dispose();
     _debounce?.cancel();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -504,7 +549,7 @@ class _RatingScreenState extends State<RatingScreen> {
                                 ),
 
                               
-                              if (_isViewMode)
+                              if (_isViewMode) ...[
                                 SizedBox(
                                   width: double.infinity,
                                   child: OutlinedButton(
@@ -534,6 +579,33 @@ class _RatingScreenState extends State<RatingScreen> {
                                     ),
                                   ),
                                 ),
+                                SizedBox(height: 12.h),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: TextButton(
+                                    onPressed: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        AppRouter.studentReviewHistory,
+                                      );
+                                    },
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: AppColors.primary,
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: isDesktop ? 16.h : 12.h,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'Xem lịch sử đánh giá',
+                                      style: TextStyle(
+                                        fontFamily: 'Lexend',
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: isDesktop ? 16.sp : 14.sp,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
 
                               SizedBox(height: 32.h),
                             ],
@@ -604,42 +676,113 @@ class _RatingScreenState extends State<RatingScreen> {
     bool isDesktop,
   ) {
     final bool isReadOnly = onRatingChanged == null;
-    return Column(
-      children: [
-        Text(
-          title,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: isDesktop ? 24.sp : 20.sp,
-            fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : AppColors.textPrimary,
-            fontFamily: 'Lexend',
+    final ratingInfo = _getRatingInfo(rating);
+    final ratingColor = _getRatingColor(rating);
+
+    return Container(
+      padding: EdgeInsets.all(24.w),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [const Color(0xFF1F2937), const Color(0xFF111827)]
+              : [Colors.white, const Color(0xFFF3F4F6)],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: (isDark ? Colors.black : Colors.grey).withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-        ),
-        SizedBox(height: 16.h),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(5, (index) {
-            return isReadOnly
-                ? Icon(
-                    index < rating ? Icons.star : Icons.star_border,
-                    color: AppColors.warning,
-                    size: isDesktop ? 56.sp : 48.sp,
-                  )
-                : IconButton(
-                    iconSize: isDesktop ? 56.sp : 48.sp,
-                    icon: Icon(
-                      index < rating ? Icons.star : Icons.star_border,
-                      color: AppColors.warning,
-                    ),
-                    onPressed: () {
-                      HapticFeedback.lightImpact();
-                      onRatingChanged(index + 1);
-                    },
-                  );
-          }),
-        ),
-      ],
+        ],
+      ),
+      child: Column(
+        children: [
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: isDesktop ? 24.sp : 20.sp,
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white : AppColors.textPrimary,
+              fontFamily: 'Lexend',
+            ),
+          ),
+          SizedBox(height: 16.h),
+
+          // Emoji indicator
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            transitionBuilder: (child, animation) {
+              return ScaleTransition(scale: animation, child: child);
+            },
+            child: Text(
+              ratingInfo['emoji']!,
+              key: ValueKey(rating),
+              style: TextStyle(fontSize: isDesktop ? 60.sp : 48.sp),
+            ),
+          ),
+          SizedBox(height: 8.h),
+
+          // Rating description
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: Text(
+              ratingInfo['text']!,
+              key: ValueKey(ratingInfo['text']),
+              style: TextStyle(
+                fontSize: isDesktop ? 16.sp : 14.sp,
+                fontWeight: FontWeight.w600,
+                color: rating > 0 ? ratingColor : Colors.grey,
+                fontFamily: 'Lexend',
+              ),
+            ),
+          ),
+          SizedBox(height: 20.h),
+
+          // Stars row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(5, (index) {
+              final isFilled = index < rating;
+              return GestureDetector(
+                onTap: isReadOnly
+                    ? null
+                    : () {
+                        HapticFeedback.lightImpact();
+                        _animationController.forward().then((_) {
+                          _animationController.reverse();
+                        });
+                        onRatingChanged!(index + 1);
+                      },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: EdgeInsets.symmetric(horizontal: 4.w),
+                  child: Icon(
+                    isFilled ? Icons.star_rounded : Icons.star_outline_rounded,
+                    color: isFilled ? AppColors.warning : Colors.grey[400],
+                    size: isDesktop ? 52.sp : 44.sp,
+                  ),
+                ),
+              );
+            }),
+          ),
+
+          if (!isReadOnly) ...[
+            SizedBox(height: 12.h),
+            Text(
+              'Nhấn để chọn số sao',
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: Colors.grey,
+                fontFamily: 'Lexend',
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -652,49 +795,82 @@ class _RatingScreenState extends State<RatingScreen> {
     bool isDesktop,
   ) {
     final bool isReadOnly = onRatingChanged == null;
+    final ratingColor = _getRatingColor(rating);
+
     return Container(
-      padding: EdgeInsets.all(12.w),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1F2937) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: rating > 0
+              ? ratingColor.withValues(alpha: 0.3)
+              : (isDark ? Colors.grey[800]! : Colors.grey[200]!),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (isDark ? Colors.black : Colors.grey).withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.primary, size: 24.sp),
-          SizedBox(width: 12.w),
+          Container(
+            padding: EdgeInsets.all(10.w),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: AppColors.primary, size: 22.sp),
+          ),
+          SizedBox(width: 14.w),
           Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: isDark ? Colors.white : Colors.black87,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black87,
+                    fontFamily: 'Lexend',
+                  ),
+                ),
+                if (rating > 0)
+                  Text(
+                    _getRatingInfo(rating)['text']!,
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      color: ratingColor,
+                      fontFamily: 'Lexend',
+                    ),
+                  ),
+              ],
             ),
           ),
           Row(
             children: List.generate(5, (index) {
-              return isReadOnly
-                  ? Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 2.w),
-                      child: Icon(
-                        index < rating ? Icons.star : Icons.star_border,
-                        color: AppColors.warning,
-                        size: 24.sp,
-                      ),
-                    )
-                  : IconButton(
-                      iconSize: 24.sp,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      icon: Icon(
-                        index < rating ? Icons.star : Icons.star_border,
-                        color: AppColors.warning,
-                      ),
-                      onPressed: () {
+              final isFilled = index < rating;
+              return GestureDetector(
+                onTap: isReadOnly
+                    ? null
+                    : () {
                         HapticFeedback.lightImpact();
-                        onRatingChanged(index + 1);
+                        onRatingChanged!(index + 1);
                       },
-                    );
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 2.w),
+                  child: Icon(
+                    isFilled ? Icons.star_rounded : Icons.star_outline_rounded,
+                    color: isFilled ? AppColors.warning : Colors.grey[400],
+                    size: isDesktop ? 26.sp : 22.sp,
+                  ),
+                ),
+              );
             }),
           ),
         ],

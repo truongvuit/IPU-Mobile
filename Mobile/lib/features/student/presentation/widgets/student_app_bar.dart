@@ -59,7 +59,7 @@ class StudentAppBar extends StatelessWidget implements PreferredSizeWidget {
                     IconButton(
                       icon: Icon(
                         Icons.arrow_back,
-                        color: isDark ? Colors.white : AppColors.slate800,
+                        color: isDark ? Colors.white : AppColors.neutral800,
                         size: AppSizes.iconMedium,
                       ),
                       onPressed: onBackPressed ?? () => Navigator.pop(context),
@@ -68,7 +68,7 @@ class StudentAppBar extends StatelessWidget implements PreferredSizeWidget {
                     IconButton(
                       icon: Icon(
                         Icons.menu,
-                        color: isDark ? Colors.white : AppColors.slate800,
+                        color: isDark ? Colors.white : AppColors.neutral800,
                         size: AppSizes.iconMedium,
                       ),
                       onPressed: onMenuPressed,
@@ -95,7 +95,7 @@ class StudentAppBar extends StatelessWidget implements PreferredSizeWidget {
                             style: TextStyle(
                               fontSize: AppSizes.textXl,
                               fontWeight: FontWeight.w700,
-                              color: isDark ? Colors.white : AppColors.slate900,
+                              color: isDark ? Colors.white : AppColors.neutral900,
                               fontFamily: 'Lexend',
                             ),
                           ),
@@ -114,7 +114,7 @@ class StudentAppBar extends StatelessWidget implements PreferredSizeWidget {
                 style: TextStyle(
                   fontSize: AppSizes.textXl,
                   fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : AppColors.slate900,
+                  color: isDark ? Colors.white : AppColors.neutral900,
                   fontFamily: 'Lexend',
                 ),
               ),
@@ -128,7 +128,7 @@ class StudentAppBar extends StatelessWidget implements PreferredSizeWidget {
                     IconButton(
                       icon: Icon(
                         Icons.notifications_outlined,
-                        color: isDark ? AppColors.gray300 : AppColors.slate600,
+                        color: isDark ? AppColors.neutral300 : AppColors.neutral600,
                         size: AppSizes.iconMedium,
                       ),
                       onPressed: onNotificationTap,

@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import '../../../../core/api/dio_client.dart';
 import '../models/course_detail_model.dart';
 import 'admin_course_data_source.dart';
@@ -47,7 +49,7 @@ class AdminCourseRemoteDataSource implements AdminCourseDataSource {
 
       throw Exception(response.data['message'] ?? 'Failed to load courses');
     } catch (e) {
-      print('Error loading courses: $e');
+      log('Error loading courses: $e');
       rethrow;
     }
   }
@@ -64,7 +66,7 @@ class AdminCourseRemoteDataSource implements AdminCourseDataSource {
 
       throw Exception(response.data['message'] ?? 'Failed to load course');
     } catch (e) {
-      print('Error loading course by id: $e');
+      log('Error loading course by id: $e');
       rethrow;
     }
   }
@@ -86,10 +88,10 @@ class AdminCourseRemoteDataSource implements AdminCourseDataSource {
           'description': request.description,
           'entryLevel': request.entryRequirement,
           'targetLevel': request.exitRequirement,
-          'courseCategoryId': request.categoryId != null
+          'categoryId': request.categoryId != null
               ? int.tryParse(request.categoryId!)
               : null,
-          'isActive': request.isActive,
+          
         },
       );
 
@@ -99,13 +101,13 @@ class AdminCourseRemoteDataSource implements AdminCourseDataSource {
 
       throw Exception(response.data['message'] ?? 'Failed to update course');
     } catch (e) {
-      print('Error updating course: $e');
+      log('Error updating course: $e');
       rethrow;
     }
   }
 
   @override
-  Future<void> deleteCourse(String id) async {
+  Future<void> toggleCourseStatus(String id) async {
     try {
       final response = await dioClient.post('/courses/status/$id');
 
@@ -115,9 +117,19 @@ class AdminCourseRemoteDataSource implements AdminCourseDataSource {
         );
       }
     } catch (e) {
-      print('Error changing course status: $e');
+      log('Error changing course status: $e');
       rethrow;
     }
+  }
+
+  @override
+  Future<void> deleteCourse(String id) async {
+    
+    
+    
+    
+    
+    await toggleCourseStatus(id);
   }
 
   CourseDetailModel _mapCourseResponseToModel(Map<String, dynamic> json) {
@@ -142,22 +154,41 @@ class AdminCourseRemoteDataSource implements AdminCourseDataSource {
   }
 
   CourseDetailModel _mapCourseDetailResponseToModel(Map<String, dynamic> json) {
-    final classInfos = json['classInfos'] as List? ?? [];
-    final totalClasses = classInfos.length;
-    final activeClasses = classInfos
+    final classInfosList = json['classInfos'] as List? ?? [];
+    final objectivesList = json['objectives'] as List? ?? [];
+    final modulesList = json['modules'] as List? ?? [];
+
+    final totalClasses = classInfosList.length;
+    final activeClasses = classInfosList
         .where((c) => c['status'] == 'InProgress' || c['status'] == 'ongoing')
         .length;
 
     int totalStudents = 0;
-    for (var cls in classInfos) {
+    for (var cls in classInfosList) {
       totalStudents += (cls['currentEnrollment'] ?? 0) as int;
     }
+
+    
+    final objectives = objectivesList
+        .map((o) => CourseObjectiveModel.fromJson(o as Map<String, dynamic>))
+        .toList();
+
+    
+    final modules = modulesList
+        .map((m) => CourseModuleModel.fromJson(m as Map<String, dynamic>))
+        .toList();
+
+    
+    final classInfos = classInfosList
+        .map((c) => CourseClassInfoModel.fromJson(c as Map<String, dynamic>))
+        .toList();
 
     return CourseDetailModel(
       id: (json['courseId'] ?? json['makhoahoc'] ?? '').toString(),
       name: json['courseName'] ?? json['tenkhoahoc'] ?? '',
       totalHours: json['studyHours'] ?? json['sogiohoc'] ?? 0,
       tuitionFee: (json['tuitionFee'] ?? json['hocphi'] ?? 0).toDouble(),
+      promotionPrice: json['PromotionPrice']?.toDouble(),
       videoUrl: json['video'],
       isActive: json['status'] ?? json['trangthai'] ?? true,
       createdAt: DateTime.now(),
@@ -175,6 +206,9 @@ class AdminCourseRemoteDataSource implements AdminCourseDataSource {
       totalRevenue: 0.0,
       averageRating: 0.0,
       reviewCount: 0,
+      objectives: objectives,
+      modules: modules,
+      classInfos: classInfos,
     );
   }
 }

@@ -22,35 +22,42 @@ class TeacherClassCard extends StatelessWidget {
     final statusText = _getStatusText(classItem.status);
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+      margin: EdgeInsets.symmetric(horizontal: 0, vertical: 6.h),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.gray800 : Colors.white,
-        borderRadius: BorderRadius.circular(10.r),
+        color: isDark ? AppColors.neutral800 : Colors.white,
+        borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
-          color: isDark ? AppColors.gray700 : AppColors.gray200,
+          color: isDark ? AppColors.neutral700 : AppColors.neutral200,
           width: 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(10.r),
+          borderRadius: BorderRadius.circular(12.r),
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+            padding: EdgeInsets.all(16.w),
             child: Row(
               children: [
                 
                 Container(
-                  width: 4.w,
-                  height: 40.h,
+                  width: 5.w,
+                  height: 50.h,
                   decoration: BoxDecoration(
                     color: statusColor,
-                    borderRadius: BorderRadius.circular(2.r),
+                    borderRadius: BorderRadius.circular(3.r),
                   ),
                 ),
                 
-                SizedBox(width: 12.w),
+                SizedBox(width: 16.w),
                 
                 
                 Expanded(
@@ -61,27 +68,55 @@ class TeacherClassCard extends StatelessWidget {
                       Text(
                         classItem.name ?? 'Không có tên',
                         style: TextStyle(
-                          fontSize: 14.sp,
+                          fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
                           color: isDark ? Colors.white : AppColors.textPrimary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      SizedBox(height: 4.h),
+                      SizedBox(height: 6.h),
                       Row(
                         children: [
                           Icon(
                             Icons.schedule,
-                            size: 12.sp,
-                            color: isDark ? AppColors.gray400 : AppColors.gray500,
+                            size: 14.sp,
+                            color: isDark ? AppColors.neutral400 : AppColors.neutral500,
                           ),
-                          SizedBox(width: 4.w),
-                          Text(
-                            '${classItem.schedule ?? 'N/A'} • ${_formatTime(classItem.startTime)}-${_formatTime(classItem.endTime)}',
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              color: isDark ? AppColors.gray400 : AppColors.textSecondary,
+                          SizedBox(width: 6.w),
+                          Expanded(
+                            child: Text(
+                              '${classItem.schedule ?? 'N/A'} • ${_formatTime(classItem.startTime)}-${_formatTime(classItem.endTime)}',
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                color: isDark ? AppColors.neutral400 : AppColors.textSecondary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 4.h),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: 14.sp,
+                            color: isDark ? AppColors.neutral400 : AppColors.neutral500,
+                          ),
+                          SizedBox(width: 6.w),
+                          Expanded(
+                            child: Text(
+                              (classItem.room != null && classItem.room!.isNotEmpty)
+                                  ? classItem.room!
+                                  : 'Chưa có phòng',
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                color: isDark ? AppColors.neutral400 : AppColors.textSecondary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -98,7 +133,7 @@ class TeacherClassCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                       decoration: BoxDecoration(
                         color: statusColor.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12.r),
@@ -106,28 +141,28 @@ class TeacherClassCard extends StatelessWidget {
                       child: Text(
                         statusText,
                         style: TextStyle(
-                          fontSize: 10.sp,
+                          fontSize: 11.sp,
                           fontWeight: FontWeight.w600,
                           color: statusColor,
                         ),
                       ),
                     ),
-                    SizedBox(height: 4.h),
+                    SizedBox(height: 8.h),
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           Icons.people_outline,
-                          size: 12.sp,
-                          color: isDark ? AppColors.gray400 : AppColors.gray500,
+                          size: 14.sp,
+                          color: isDark ? AppColors.neutral400 : AppColors.neutral500,
                         ),
-                        SizedBox(width: 3.w),
+                        SizedBox(width: 4.w),
                         Text(
                           '${classItem.totalStudents}',
                           style: TextStyle(
-                            fontSize: 12.sp,
+                            fontSize: 13.sp,
                             fontWeight: FontWeight.w500,
-                            color: isDark ? AppColors.gray300 : AppColors.gray600,
+                            color: isDark ? AppColors.neutral300 : AppColors.neutral600,
                           ),
                         ),
                       ],
@@ -140,7 +175,7 @@ class TeacherClassCard extends StatelessWidget {
                 Icon(
                   Icons.chevron_right,
                   size: 20.sp,
-                  color: isDark ? AppColors.gray500 : AppColors.gray400,
+                  color: isDark ? AppColors.neutral500 : AppColors.neutral400,
                 ),
               ],
             ),
@@ -160,7 +195,7 @@ class TeacherClassCard extends StatelessWidget {
         return AppColors.info;
       case 'completed':
       case 'closed':
-        return AppColors.gray500;
+        return AppColors.neutral500;
       default:
         return AppColors.warning;
     }

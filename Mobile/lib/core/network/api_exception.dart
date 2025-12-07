@@ -11,7 +11,7 @@ class ApiException implements Exception {
     this.data,
   });
 
-  /// Timeout exception
+  
   factory ApiException.timeout({required String message}) {
     return ApiException(
       message: message,
@@ -20,7 +20,7 @@ class ApiException implements Exception {
     );
   }
 
-  /// Bad request (400)
+  
   factory ApiException.badRequest({required String message, dynamic data}) {
     return ApiException(
       message: message,
@@ -30,7 +30,7 @@ class ApiException implements Exception {
     );
   }
 
-  /// Unauthorized (401)
+  
   factory ApiException.unauthorized({required String message}) {
     return ApiException(
       message: message,
@@ -39,7 +39,7 @@ class ApiException implements Exception {
     );
   }
 
-  /// Forbidden (403)
+  
   factory ApiException.forbidden({required String message}) {
     return ApiException(
       message: message,
@@ -48,7 +48,7 @@ class ApiException implements Exception {
     );
   }
 
-  /// Not found (404)
+  
   factory ApiException.notFound({required String message}) {
     return ApiException(
       message: message,
@@ -57,7 +57,7 @@ class ApiException implements Exception {
     );
   }
 
-  /// Server error (500+)
+  
   factory ApiException.serverError({required String message}) {
     return ApiException(
       message: message,
@@ -66,17 +66,17 @@ class ApiException implements Exception {
     );
   }
 
-  /// No internet connection
+  
   factory ApiException.noInternetConnection({required String message}) {
     return ApiException(message: message, errorCode: 'NO_INTERNET');
   }
 
-  /// Request cancelled
+  
   factory ApiException.requestCancelled({required String message}) {
     return ApiException(message: message, errorCode: 'REQUEST_CANCELLED');
   }
 
-  /// Unknown error
+  
   factory ApiException.unknown({required String message}) {
     return ApiException(message: message, errorCode: 'UNKNOWN');
   }

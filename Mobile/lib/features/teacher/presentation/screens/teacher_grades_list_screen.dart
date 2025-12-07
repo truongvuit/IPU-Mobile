@@ -158,7 +158,7 @@ class _TeacherGradesListScreenState extends State<TeacherGradesListScreen> {
                     horizontal: AppSizes.p16,
                     vertical: AppSizes.p12,
                   ),
-                  color: isDark ? AppColors.gray800 : Colors.white,
+                  color: isDark ? AppColors.neutral800 : Colors.white,
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
@@ -184,7 +184,7 @@ class _TeacherGradesListScreenState extends State<TeacherGradesListScreen> {
                 
                 Container(
                   padding: EdgeInsets.all(AppSizes.p16),
-                  color: isDark ? AppColors.gray800 : Colors.white,
+                  color: isDark ? AppColors.neutral800 : Colors.white,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
@@ -295,7 +295,7 @@ class _TeacherGradesListScreenState extends State<TeacherGradesListScreen> {
       onSelected: (selected) {
         setState(() => _filterStatus = value);
       },
-      selectedColor: AppColors.primary.withOpacity(0.2),
+      selectedColor: AppColors.primary.withValues(alpha: 0.2),
       checkmarkColor: AppColors.primary,
       labelStyle: TextStyle(
         color: isSelected ? AppColors.primary : null,
@@ -353,7 +353,7 @@ class _TeacherGradesListScreenState extends State<TeacherGradesListScreen> {
                   
                   CircleAvatar(
                     radius: 24.r,
-                    backgroundColor: AppColors.primary.withOpacity(0.1),
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                     child: Text(
                       grade.studentName.substring(0, 1).toUpperCase(),
                       style: TextStyle(
@@ -401,7 +401,7 @@ class _TeacherGradesListScreenState extends State<TeacherGradesListScreen> {
                         int.parse(
                           grade.classificationColor.replaceFirst('#', '0xFF'),
                         ),
-                      ).withOpacity(0.1),
+                      ).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
                     ),
                     child: Row(
@@ -587,7 +587,7 @@ class _TeacherGradesListScreenState extends State<TeacherGradesListScreen> {
                 children: [
                   CircleAvatar(
                     radius: 32.r,
-                    backgroundColor: AppColors.primary.withOpacity(0.1),
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                     child: Text(
                       grade.studentName.substring(0, 1).toUpperCase(),
                       style: TextStyle(
@@ -668,7 +668,7 @@ class _TeacherGradesListScreenState extends State<TeacherGradesListScreen> {
                     int.parse(
                       grade.classificationColor.replaceFirst('#', '0xFF'),
                     ),
-                  ).withOpacity(0.1),
+                  ).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
                 ),
                 child: Row(
@@ -745,8 +745,8 @@ class _TeacherGradesListScreenState extends State<TeacherGradesListScreen> {
             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
             decoration: BoxDecoration(
               color: isTotal
-                  ? AppColors.primary.withOpacity(0.1)
-                  : Colors.grey.withOpacity(0.1),
+                  ? AppColors.primary.withValues(alpha: 0.1)
+                  : Colors.grey.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
             ),
             child: Text(

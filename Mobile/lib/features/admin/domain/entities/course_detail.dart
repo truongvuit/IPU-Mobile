@@ -1,10 +1,125 @@
 import 'package:equatable/equatable.dart';
 
+
+class CourseObjective extends Equatable {
+  final int id;
+  final String name;
+
+  const CourseObjective({required this.id, required this.name});
+
+  @override
+  List<Object?> get props => [id, name];
+}
+
+
+class ModuleContent extends Equatable {
+  final int id;
+  final String name;
+
+  const ModuleContent({required this.id, required this.name});
+
+  @override
+  List<Object?> get props => [id, name];
+}
+
+
+class ModuleDocument extends Equatable {
+  final int id;
+  final String? fileName;
+  final String? link;
+  final String? description;
+  final String? image;
+
+  const ModuleDocument({
+    required this.id,
+    this.fileName,
+    this.link,
+    this.description,
+    this.image,
+  });
+
+  @override
+  List<Object?> get props => [id, fileName, link, description, image];
+}
+
+
+class CourseModule extends Equatable {
+  final int id;
+  final String name;
+  final int? duration;
+  final List<ModuleContent> contents;
+  final List<ModuleDocument> documents;
+
+  const CourseModule({
+    required this.id,
+    required this.name,
+    this.duration,
+    this.contents = const [],
+    this.documents = const [],
+  });
+
+  @override
+  List<Object?> get props => [id, name, duration, contents, documents];
+}
+
+
+class CourseClassInfo extends Equatable {
+  final int classId;
+  final String className;
+  final String? courseName;
+  final String? roomName;
+  final String? instructorName;
+  final DateTime? startDate;
+  final DateTime? endDate;
+  final String? schedulePattern;
+  final String? status;
+  final int? maxCapacity;
+  final int? currentEnrollment;
+  final double? tuitionFee;
+
+  const CourseClassInfo({
+    required this.classId,
+    required this.className,
+    this.courseName,
+    this.roomName,
+    this.instructorName,
+    this.startDate,
+    this.endDate,
+    this.schedulePattern,
+    this.status,
+    this.maxCapacity,
+    this.currentEnrollment,
+    this.tuitionFee,
+  });
+
+  bool get isActive => status == 'InProgress' || status == 'ongoing';
+
+  String get enrollmentText =>
+      '${currentEnrollment ?? 0}/${maxCapacity ?? 0} học viên';
+
+  @override
+  List<Object?> get props => [
+    classId,
+    className,
+    courseName,
+    roomName,
+    instructorName,
+    startDate,
+    endDate,
+    schedulePattern,
+    status,
+    maxCapacity,
+    currentEnrollment,
+    tuitionFee,
+  ];
+}
+
 class CourseDetail extends Equatable {
   final String id;
   final String name;
   final int totalHours;
   final double tuitionFee;
+  final double? promotionPrice;
   final String? videoUrl;
   final bool isActive;
   final DateTime createdAt;
@@ -25,11 +140,17 @@ class CourseDetail extends Equatable {
   final double averageRating;
   final int reviewCount;
 
+  
+  final List<CourseObjective> objectives;
+  final List<CourseModule> modules;
+  final List<CourseClassInfo> classInfos;
+
   const CourseDetail({
     required this.id,
     required this.name,
     required this.totalHours,
     required this.tuitionFee,
+    this.promotionPrice,
     this.videoUrl,
     required this.isActive,
     required this.createdAt,
@@ -47,6 +168,9 @@ class CourseDetail extends Equatable {
     this.totalRevenue = 0.0,
     this.averageRating = 0.0,
     this.reviewCount = 0,
+    this.objectives = const [],
+    this.modules = const [],
+    this.classInfos = const [],
   });
 
   bool get isActiveStatus => isActive;
@@ -86,7 +210,6 @@ class CourseDetail extends Equatable {
     return '#F44336';
   }
 
-
   String get levelBadgeColor {
     switch (level?.toUpperCase()) {
       case 'A1':
@@ -109,6 +232,7 @@ class CourseDetail extends Equatable {
     name,
     totalHours,
     tuitionFee,
+    promotionPrice,
     videoUrl,
     isActive,
     createdAt,
@@ -126,6 +250,9 @@ class CourseDetail extends Equatable {
     totalRevenue,
     averageRating,
     reviewCount,
+    objectives,
+    modules,
+    classInfos,
   ];
 
   CourseDetail copyWith({
@@ -133,6 +260,7 @@ class CourseDetail extends Equatable {
     String? name,
     int? totalHours,
     double? tuitionFee,
+    double? promotionPrice,
     String? videoUrl,
     bool? isActive,
     DateTime? createdAt,
@@ -150,12 +278,16 @@ class CourseDetail extends Equatable {
     double? totalRevenue,
     double? averageRating,
     int? reviewCount,
+    List<CourseObjective>? objectives,
+    List<CourseModule>? modules,
+    List<CourseClassInfo>? classInfos,
   }) {
     return CourseDetail(
       id: id ?? this.id,
       name: name ?? this.name,
       totalHours: totalHours ?? this.totalHours,
       tuitionFee: tuitionFee ?? this.tuitionFee,
+      promotionPrice: promotionPrice ?? this.promotionPrice,
       videoUrl: videoUrl ?? this.videoUrl,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
@@ -173,6 +305,9 @@ class CourseDetail extends Equatable {
       totalRevenue: totalRevenue ?? this.totalRevenue,
       averageRating: averageRating ?? this.averageRating,
       reviewCount: reviewCount ?? this.reviewCount,
+      objectives: objectives ?? this.objectives,
+      modules: modules ?? this.modules,
+      classInfos: classInfos ?? this.classInfos,
     );
   }
 }

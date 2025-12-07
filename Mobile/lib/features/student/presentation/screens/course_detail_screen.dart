@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../bloc/student_bloc.dart';
 import '../bloc/student_event.dart';
 import '../bloc/student_state.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/custom_image.dart';
+import '../../../../core/routing/app_router.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final String courseId;
@@ -29,33 +28,29 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     context.read<StudentBloc>().add(LoadCourseDetail(widget.courseId));
   }
 
-  Future<void> _openRegistrationWebsite(String courseId) async {
-    final url = Uri.parse(
-      '${AppConstants.courseRegistrationWebUrl}/$courseId/register',
-    );
-
-    try {
-      if (await canLaunchUrl(url)) {
-        await launchUrl(url, mode: LaunchMode.externalApplication);
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Không thể mở trang đăng ký. Vui lòng thử lại sau.',
-              ),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-      }
-    } catch (e) {
+  Future<void> _navigateToCheckout(
+    String courseId,
+    String? courseName,
+    List<int>? availableClassIds,
+  ) async {
+    if (availableClassIds == null || availableClassIds.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi: $e'), backgroundColor: AppColors.error),
+          const SnackBar(
+            content: Text(
+              'Không tìm thấy lớp học cho khóa này. Vui lòng liên hệ trung tâm.',
+            ),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
+      return;
     }
+
+    Navigator.of(context).pushNamed(
+      AppRouter.studentCheckout,
+      arguments: {'classIds': availableClassIds, 'courseName': courseName},
+    );
   }
 
   @override
@@ -432,28 +427,144 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                               ),
                             ),
                           ),
-                          child: ElevatedButton.icon(
-                            onPressed: () =>
-                                _openRegistrationWebsite(widget.courseId),
-                            icon: const Icon(Icons.open_in_new, size: 20),
-                            label: const Text(
-                              'Đăng ký khóa học',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                fontFamily: 'Lexend',
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
-                              minimumSize: const Size(double.infinity, 48),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppSizes.radiusMedium,
+                          child: Row(
+                            children: [
+                              // Add to Cart button
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () {
+                                    // Check if course has available classes
+                                    if (course.availableClassIds.isEmpty) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Không có lớp học khả dụng',
+                                          ),
+                                          backgroundColor: AppColors.warning,
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    // Check if already in cart
+                                    final bloc = context.read<StudentBloc>();
+                                    if (bloc.isInCart(
+                                      course.availableClassIds.first,
+                                    )) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Khóa học đã có trong giỏ hàng',
+                                          ),
+                                          backgroundColor: AppColors.info,
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    // Add to cart
+                                    bloc.add(
+                                      AddCourseToCart(
+                                        courseId: widget.courseId,
+                                        courseName: course.name,
+                                        classId: course.availableClassIds.first,
+                                        className:
+                                            'Lớp ${course.availableClassIds.first}',
+                                        price: course.price,
+                                        imageUrl: course.imageUrl,
+                                      ),
+                                    );
+
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.check_circle,
+                                              color: Colors.white,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                'Đã thêm "${course.name}" vào giỏ',
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        backgroundColor: AppColors.success,
+                                        action: SnackBarAction(
+                                          label: 'Xem giỏ',
+                                          textColor: Colors.white,
+                                          onPressed: () {
+                                            // Import and show cart bottom sheet
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(
+                                    Icons.add_shopping_cart,
+                                    size: 18,
+                                  ),
+                                  label: const Text(
+                                    'Thêm vào giỏ',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      fontFamily: 'Lexend',
+                                    ),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppColors.primary,
+                                    side: BorderSide(
+                                      color: AppColors.primary,
+                                      width: 1.5,
+                                    ),
+                                    minimumSize: const Size(0, 48),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppSizes.radiusMedium,
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
+                              const SizedBox(width: 12),
+                              // Immediate checkout button
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () => _navigateToCheckout(
+                                    widget.courseId,
+                                    course.name,
+                                    course.availableClassIds,
+                                  ),
+                                  icon: const Icon(Icons.flash_on, size: 18),
+                                  label: const Text(
+                                    'Đăng ký ngay',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      fontFamily: 'Lexend',
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    foregroundColor: Colors.white,
+                                    minimumSize: const Size(0, 48),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppSizes.radiusMedium,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),

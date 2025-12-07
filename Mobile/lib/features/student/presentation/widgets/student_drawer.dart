@@ -25,13 +25,11 @@ class StudentDrawer extends StatelessWidget {
     return BlocBuilder<StudentBloc, StudentState>(
       builder: (context, state) {
         final bloc = context.read<StudentBloc>();
-        
-        
+
         String displayName = 'Học viên';
         String? displayAvatar;
         bool isLoading = state is StudentLoading || state is StudentInitial;
 
-        
         if (state is DashboardLoaded && state.profile != null) {
           displayName = state.profile!.fullName;
           displayAvatar = state.profile!.avatarUrl;
@@ -45,7 +43,6 @@ class StudentDrawer extends StatelessWidget {
           displayName = state.profile.fullName;
           displayAvatar = state.profile.avatarUrl;
         } else if (bloc.cachedProfile != null) {
-          
           displayName = bloc.cachedProfile!.fullName;
           displayAvatar = bloc.cachedProfile!.avatarUrl;
         }
@@ -57,7 +54,6 @@ class StudentDrawer extends StatelessWidget {
               children: [
                 InkWell(
                   onTap: () {
-                    
                     onNavigate(AppRouter.studentProfile);
                   },
                   child: Padding(
@@ -220,6 +216,27 @@ class StudentDrawer extends StatelessWidget {
                       SizedBox(height: 8.h),
                       _buildNavItem(
                         context,
+                        icon: Icons.rate_review_outlined,
+                        title: 'Lịch sử đánh giá',
+                        isDark: isDark,
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.pushNamed(
+                            context,
+                            AppRouter.studentReviewHistory,
+                          );
+                        },
+                      ),
+                      SizedBox(height: 8.h),
+                      Divider(
+                        height: 1,
+                        color: isDark
+                            ? const Color(0xFF374151)
+                            : const Color(0xFFE5E7EB),
+                      ),
+                      SizedBox(height: 8.h),
+                      _buildNavItem(
+                        context,
                         icon: Icons.settings_outlined,
                         title: 'Cài đặt',
                         isDark: isDark,
@@ -265,45 +282,7 @@ class StudentDrawer extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.r),
                     ),
-                    onTap: () {
-                      
-                      final authBloc = context.read<AuthBloc>();
-                      final navigator = Navigator.of(context);
-
-                      navigator.pop(); 
-
-                      showDialog(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text('Đăng xuất'),
-                          content: const Text(
-                            'Bạn có chắc chắn muốn đăng xuất?',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              child: const Text('Hủy'),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pop(ctx);
-                                
-                                authBloc.add(const LogoutRequested());
-                                
-                                navigator.pushNamedAndRemoveUntil(
-                                  AppRouter.welcome,
-                                  (route) => false,
-                                );
-                              },
-                              child: const Text(
-                                'Đăng xuất',
-                                style: TextStyle(color: AppColors.error),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
+                    onTap: () => _showLogoutDialog(context, isDark),
                   ),
                 ),
                 SizedBox(height: 8.h),
@@ -373,6 +352,103 @@ class StudentDrawer extends StatelessWidget {
                 onNavigate(route);
               }
             },
+      ),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context, bool isDark) {
+    final authBloc = context.read<AuthBloc>();
+    
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
+        child: Padding(
+          padding: EdgeInsets.all(20.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Xác nhận đăng xuất',
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Text(
+                'Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng?',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF64748B),
+                ),
+              ),
+              SizedBox(height: 24.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                          side: BorderSide(
+                            color: isDark
+                                ? const Color(0xFF4B5563)
+                                : const Color(0xFFD1D5DB),
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        'Hủy',
+                        style: TextStyle(
+                          color: isDark
+                              ? const Color(0xFFD1D5DB)
+                              : const Color(0xFF374151),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(dialogContext);
+                        authBloc.add(const LogoutRequested());
+                        Navigator.of(context).pushNamedAndRemoveUntil(
+                          AppRouter.welcome,
+                          (route) => false,
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.error,
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                      ),
+                      child: const Text(
+                        'Đăng xuất',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

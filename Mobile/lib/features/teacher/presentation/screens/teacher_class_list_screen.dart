@@ -11,6 +11,7 @@ import '../bloc/teacher_event.dart';
 import '../bloc/teacher_state.dart';
 import '../widgets/teacher_class_card.dart';
 import '../widgets/teacher_app_bar.dart';
+
 class TeacherClassListScreen extends StatefulWidget {
   final String? mode;
   final bool showScaffold;
@@ -25,34 +26,19 @@ class TeacherClassListScreen extends StatefulWidget {
   State<TeacherClassListScreen> createState() => _TeacherClassListScreenState();
 }
 
-class _TeacherClassListScreenState extends State<TeacherClassListScreen>
-    with SingleTickerProviderStateMixin {
+class _TeacherClassListScreenState extends State<TeacherClassListScreen> {
   final TextEditingController _searchController = TextEditingController();
-  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _tabController.addListener(_onTabChanged);
-    
     
     context.read<TeacherBloc>().add(LoadMyClasses());
-  }
-
-  void _onTabChanged() {
-    if (_tabController.indexIsChanging) return;
-    
-    
-    final filter = _tabController.index == 0 ? 'ongoing' : 'completed';
-    context.read<TeacherBloc>().add(FilterClasses(filter));
   }
 
   @override
   void dispose() {
     _searchController.dispose();
-    _tabController.removeListener(_onTabChanged);
-    _tabController.dispose();
     super.dispose();
   }
 
@@ -63,7 +49,6 @@ class _TeacherClassListScreenState extends State<TeacherClassListScreen>
 
     final content = Column(
       children: [
-        
         TeacherAppBar(
           title: widget.mode == 'attendance'
               ? 'Chọn lớp điểm danh'
@@ -71,7 +56,6 @@ class _TeacherClassListScreenState extends State<TeacherClassListScreen>
           showBackButton: widget.showScaffold,
         ),
 
-        
         Container(
           padding: EdgeInsets.all(isDesktop ? 32.w : 20.w),
           color: isDark ? const Color(0xFF1F2937) : Colors.white,
@@ -106,32 +90,6 @@ class _TeacherClassListScreenState extends State<TeacherClassListScreen>
                 }
               },
             ),
-          ),
-        ),
-
-        
-        Container(
-          color: isDark ? const Color(0xFF1F2937) : Colors.white,
-          child: TabBar(
-            controller: _tabController,
-            labelColor: AppColors.primary,
-            unselectedLabelColor: isDark ? Colors.white70 : AppColors.textSecondary,
-            indicatorColor: AppColors.primary,
-            indicatorWeight: 3,
-            labelStyle: TextStyle(
-              fontSize: isDesktop ? 16.sp : 14.sp,
-              fontWeight: FontWeight.w600,
-              fontFamily: 'Lexend',
-            ),
-            unselectedLabelStyle: TextStyle(
-              fontSize: isDesktop ? 16.sp : 14.sp,
-              fontWeight: FontWeight.w500,
-              fontFamily: 'Lexend',
-            ),
-            tabs: const [
-              Tab(text: 'Đang diễn ra'),
-              Tab(text: 'Kết thúc'),
-            ],
           ),
         ),
 
@@ -198,7 +156,7 @@ class _TeacherClassListScreenState extends State<TeacherClassListScreen>
                     padding: EdgeInsets.all(AppSizes.paddingMedium),
                     child: EmptyStateWidget(
                       icon: Icons.class_outlined,
-                      message: 'Không tìm thấy lớp học',
+                      message: 'Không có lớp học đang hoạt động',
                     ),
                   );
                 }
@@ -230,18 +188,9 @@ class _TeacherClassListScreenState extends State<TeacherClassListScreen>
 
                                   if (widget.mode == 'attendance') {
                                     
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: const Text('Vui lòng chọn buổi học từ Lịch dạy để điểm danh'),
-                                        backgroundColor: AppColors.warning,
-                                        action: SnackBarAction(
-                                          label: 'Xem lịch',
-                                          textColor: Colors.white,
-                                          onPressed: () {
-                                            Navigator.pushNamed(context, AppRouter.teacherSchedule);
-                                          },
-                                        ),
-                                      ),
+                                    Navigator.pushNamed(
+                                      context,
+                                      AppRouter.teacherSchedule,
                                     );
                                   } else {
                                     Navigator.of(
@@ -255,44 +204,33 @@ class _TeacherClassListScreenState extends State<TeacherClassListScreen>
                                 },
                               )
                             : TeacherClassCard(
-                                  classItem: state.classes[index],
-                                  onTap: () {
-                                    final classId = state.classes[index].id;
+                                classItem: state.classes[index],
+                                onTap: () {
+                                  final classId = state.classes[index].id;
 
-                                    if (widget.mode == 'attendance') {
-                                      
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: const Text('Vui lòng chọn buổi học từ Lịch dạy để điểm danh'),
-                                          backgroundColor: AppColors.warning,
-                                          action: SnackBarAction(
-                                            label: 'Xem lịch',
-                                            textColor: Colors.white,
-                                            onPressed: () {
-                                              Navigator.pushNamed(context, AppRouter.teacherSchedule);
-                                            },
-                                          ),
-                                        ),
-                                      );
-                                    } else {
-                                      Navigator.of(
-                                        context,
-                                        rootNavigator: true,
-                                      ).pushNamed(
-                                        AppRouter.teacherClassDetail,
-                                        arguments: classId,
-                                      );
-                                    }
-                                  },
-                                ),
+                                  if (widget.mode == 'attendance') {
+                                    
+                                    Navigator.pushNamed(
+                                      context,
+                                      AppRouter.teacherSchedule,
+                                    );
+                                  } else {
+                                    Navigator.of(
+                                      context,
+                                      rootNavigator: true,
+                                    ).pushNamed(
+                                      AppRouter.teacherClassDetail,
+                                      arguments: classId,
+                                    );
+                                  }
+                                },
+                              ),
                       );
                     },
                   ),
                 );
               }
 
-              
-              
               return ListView.builder(
                 padding: EdgeInsets.all(AppSizes.paddingMedium),
                 itemCount: 5,

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import '../../domain/entities/admin_profile.dart';
 import '../../domain/entities/admin_dashboard_stats.dart';
 import '../../domain/entities/admin_activity.dart';
@@ -8,8 +10,10 @@ import '../../domain/entities/class_student.dart';
 import '../../domain/entities/class_session.dart';
 import '../../domain/entities/promotion.dart';
 import '../../domain/entities/admin_feedback.dart';
+import '../../domain/entities/cart_preview.dart';
 import '../../domain/repositories/admin_repository.dart';
 import '../datasources/admin_api_datasource.dart';
+import '../datasources/admin_remote_datasource.dart';
 
 class AdminRepositoryImpl implements AdminRepository {
   final AdminApiDataSource dataSource;
@@ -27,13 +31,19 @@ class AdminRepositoryImpl implements AdminRepository {
     required String fullName,
     required String phoneNumber,
     String? avatarUrl,
-  }) {
-    return dataSource.updateAdminProfile(
-      userId: userId,
-      fullName: fullName,
-      phoneNumber: phoneNumber,
-      avatarUrl: avatarUrl,
-    );
+  }) async {
+    try {
+      return await dataSource.updateAdminProfile(
+        userId: userId,
+        fullName: fullName,
+        phoneNumber: phoneNumber,
+        avatarUrl: avatarUrl,
+      );
+    } on UnsupportedOperationException {
+      rethrow; 
+    } catch (e) {
+      throw Exception('Không thể cập nhật thông tin: $e');
+    }
   }
 
   @override
@@ -47,8 +57,13 @@ class AdminRepositoryImpl implements AdminRepository {
   }
 
   @override
-  Future<List<AdminClass>> getClasses({ClassStatus? statusFilter}) {
-    return dataSource.getClasses(statusFilter: statusFilter);
+  Future<List<AdminClass>> getClasses({ClassStatus? statusFilter}) async {
+    
+    final allClasses = await dataSource.getClasses(statusFilter: null);
+    return allClasses.where((cls) {
+      return cls.status == ClassStatus.ongoing ||
+          cls.status == ClassStatus.upcoming;
+    }).toList();
   }
 
   @override
@@ -63,6 +78,8 @@ class AdminRepositoryImpl implements AdminRepository {
     required String schedule,
     required String timeRange,
     required String room,
+    String? startDate,
+    int? maxStudents,
   }) {
     return dataSource.updateClass(
       classId: classId,
@@ -70,6 +87,8 @@ class AdminRepositoryImpl implements AdminRepository {
       schedule: schedule,
       timeRange: timeRange,
       room: room,
+      startDate: startDate,
+      maxStudents: maxStudents,
     );
   }
 
@@ -94,28 +113,8 @@ class AdminRepositoryImpl implements AdminRepository {
   }
 
   @override
-  Future<AdminStudent> updateStudent({
-    required String studentId,
-    required String fullName,
-    required String phoneNumber,
-    String? email,
-    String? address,
-    String? occupation,
-    String? educationLevel,
-    DateTime? dateOfBirth,
-    String? password,
-  }) {
-    return dataSource.updateStudent(
-      studentId: studentId,
-      fullName: fullName,
-      phoneNumber: phoneNumber,
-      email: email,
-      address: address,
-      occupation: occupation,
-      educationLevel: educationLevel,
-      dateOfBirth: dateOfBirth,
-      password: password,
-    );
+  Future<AdminStudent> updateStudent(AdminStudent student) {
+    return dataSource.updateStudent(student);
   }
 
   @override
@@ -137,6 +136,25 @@ class AdminRepositoryImpl implements AdminRepository {
     String? imageUrl,
   }) {
     return dataSource.createTeacher(
+      name: name,
+      phoneNumber: phoneNumber,
+      email: email,
+      dateOfBirth: dateOfBirth,
+      imageUrl: imageUrl,
+    );
+  }
+
+  @override
+  Future<AdminTeacher> updateTeacher({
+    required String teacherId,
+    required String name,
+    required String phoneNumber,
+    String? email,
+    DateTime? dateOfBirth,
+    String? imageUrl,
+  }) {
+    return dataSource.updateTeacher(
+      teacherId: teacherId,
       name: name,
       phoneNumber: phoneNumber,
       email: email,
@@ -229,5 +247,15 @@ class AdminRepositoryImpl implements AdminRepository {
   @override
   Future<SessionAttendanceInfo> getSessionAttendance(int sessionId) {
     return dataSource.getSessionAttendance(sessionId);
+  }
+
+  @override
+  Future<CartPreview> previewCart(List<String> classIds, {String? studentId}) {
+    return dataSource.previewCart(classIds, studentId: studentId);
+  }
+
+  @override
+  Future<String?> uploadFile(File file) {
+    return dataSource.uploadFile(file);
   }
 }

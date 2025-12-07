@@ -25,7 +25,6 @@ class TeacherDrawerWidget extends StatelessWidget {
         String? displayAvatar;
         bool isLoading = state is TeacherLoading || state is TeacherInitial;
 
-        
         if (state is TeacherLoaded) {
           displayName = state.profile.fullName;
           displayAvatar = state.profile.avatarUrl;
@@ -36,7 +35,6 @@ class TeacherDrawerWidget extends StatelessWidget {
           displayName = state.profile!.fullName;
           displayAvatar = state.profile!.avatarUrl;
         } else if (bloc.cachedProfile != null) {
-          
           displayName = bloc.cachedProfile!.fullName;
           displayAvatar = bloc.cachedProfile!.avatarUrl;
         }
@@ -86,8 +84,9 @@ class TeacherDrawerWidget extends StatelessWidget {
                                         );
                                       },
                                       loadingBuilder: (context, child, loadingProgress) {
-                                        if (loadingProgress == null)
+                                        if (loadingProgress == null) {
                                           return child;
+                                        }
                                         return Center(
                                           child: CircularProgressIndicator(
                                             value:
@@ -233,7 +232,6 @@ class TeacherDrawerWidget extends StatelessWidget {
                         : const Color(0xFFE5E7EB),
                   ),
 
-                  
                   Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: 8.w,
@@ -256,7 +254,9 @@ class TeacherDrawerWidget extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 12.sp,
-                        color: isDark ? AppColors.gray500 : AppColors.gray400,
+                        color: isDark
+                            ? AppColors.neutral500
+                            : AppColors.neutral400,
                         fontFamily: 'Lexend',
                       ),
                     ),
@@ -320,33 +320,102 @@ class TeacherDrawerWidget extends StatelessWidget {
   }
 
   void _showLogoutDialog(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final authBloc = context.read<AuthBloc>();
+    
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Đăng xuất'),
-        content: const Text('Bạn có chắc chắn muốn đăng xuất?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Hủy'),
+      barrierDismissible: true,
+      builder: (dialogContext) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
+        child: Padding(
+          padding: EdgeInsets.all(20.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Xác nhận đăng xuất',
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Text(
+                'Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng?',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF64748B),
+                ),
+              ),
+              SizedBox(height: 24.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                          side: BorderSide(
+                            color: isDark
+                                ? const Color(0xFF4B5563)
+                                : const Color(0xFFD1D5DB),
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        'Hủy',
+                        style: TextStyle(
+                          color: isDark
+                              ? const Color(0xFFD1D5DB)
+                              : const Color(0xFF374151),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(dialogContext); // Close dialog
+                        Navigator.pop(context); // Close drawer
+                        authBloc.add(const LogoutRequested());
+                        // Navigate to welcome page
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          AppRouter.welcome,
+                          (route) => false,
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.error,
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                      ),
+                      child: const Text(
+                        'Đăng xuất',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              if (!context.mounted) return;
-
-              context.read<AuthBloc>().add(const LogoutRequested());
-
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                AppRouter.welcome,
-                (route) => false,
-              );
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Đăng xuất'),
-          ),
-        ],
+        ),
       ),
     );
   }

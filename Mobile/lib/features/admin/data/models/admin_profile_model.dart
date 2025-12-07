@@ -20,9 +20,9 @@ class AdminProfileModel extends AdminProfile {
       avatarUrl: json['avatarUrl'] as String? ?? json['anhdaidien'] as String?,
       role: json['role'] as String? ?? json['vaitro'] as String? ?? 'admin',
       createdAt: json['createdAt'] != null
-          ? DateTime.tryParse(json['createdAt'] as String)
+          ? DateTime.tryParse(json['createdAt'].toString())
           : (json['ngaytao'] != null
-                ? DateTime.tryParse(json['ngaytao'] as String)
+                ? DateTime.tryParse(json['ngaytao'].toString())
                 : null),
     );
   }

@@ -64,7 +64,7 @@ class CustomImage extends StatelessWidget {
       );
     }
 
-    // Fallback cuối cùng
+    
     return _buildErrorWidget();
   }
 
@@ -72,10 +72,10 @@ class CustomImage extends StatelessWidget {
     return Container(
       width: width,
       height: height,
-      color: AppColors.gray200,
+      color: AppColors.neutral200,
       child: Icon(
         isAvatar ? Icons.person : Icons.error_outline,
-        color: AppColors.gray500,
+        color: AppColors.neutral500,
         size: (width != null && height != null)
             ? (width! < height! ? width! * 0.5 : height! * 0.5)
             : null,

@@ -3,11 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/widgets/common/app_button.dart';
+import '../../../../core/widgets/common/app_text_field.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
-import '../widgets/auth_button.dart';
-import '../widgets/custom_text_field.dart';
 import '../widgets/password_strength_indicator.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
@@ -194,12 +194,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   Widget _buildPasswordFields(bool isDark) {
     return Column(
       children: [
-        CustomTextField(
+        AppTextField(
           label: 'Mật khẩu hiện tại',
           hintText: 'Nhập mật khẩu hiện tại',
           controller: _currentPasswordController,
           obscureText: true,
-          showPasswordToggle: true,
           validator: (value) {
             if (value == null || value.isEmpty) {
               return 'Vui lòng nhập mật khẩu hiện tại';
@@ -209,12 +208,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         ),
         SizedBox(height: AppSizes.paddingMedium),
 
-        CustomTextField(
+        AppTextField(
           label: 'Mật khẩu mới',
           hintText: 'Nhập mật khẩu mới',
           controller: _newPasswordController,
           obscureText: true,
-          showPasswordToggle: true,
           onChanged: (value) {
             setState(() {
               _passwordValue = value;
@@ -232,12 +230,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         ),
         SizedBox(height: AppSizes.paddingMedium),
 
-        CustomTextField(
+        AppTextField(
           label: 'Xác nhận mật khẩu mới',
           hintText: 'Nhập lại mật khẩu mới',
           controller: _confirmPasswordController,
           obscureText: true,
-          showPasswordToggle: true,
           validator: (value) {
             if (value == null || value.isEmpty) {
               return 'Vui lòng xác nhận mật khẩu';
@@ -258,7 +255,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       width: double.infinity,
       child: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
-          return AuthButton(
+          return AppButton(
             text: 'Đổi Mật Khẩu',
             onPressed: _isPasswordValid() ? _handleSubmit : null,
             isLoading: state is AuthLoading,

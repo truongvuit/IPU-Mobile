@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../widgets/admin_icon_action.dart';
+import '../widgets/simple_admin_app_bar.dart';
 
 import '../../domain/entities/quick_registration.dart';
 import '../bloc/registration_bloc.dart';
@@ -29,7 +31,6 @@ class _QuickRegistrationFormScreenState
   final _formKey = GlobalKey<FormState>();
   final _notesController = TextEditingController();
 
-  
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
@@ -39,13 +40,12 @@ class _QuickRegistrationFormScreenState
     super.initState();
     context.read<RegistrationBloc>().add(const InitializeRegistration());
 
-    
     _nameController.addListener(_onFormChanged);
     _phoneController.addListener(_onFormChanged);
   }
 
   void _onFormChanged() {
-    setState(() {}); 
+    setState(() {});
   }
 
   @override
@@ -73,7 +73,6 @@ class _QuickRegistrationFormScreenState
   }
 
   void _navigateToClassSelection() {
-    
     final bloc = context.read<RegistrationBloc>();
     final state = bloc.state;
     if (state is RegistrationInProgress && state.isNewStudent) {
@@ -137,7 +136,7 @@ class _QuickRegistrationFormScreenState
       backgroundColor: isDark
           ? AppColors.backgroundDark
           : AppColors.backgroundLight,
-      appBar: AppBar(title: const Text('Đăng ký nhanh')),
+      appBar: const SimpleAdminAppBar(title: 'Đăng ký nhanh'),
       body: BlocConsumer<RegistrationBloc, RegistrationState>(
         listener: (context, state) {
           if (state is RegistrationError) {
@@ -148,9 +147,34 @@ class _QuickRegistrationFormScreenState
               ),
             );
           }
+
+          
+          RegistrationInProgress? regState;
+          if (state is RegistrationInProgress) {
+            regState = state;
+          } else if (state is ClassesLoaded) {
+            regState = state.currentRegistration;
+          }
+
+          if (regState?.cartPreviewError != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.warning_amber, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(regState!.cartPreviewError!)),
+                  ],
+                ),
+                backgroundColor: AppColors.warning,
+                duration: const Duration(seconds: 4),
+              ),
+            );
+            
+            context.read<RegistrationBloc>().add(const ClearCartPreviewError());
+          }
         },
         builder: (context, state) {
-          
           RegistrationInProgress? regState;
           if (state is RegistrationInProgress) {
             regState = state;
@@ -164,35 +188,109 @@ class _QuickRegistrationFormScreenState
             return const Center(child: CircularProgressIndicator());
           }
 
-          return SingleChildScrollView(
-            padding: EdgeInsets.all(AppSizes.paddingMedium),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  
-                  _buildStudentModeToggle(regState, isDark),
-                  SizedBox(height: AppSizes.p20),
+          return SafeArea(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.only(
+                left: AppSizes.paddingMedium,
+                right: AppSizes.paddingMedium,
+                top: AppSizes.paddingMedium,
+                bottom:
+                    MediaQuery.of(context).viewInsets.bottom +
+                    AppSizes.paddingMedium,
+              ),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildStudentModeToggle(regState, isDark),
+                    SizedBox(height: AppSizes.p20),
 
-                  
-                  if (regState.isNewStudent)
-                    _buildNewStudentForm(isDark)
-                  else
-                    _buildExistingStudentSelector(regState, isDark),
+                    if (regState.isNewStudent)
+                      _buildNewStudentForm(isDark)
+                    else
+                      _buildExistingStudentSelector(regState, isDark),
 
-                  SizedBox(height: AppSizes.p20),
+                    SizedBox(height: AppSizes.p20),
 
-                  
-                  _buildSectionTitle('Chọn khóa học/lớp học'),
-                  SizedBox(height: AppSizes.p12),
+                    _buildSectionTitle('Chọn khóa học/lớp học'),
+                    SizedBox(height: AppSizes.p12),
 
-                  
-                  if (regState.selectedClasses.isNotEmpty) ...[
-                    ...regState.selectedClasses.map(
-                      (classInfo) => Container(
-                        margin: EdgeInsets.only(bottom: 8.h),
-                        padding: EdgeInsets.all(AppSizes.p12),
+                    if (regState.selectedClasses.isNotEmpty) ...[
+                      ...regState.selectedClasses.map(
+                        (classInfo) => Container(
+                          margin: EdgeInsets.only(bottom: 8.h),
+                          padding: EdgeInsets.all(AppSizes.p12),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? AppColors.surfaceDark
+                                : AppColors.surface,
+                            borderRadius: BorderRadius.circular(
+                              AppSizes.radiusMedium,
+                            ),
+                            border: Border.all(color: AppColors.primary),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      classInfo.className,
+                                      style: theme.textTheme.bodyMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                    ),
+                                    if (classInfo.courseName != null) ...[
+                                      SizedBox(height: 2.h),
+                                      Text(
+                                        classInfo.courseName!,
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: isDark
+                                                  ? AppColors.neutral400
+                                                  : AppColors.neutral600,
+                                            ),
+                                      ),
+                                    ],
+                                    SizedBox(height: 4.h),
+                                    Text(
+                                      _formatCurrency(classInfo.tuitionFee),
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: AppColors.primary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              AdminIconAction(
+                                icon: Icons.close,
+                                iconColor: AppColors.error,
+                                iconSize: 20.sp,
+                                onTap: () {
+                                  context.read<RegistrationBloc>().add(
+                                    RemoveClass(classInfo.classId),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                    ],
+
+                    InkWell(
+                      onTap: _navigateToClassSelection,
+                      borderRadius: BorderRadius.circular(
+                        AppSizes.radiusMedium,
+                      ),
+                      child: Container(
+                        padding: EdgeInsets.all(AppSizes.paddingMedium),
                         decoration: BoxDecoration(
                           color: isDark
                               ? AppColors.surfaceDark
@@ -200,284 +298,248 @@ class _QuickRegistrationFormScreenState
                           borderRadius: BorderRadius.circular(
                             AppSizes.radiusMedium,
                           ),
-                          border: Border.all(color: AppColors.primary),
+                          border: Border.all(
+                            color: regState.selectedClasses.isNotEmpty
+                                ? (isDark
+                                      ? AppColors.neutral700
+                                      : AppColors.neutral200)
+                                : AppColors.primary.withValues(alpha: 0.5),
+                            style: regState.selectedClasses.isNotEmpty
+                                ? BorderStyle.solid
+                                : BorderStyle.solid,
+                          ),
                         ),
                         child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    classInfo.className,
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  if (classInfo.courseName != null) ...[
-                                    SizedBox(height: 2.h),
-                                    Text(
-                                      classInfo.courseName!,
-                                      style: theme.textTheme.bodySmall
-                                          ?.copyWith(
-                                            color: isDark
-                                                ? AppColors.gray400
-                                                : AppColors.gray600,
-                                          ),
-                                    ),
-                                  ],
-                                  SizedBox(height: 4.h),
-                                  Text(
-                                    _formatCurrency(classInfo.tuitionFee),
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            Icon(
+                              regState.selectedClasses.isNotEmpty
+                                  ? Icons.add_circle_outline
+                                  : Icons.search,
+                              color: regState.selectedClasses.isNotEmpty
+                                  ? AppColors.primary
+                                  : (isDark
+                                        ? AppColors.neutral400
+                                        : AppColors.neutral600),
+                              size: 20.sp,
                             ),
-                            IconButton(
-                              onPressed: () {
-                                context.read<RegistrationBloc>().add(
-                                  RemoveClass(classInfo.classId),
-                                );
-                              },
-                              icon: Icon(
-                                Icons.close,
-                                color: AppColors.error,
-                                size: 20.sp,
+                            SizedBox(width: 8.w),
+                            Text(
+                              regState.selectedClasses.isNotEmpty
+                                  ? 'Thêm lớp học khác'
+                                  : 'Tìm kiếm lớp học/khóa học',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: regState.selectedClasses.isNotEmpty
+                                    ? AppColors.primary
+                                    : (isDark
+                                          ? AppColors.neutral400
+                                          : AppColors.neutral600),
+                                fontWeight: regState.selectedClasses.isNotEmpty
+                                    ? FontWeight.w600
+                                    : null,
                               ),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
                             ),
                           ],
                         ),
                       ),
                     ),
-                    SizedBox(height: 8.h),
-                  ],
+                    SizedBox(height: AppSizes.p20),
 
-                  
-                  InkWell(
-                    onTap: _navigateToClassSelection,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-                    child: Container(
-                      padding: EdgeInsets.all(AppSizes.paddingMedium),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? AppColors.surfaceDark
-                            : AppColors.surface,
-                        borderRadius: BorderRadius.circular(
-                          AppSizes.radiusMedium,
-                        ),
-                        border: Border.all(
-                          color: regState.selectedClasses.isNotEmpty
-                              ? (isDark ? AppColors.gray700 : AppColors.gray200)
-                              : AppColors.primary.withValues(alpha: 0.5),
-                          style: regState.selectedClasses.isNotEmpty
-                              ? BorderStyle.solid
-                              : BorderStyle.solid,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            regState.selectedClasses.isNotEmpty
-                                ? Icons.add_circle_outline
-                                : Icons.search,
-                            color: regState.selectedClasses.isNotEmpty
-                                ? AppColors.primary
-                                : (isDark
-                                      ? AppColors.gray400
-                                      : AppColors.gray600),
-                            size: 20.sp,
-                          ),
-                          SizedBox(width: 8.w),
-                          Text(
-                            regState.selectedClasses.isNotEmpty
-                                ? 'Thêm lớp học khác'
-                                : 'Tìm kiếm lớp học/khóa học',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: regState.selectedClasses.isNotEmpty
-                                  ? AppColors.primary
-                                  : (isDark
-                                        ? AppColors.gray400
-                                        : AppColors.gray600),
-                              fontWeight: regState.selectedClasses.isNotEmpty
-                                  ? FontWeight.w600
-                                  : null,
+                    
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildSectionTitle('Thông tin thanh toán'),
+                        if (regState.hasAutoPromotions &&
+                            regState.cartPreview != null)
+                          TextButton.icon(
+                            onPressed: () =>
+                                _showPromotionBreakdownModal(regState!),
+                            icon: Icon(
+                              Icons.receipt_long,
+                              size: 16.sp,
+                              color: AppColors.primary,
+                            ),
+                            label: Text(
+                              'Chi tiết',
+                              style: TextStyle(
+                                fontSize: AppSizes.textSm,
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: AppSizes.p8,
+                                vertical: AppSizes.p4,
+                              ),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: AppSizes.p20),
-
-                  
-                  _buildSectionTitle('Thông tin thanh toán'),
-                  SizedBox(height: AppSizes.p12),
-
-                  Container(
-                    padding: EdgeInsets.all(AppSizes.paddingMedium),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.surfaceDark : AppColors.surface,
-                      borderRadius: BorderRadius.circular(
-                        AppSizes.radiusMedium,
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        _buildPaymentRow('Học phí', regState.tuitionFee),
-                        SizedBox(height: AppSizes.p8),
-                        _buildPaymentRow(
-                          'Giảm giá',
-                          -regState.discount,
-                          color: AppColors.error,
-                        ),
-                        Divider(height: AppSizes.p20),
-                        _buildPaymentRow(
-                          'Tổng cộng',
-                          regState.totalAmount,
-                          isTotal: true,
-                        ),
                       ],
                     ),
-                  ),
-                  SizedBox(height: AppSizes.paddingMedium),
+                    SizedBox(height: AppSizes.p12),
 
-                  
-                  InkWell(
-                    onTap: _navigateToPromotion,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: AppSizes.paddingMedium,
-                        vertical: AppSizes.p12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? AppColors.surfaceDark
-                            : AppColors.surface,
+                    _buildEnhancedPaymentSection(regState, isDark),
+                    SizedBox(height: AppSizes.paddingMedium),
+
+                    
+                    if (regState.hasAutoPromotions)
+                      _buildAppliedPromotionsChips(regState, isDark),
+
+                    
+                    if (!regState.hasAutoPromotions)
+                      InkWell(
+                        onTap: _navigateToPromotion,
                         borderRadius: BorderRadius.circular(
                           AppSizes.radiusMedium,
                         ),
-                        border: Border.all(
-                          color: regState.promotionCode != null
-                              ? AppColors.primary
-                              : (isDark
-                                    ? AppColors.gray700
-                                    : AppColors.gray200),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.local_offer,
-                            color: regState.promotionCode != null
-                                ? AppColors.primary
-                                : (isDark
-                                      ? AppColors.gray400
-                                      : AppColors.gray600),
-                            size: 20.sp,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: AppSizes.paddingMedium,
+                            vertical: AppSizes.p12,
                           ),
-                          SizedBox(width: AppSizes.p12),
-                          Expanded(
-                            child: Text(
-                              regState.promotionCode != null
-                                  ? 'Đã áp dụng: ${regState.promotionCode}'
-                                  : 'Chọn hoặc nhập mã khuyến mãi',
-                              style: theme.textTheme.bodyMedium?.copyWith(
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? AppColors.surfaceDark
+                                : AppColors.surface,
+                            borderRadius: BorderRadius.circular(
+                              AppSizes.radiusMedium,
+                            ),
+                            border: Border.all(
+                              color: regState.promotionCode != null
+                                  ? AppColors.primary
+                                  : (isDark
+                                        ? AppColors.neutral700
+                                        : AppColors.neutral200),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.local_offer,
                                 color: regState.promotionCode != null
                                     ? AppColors.primary
                                     : (isDark
-                                          ? AppColors.gray400
-                                          : AppColors.gray600),
-                                fontWeight: regState.promotionCode != null
-                                    ? FontWeight.w600
-                                    : null,
+                                          ? AppColors.neutral400
+                                          : AppColors.neutral600),
+                                size: 20.sp,
                               ),
-                            ),
-                          ),
-                          Icon(
-                            Icons.arrow_forward_ios,
-                            size: AppSizes.textBase,
-                            color: isDark
-                                ? AppColors.gray400
-                                : AppColors.gray600,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: AppSizes.p20),
-
-                  
-                  _buildSectionTitle('Phương thức thanh toán'),
-                  SizedBox(height: AppSizes.p12),
-
-                  _buildPaymentMethodSelector(regState, isDark),
-
-                  SizedBox(height: 32.h),
-
-                  
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _canProceedToPayment(regState)
-                          ? () {
-                              final bloc = context.read<RegistrationBloc>();
-
-                              
-                              if (regState?.isNewStudent == true) {
-                                bloc.add(
-                                  UpdateStudentInfo(
-                                    studentName: _nameController.text,
-                                    phoneNumber: _phoneController.text,
-                                    email: _emailController.text.isNotEmpty
-                                        ? _emailController.text
+                              SizedBox(width: AppSizes.p12),
+                              Expanded(
+                                child: Text(
+                                  regState.promotionCode != null
+                                      ? 'Đã áp dụng: ${regState.promotionCode}'
+                                      : 'Chọn hoặc nhập mã khuyến mãi',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: regState.promotionCode != null
+                                        ? AppColors.primary
+                                        : (isDark
+                                              ? AppColors.neutral400
+                                              : AppColors.neutral600),
+                                    fontWeight: regState.promotionCode != null
+                                        ? FontWeight.w600
                                         : null,
+                                  ),
+                                ),
+                              ),
+                              Icon(
+                                Icons.arrow_forward_ios,
+                                size: AppSizes.textBase,
+                                color: isDark
+                                    ? AppColors.neutral400
+                                    : AppColors.neutral600,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    SizedBox(height: AppSizes.p20),
+
+                    
+                    _buildSectionTitle('Phương thức thanh toán'),
+                    SizedBox(height: AppSizes.p12),
+
+                    _buildPaymentMethodSelector(regState, isDark),
+
+                    SizedBox(height: 32.h),
+
+                    
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _canProceedToPayment(regState)
+                            ? () {
+                                
+                                if (regState!.isNewStudent &&
+                                    !(_formKey.currentState?.validate() ??
+                                        false)) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Vui lòng kiểm tra lại thông tin',
+                                      ),
+                                      backgroundColor: AppColors.warning,
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                final bloc = context.read<RegistrationBloc>();
+
+                                
+                                if (regState.isNewStudent) {
+                                  bloc.add(
+                                    UpdateStudentInfo(
+                                      studentName: _nameController.text.trim(),
+                                      phoneNumber: _phoneController.text.trim(),
+                                      email:
+                                          _emailController.text
+                                              .trim()
+                                              .isNotEmpty
+                                          ? _emailController.text.trim()
+                                          : null,
+                                    ),
+                                  );
+                                }
+
+                                
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => BlocProvider.value(
+                                      value: bloc,
+                                      child:
+                                          const QuickRegistrationPaymentScreen(),
+                                    ),
                                   ),
                                 );
                               }
-
-                              
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => BlocProvider.value(
-                                    value: bloc,
-                                    child:
-                                        const QuickRegistrationPaymentScreen(),
-                                  ),
-                                ),
-                              );
-                            }
-                          : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        padding: EdgeInsets.symmetric(vertical: 16.h),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppSizes.radiusMedium,
+                            : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          padding: EdgeInsets.symmetric(vertical: 16.h),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              AppSizes.radiusMedium,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          'Tiếp tục',
+                          style: TextStyle(
+                            fontSize: AppSizes.textBase,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
                           ),
                         ),
                       ),
-                      child: Text(
-                        'Tiếp tục',
-                        style: TextStyle(
-                          fontSize: AppSizes.textBase,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
                     ),
-                  ),
 
-                  SizedBox(height: 80.h),
-                ],
+                    SizedBox(height: 80.h),
+                  ],
+                ),
               ),
             ),
           );
@@ -487,9 +549,11 @@ class _QuickRegistrationFormScreenState
   }
 
   bool _canProceedToPayment(RegistrationInProgress state) {
+    
     if (state.selectedClasses.isEmpty) return false;
 
     if (state.isNewStudent) {
+      
       
       return _nameController.text.isNotEmpty &&
           _phoneController.text.isNotEmpty;
@@ -502,7 +566,7 @@ class _QuickRegistrationFormScreenState
   Widget _buildStudentModeToggle(RegistrationInProgress state, bool isDark) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.gray100,
+        color: isDark ? AppColors.surfaceDark : AppColors.neutral100,
         borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
       ),
       child: Row(
@@ -526,7 +590,7 @@ class _QuickRegistrationFormScreenState
                       size: 18.sp,
                       color: state.isNewStudent
                           ? Colors.white
-                          : AppColors.gray500,
+                          : AppColors.neutral500,
                     ),
                     SizedBox(width: 6.w),
                     Text(
@@ -534,7 +598,7 @@ class _QuickRegistrationFormScreenState
                       style: TextStyle(
                         color: state.isNewStudent
                             ? Colors.white
-                            : AppColors.gray600,
+                            : AppColors.neutral600,
                         fontWeight: state.isNewStudent
                             ? FontWeight.w600
                             : FontWeight.normal,
@@ -565,7 +629,7 @@ class _QuickRegistrationFormScreenState
                       size: 18.sp,
                       color: !state.isNewStudent
                           ? Colors.white
-                          : AppColors.gray500,
+                          : AppColors.neutral500,
                     ),
                     SizedBox(width: 6.w),
                     Text(
@@ -573,7 +637,7 @@ class _QuickRegistrationFormScreenState
                       style: TextStyle(
                         color: !state.isNewStudent
                             ? Colors.white
-                            : AppColors.gray600,
+                            : AppColors.neutral600,
                         fontWeight: !state.isNewStudent
                             ? FontWeight.w600
                             : FontWeight.normal,
@@ -605,6 +669,9 @@ class _QuickRegistrationFormScreenState
             if (value == null || value.isEmpty) {
               return 'Vui lòng nhập họ và tên';
             }
+            if (value.length < 2) {
+              return 'Họ tên phải có ít nhất 2 ký tự';
+            }
             return null;
           },
         ),
@@ -619,6 +686,12 @@ class _QuickRegistrationFormScreenState
             if (value == null || value.isEmpty) {
               return 'Vui lòng nhập số điện thoại';
             }
+            
+            final phoneRegex = RegExp(r'^(0|\+84)(3|5|7|8|9)[0-9]{8}$');
+            final cleanPhone = value.replaceAll(RegExp(r'[\s\-\.]'), '');
+            if (!phoneRegex.hasMatch(cleanPhone)) {
+              return 'Số điện thoại không hợp lệ (VD: 0912345678)';
+            }
             return null;
           },
         ),
@@ -629,6 +702,18 @@ class _QuickRegistrationFormScreenState
           label: 'Email (không bắt buộc)',
           hintText: 'Nhập email',
           keyboardType: TextInputType.emailAddress,
+          validator: (value) {
+            
+            if (value != null && value.isNotEmpty) {
+              final emailRegex = RegExp(
+                r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+              );
+              if (!emailRegex.hasMatch(value)) {
+                return 'Email không hợp lệ';
+              }
+            }
+            return null;
+          },
         ),
 
         SizedBox(height: AppSizes.p8),
@@ -678,7 +763,7 @@ class _QuickRegistrationFormScreenState
               border: Border.all(
                 color: state.studentId != null
                     ? AppColors.primary
-                    : (isDark ? AppColors.gray700 : AppColors.gray200),
+                    : (isDark ? AppColors.neutral700 : AppColors.neutral200),
               ),
             ),
             child: Row(
@@ -687,14 +772,14 @@ class _QuickRegistrationFormScreenState
                   radius: 24.r,
                   backgroundColor: state.studentId != null
                       ? AppColors.primary.withValues(alpha: 0.2)
-                      : (isDark ? AppColors.gray600 : AppColors.gray200),
+                      : (isDark ? AppColors.neutral600 : AppColors.neutral200),
                   child: Icon(
                     state.studentId != null
                         ? Icons.person
                         : Icons.person_search,
                     color: state.studentId != null
                         ? AppColors.primary
-                        : AppColors.gray500,
+                        : AppColors.neutral500,
                   ),
                 ),
                 SizedBox(width: AppSizes.paddingMedium),
@@ -708,8 +793,8 @@ class _QuickRegistrationFormScreenState
                           color: state.studentName != null
                               ? null
                               : (isDark
-                                    ? AppColors.gray400
-                                    : AppColors.gray600),
+                                    ? AppColors.neutral400
+                                    : AppColors.neutral600),
                           fontWeight: state.studentName != null
                               ? FontWeight.w600
                               : null,
@@ -722,8 +807,8 @@ class _QuickRegistrationFormScreenState
                           'SĐT: ${state.phoneNumber}',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: isDark
-                                ? AppColors.gray400
-                                : AppColors.gray600,
+                                ? AppColors.neutral400
+                                : AppColors.neutral600,
                           ),
                         ),
                       ],
@@ -733,13 +818,354 @@ class _QuickRegistrationFormScreenState
                 Icon(
                   Icons.arrow_forward_ios,
                   size: AppSizes.textBase,
-                  color: isDark ? AppColors.gray400 : AppColors.gray600,
+                  color: isDark ? AppColors.neutral400 : AppColors.neutral600,
                 ),
               ],
             ),
           ),
         ),
       ],
+    );
+  }
+
+  
+  void _showPromotionBreakdownModal(RegistrationInProgress state) {
+    if (state.cartPreview == null) return;
+
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final cartPreview = state.cartPreview!;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.8,
+        ),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surfaceDark : Colors.white,
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppSizes.radiusLarge),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            
+            Container(
+              margin: EdgeInsets.only(top: AppSizes.p12),
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: AppColors.neutral300,
+                borderRadius: BorderRadius.circular(2.r),
+              ),
+            ),
+
+            
+            Padding(
+              padding: EdgeInsets.all(AppSizes.paddingMedium),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.receipt_long,
+                    color: AppColors.primary,
+                    size: 24.sp,
+                  ),
+                  SizedBox(width: AppSizes.p12),
+                  Text(
+                    'Chi tiết khuyến mãi',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            Divider(height: 1),
+
+            
+            Flexible(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(AppSizes.paddingMedium),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    
+                    ...cartPreview.items.map(
+                      (item) => _buildItemBreakdown(item, isDark),
+                    ),
+
+                    if (cartPreview.items.isNotEmpty)
+                      Padding(
+                        padding: EdgeInsets.symmetric(vertical: AppSizes.p12),
+                        child: Divider(),
+                      ),
+
+                    
+                    _buildSummarySection(cartPreview.summary, isDark),
+                  ],
+                ),
+              ),
+            ),
+
+            
+            Padding(
+              padding: EdgeInsets.all(AppSizes.paddingMedium),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    padding: EdgeInsets.symmetric(vertical: AppSizes.p12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(
+                        AppSizes.radiusMedium,
+                      ),
+                    ),
+                  ),
+                  child: Text(
+                    'Đóng',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  
+  Widget _buildItemBreakdown(dynamic item, bool isDark) {
+    final theme = Theme.of(context);
+
+    return Container(
+      margin: EdgeInsets.only(bottom: AppSizes.p12),
+      padding: EdgeInsets.all(AppSizes.p12),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.neutral800 : AppColors.neutral50,
+        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+        border: Border.all(
+          color: isDark ? AppColors.neutral700 : AppColors.neutral200,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          
+          Text(
+            item.courseName ?? 'Khóa học',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (item.className != null)
+            Text(
+              item.className!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: AppColors.neutral500,
+              ),
+            ),
+          SizedBox(height: AppSizes.p8),
+
+          
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Học phí gốc', style: theme.textTheme.bodySmall),
+              Text(
+                _formatCurrency(item.tuitionFee?.toDouble() ?? 0),
+                style: theme.textTheme.bodySmall,
+              ),
+            ],
+          ),
+
+          
+          if ((item.singleCourseDiscountPercent ?? 0) > 0) ...[
+            SizedBox(height: AppSizes.p4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '🏷️ Giảm giá khóa lẻ (-${item.singleCourseDiscountPercent}%)',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.success,
+                  ),
+                ),
+                Text(
+                  '-${_formatCurrency(item.singleCourseDiscountAmount?.toDouble() ?? 0)}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.success,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ],
+
+          
+          SizedBox(height: AppSizes.p4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Thành tiền',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Text(
+                _formatCurrency(
+                  item.priceAfterSingleDiscount?.toDouble() ??
+                      item.tuitionFee?.toDouble() ??
+                      0,
+                ),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  
+  Widget _buildSummarySection(dynamic summary, bool isDark) {
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Tổng kết',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(height: AppSizes.p12),
+
+        
+        _buildSummaryRow(
+          'Tổng học phí gốc',
+          summary.totalTuitionFee?.toDouble() ?? 0,
+        ),
+
+        
+        if ((summary.totalSingleCourseDiscount ?? 0) > 0)
+          _buildSummaryRow(
+            '🏷️ Giảm giá khóa lẻ',
+            -(summary.totalSingleCourseDiscount?.toDouble() ?? 0),
+            color: AppColors.success,
+          ),
+
+        
+        if ((summary.totalComboDiscount ?? 0) > 0) ...[
+          ...((summary.appliedCombos as List?)?.map(
+                (combo) => _buildSummaryRow(
+                  '🎁 ${combo.comboName ?? 'Combo'} (-${combo.discountPercent ?? 0}%)',
+                  -(combo.discountAmount?.toDouble() ?? 0),
+                  color: AppColors.success,
+                ),
+              ) ??
+              []),
+        ],
+
+        
+        if ((summary.returningDiscountAmount ?? 0) > 0)
+          _buildSummaryRow(
+            '🎉 Ưu đãi học viên cũ',
+            -(summary.returningDiscountAmount?.toDouble() ?? 0),
+            color: AppColors.success,
+          ),
+
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: AppSizes.p8),
+          child: Divider(),
+        ),
+
+        
+        if ((summary.totalDiscountAmount ?? 0) > 0)
+          _buildSummaryRow(
+            'Tổng giảm giá',
+            -(summary.totalDiscountAmount?.toDouble() ?? 0),
+            color: AppColors.success,
+            isBold: true,
+          ),
+
+        SizedBox(height: AppSizes.p8),
+
+        
+        Container(
+          padding: EdgeInsets.all(AppSizes.p12),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Tổng thanh toán',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                ),
+              ),
+              Text(
+                _formatCurrency(summary.finalAmount?.toDouble() ?? 0),
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  
+  Widget _buildSummaryRow(
+    String label,
+    double amount, {
+    Color? color,
+    bool isBold = false,
+  }) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: AppSizes.p4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: isBold ? FontWeight.w600 : null,
+            ),
+          ),
+          Text(
+            _formatCurrency(amount),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: color,
+              fontWeight: isBold ? FontWeight.w600 : FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -785,13 +1211,13 @@ class _QuickRegistrationFormScreenState
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
               borderSide: BorderSide(
-                color: isDark ? AppColors.gray700 : AppColors.gray200,
+                color: isDark ? AppColors.neutral700 : AppColors.neutral200,
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
               borderSide: BorderSide(
-                color: isDark ? AppColors.gray700 : AppColors.gray200,
+                color: isDark ? AppColors.neutral700 : AppColors.neutral200,
               ),
             ),
           ),
@@ -808,7 +1234,7 @@ class _QuickRegistrationFormScreenState
     final methods = [
       (PaymentMethod.cash, Icons.money, 'Tiền mặt'),
       (PaymentMethod.transfer, Icons.account_balance, 'Chuyển khoản'),
-      (PaymentMethod.card, Icons.credit_card, 'Quẹt thẻ'),
+      
     ];
 
     return Row(
@@ -836,7 +1262,9 @@ class _QuickRegistrationFormScreenState
                   border: Border.all(
                     color: isSelected
                         ? AppColors.primary
-                        : (isDark ? AppColors.gray700 : AppColors.gray200),
+                        : (isDark
+                              ? AppColors.neutral700
+                              : AppColors.neutral200),
                   ),
                 ),
                 child: Column(
@@ -847,7 +1275,9 @@ class _QuickRegistrationFormScreenState
                       size: 24.sp,
                       color: isSelected
                           ? Colors.white
-                          : (isDark ? AppColors.gray400 : AppColors.gray600),
+                          : (isDark
+                                ? AppColors.neutral400
+                                : AppColors.neutral600),
                     ),
                     SizedBox(height: 4.h),
                     Text(
@@ -859,7 +1289,9 @@ class _QuickRegistrationFormScreenState
                             : FontWeight.normal,
                         color: isSelected
                             ? Colors.white
-                            : (isDark ? AppColors.gray400 : AppColors.gray600),
+                            : (isDark
+                                  ? AppColors.neutral400
+                                  : AppColors.neutral600),
                       ),
                     ),
                   ],
@@ -869,6 +1301,279 @@ class _QuickRegistrationFormScreenState
           ),
         );
       }).toList(),
+    );
+  }
+
+  
+  Widget _buildEnhancedPaymentSection(
+    RegistrationInProgress state,
+    bool isDark,
+  ) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: EdgeInsets.all(AppSizes.paddingMedium),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : AppColors.surface,
+        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+      ),
+      child: Column(
+        children: [
+          
+          _buildPaymentRow(
+            'Học phí gốc',
+            state.hasSingleCourseDiscount
+                ? state.totalTuitionFee
+                : state.tuitionFee,
+          ),
+
+          
+          if (state.hasSingleCourseDiscount) ...[
+            SizedBox(height: AppSizes.p8),
+            _buildPaymentRow(
+              '🏷️ Giảm giá khóa lẻ',
+              -state.singleCourseDiscountAmount,
+              color: AppColors.success,
+            ),
+          ],
+
+          
+          if (state.appliedCombos.isNotEmpty) ...[
+            SizedBox(height: AppSizes.p8),
+            ...state.appliedCombos.map(
+              (combo) => Padding(
+                padding: EdgeInsets.only(bottom: AppSizes.p4),
+                child: _buildPaymentRow(
+                  '🎁 ${combo.comboName} (-${combo.discountPercent}%)',
+                  -combo.discountAmount,
+                  color: AppColors.success,
+                ),
+              ),
+            ),
+          ],
+
+          
+          if (state.returningDiscountAmount > 0) ...[
+            SizedBox(height: AppSizes.p4),
+            _buildPaymentRow(
+              '🎉 Ưu đãi học viên cũ',
+              -state.returningDiscountAmount,
+              color: AppColors.success,
+            ),
+          ],
+
+          
+          if (state.totalDiscount > 0 &&
+              !state.hasSingleCourseDiscount &&
+              state.appliedCombos.isEmpty &&
+              state.returningDiscountAmount == 0) ...[
+            SizedBox(height: AppSizes.p8),
+            _buildPaymentRow(
+              'Giảm giá',
+              -state.totalDiscount,
+              color: AppColors.error,
+            ),
+          ],
+
+          
+          if (state.isCalculatingPreview)
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSizes.p8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 16.sp,
+                    height: 16.sp,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  SizedBox(width: AppSizes.p8),
+                  Text(
+                    'Đang tính khuyến mãi...',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppColors.neutral500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          Divider(height: AppSizes.p20),
+
+          
+          _buildPaymentRow('Tổng thanh toán', state.totalAmount, isTotal: true),
+
+          
+          if (state.totalDiscount > 0)
+            Padding(
+              padding: EdgeInsets.only(top: AppSizes.p8),
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppSizes.p12,
+                  vertical: AppSizes.p8,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.savings_outlined,
+                      size: 16.sp,
+                      color: AppColors.success,
+                    ),
+                    SizedBox(width: AppSizes.p8),
+                    Text(
+                      'Bạn tiết kiệm ${_formatCurrency(state.totalDiscount)}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColors.success,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  
+  Widget _buildAppliedPromotionsChips(
+    RegistrationInProgress state,
+    bool isDark,
+  ) {
+    final theme = Theme.of(context);
+
+    return Container(
+      margin: EdgeInsets.only(bottom: AppSizes.paddingMedium),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.auto_awesome, size: 16.sp, color: AppColors.success),
+              SizedBox(width: AppSizes.p8),
+              Text(
+                'Khuyến mãi tự động áp dụng',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColors.success,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: AppSizes.p8),
+          Wrap(
+            spacing: AppSizes.p8,
+            runSpacing: AppSizes.p8,
+            children: [
+              
+              if (state.hasSingleCourseDiscount)
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppSizes.p12,
+                    vertical: AppSizes.p8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.info.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+                    border: Border.all(
+                      color: AppColors.info.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.sell, size: 14.sp, color: AppColors.info),
+                      SizedBox(width: AppSizes.p4),
+                      Text(
+                        'Giảm giá khóa lẻ',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: AppColors.info,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              
+              ...state.appliedCombos.map(
+                (combo) => Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppSizes.p12,
+                    vertical: AppSizes.p8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.local_offer,
+                        size: 14.sp,
+                        color: AppColors.primary,
+                      ),
+                      SizedBox(width: AppSizes.p4),
+                      Flexible(
+                        child: Text(
+                          '${combo.comboName} (-${combo.discountPercent}%)',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              
+              if (state.returningDiscountAmount > 0)
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppSizes.p12,
+                    vertical: AppSizes.p8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+                    border: Border.all(
+                      color: AppColors.success.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.star, size: 14.sp, color: AppColors.success),
+                      SizedBox(width: AppSizes.p4),
+                      Text(
+                        'Học viên cũ',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: AppColors.success,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

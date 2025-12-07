@@ -24,29 +24,20 @@ class TeacherGradesDataSourceImpl implements TeacherGradesDataSource {
         final data = response.data['data'];
         if (data == null) return [];
 
-        
         final className = data['className'] ?? '';
         final courseName = data['courseName'] ?? '';
         final students = data['students'] as List? ?? [];
 
+        
         return students.map((student) {
           
-          return ClassGradeSummaryModel.fromJson({
-            'mahocvien': student['studentId']?.toString() ?? '',
-            'ten_hocvien': student['studentName'] ?? '',
-            'email': student['email'] ?? '',
-            'sdt': '', 
-            'malop': classId,
-            'tenlop': className,
-            'tenkhoahoc': courseName,
-            'diem_chuyencan': student['attendanceScore']?.toDouble(),
-            'diem_giuaky': student['midtermScore']?.toDouble(),
-            'diem_cuoiky': student['finalScore']?.toDouble(),
-            'diem_tongket': student['totalScore']?.toDouble() ?? 0.0,
-            'xeploai': student['grade'] ?? _getClassification(student['totalScore']?.toDouble()),
-            'ngay_chamdiem_cuoicung': student['finalGrade']?['gradedAt'],
-            'trangthai_hoantat': student['status'] ?? 'Chưa hoàn thành',
-          });
+          final enrichedStudent = {
+            ...Map<String, dynamic>.from(student),
+            'classId': classId,
+            'className': className,
+            'courseName': courseName,
+          };
+          return ClassGradeSummaryModel.fromJson(enrichedStudent);
         }).toList();
       } else {
         throw ServerException(
@@ -64,14 +55,5 @@ class TeacherGradesDataSourceImpl implements TeacherGradesDataSource {
       if (e is ServerException) rethrow;
       throw ServerException('Không thể tải điểm lớp học: $e');
     }
-  }
-
-  String _getClassification(double? score) {
-    if (score == null) return 'Chưa xếp loại';
-    if (score >= 8.5) return 'Xuất sắc';
-    if (score >= 7.0) return 'Giỏi';
-    if (score >= 5.5) return 'Khá';
-    if (score >= 4.0) return 'Trung bình';
-    return 'Yếu';
   }
 }

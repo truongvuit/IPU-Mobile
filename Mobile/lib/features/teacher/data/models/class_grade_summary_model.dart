@@ -1,7 +1,5 @@
 import '../../domain/entities/class_grade_summary.dart';
 
-
-
 class ClassGradeSummaryModel extends ClassGradeSummary {
   const ClassGradeSummaryModel({
     required super.studentId,
@@ -23,54 +21,51 @@ class ClassGradeSummaryModel extends ClassGradeSummary {
   
   factory ClassGradeSummaryModel.fromJson(Map<String, dynamic> json) {
     return ClassGradeSummaryModel(
-      studentId: json['mahocvien']?.toString() ?? '',
-      studentName: json['ten_hocvien']?.toString() ?? '',
+      studentId: json['studentId']?.toString() ?? '',
+      studentName: json['studentName']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
-      phone: json['sdt']?.toString() ?? '',
-      classId: json['malop']?.toString() ?? '',
-      className: json['tenlop']?.toString() ?? '',
-      courseName: json['tenkhoahoc']?.toString() ?? '',
-      attendanceScore: json['diem_chuyencan'] != null
-          ? double.tryParse(json['diem_chuyencan'].toString())
+      phone: json['phoneNumber']?.toString() ?? '',
+      classId: json['classId']?.toString() ?? '',
+      className: json['className']?.toString() ?? '',
+      courseName: json['courseName']?.toString() ?? '',
+      attendanceScore: json['attendanceScore'] != null
+          ? double.tryParse(json['attendanceScore'].toString())
           : null,
-      midtermScore: json['diem_giuaky'] != null
-          ? double.tryParse(json['diem_giuaky'].toString())
+      midtermScore: json['midtermScore'] != null
+          ? double.tryParse(json['midtermScore'].toString())
           : null,
-      finalScore: json['diem_cuoiky'] != null
-          ? double.tryParse(json['diem_cuoiky'].toString())
+      finalScore: json['finalScore'] != null
+          ? double.tryParse(json['finalScore'].toString())
           : null,
-      finalGrade:
-          double.tryParse(json['diem_tongket']?.toString() ?? '0') ?? 0.0,
-      classification: json['xeploai']?.toString() ?? 'Chưa xếp loại',
-      lastGradedDate: json['ngay_chamdiem_cuoicung'] != null
-          ? DateTime.tryParse(json['ngay_chamdiem_cuoicung'].toString())
+      finalGrade: double.tryParse(json['totalScore']?.toString() ?? '0') ?? 0.0,
+      classification: json['grade']?.toString() ?? 'Chưa xếp loại',
+      lastGradedDate: json['lastGradedAt'] != null
+          ? DateTime.tryParse(json['lastGradedAt'].toString())
           : null,
-      completionStatus:
-          json['trangthai_hoantat']?.toString() ?? 'Chưa hoàn thành',
+      completionStatus: json['status']?.toString() ?? 'Chưa hoàn thành',
     );
   }
 
   
   Map<String, dynamic> toJson() {
     return {
-      'mahocvien': studentId,
-      'ten_hocvien': studentName,
+      'studentId': studentId,
+      'studentName': studentName,
       'email': email,
-      'sdt': phone,
-      'malop': classId,
-      'tenlop': className,
-      'tenkhoahoc': courseName,
-      'diem_chuyencan': attendanceScore,
-      'diem_giuaky': midtermScore,
-      'diem_cuoiky': finalScore,
-      'diem_tongket': finalGrade,
-      'xeploai': classification,
-      'ngay_chamdiem_cuoicung': lastGradedDate?.toIso8601String(),
-      'trangthai_hoantat': completionStatus,
+      'phoneNumber': phone,
+      'classId': classId,
+      'className': className,
+      'courseName': courseName,
+      'attendanceScore': attendanceScore,
+      'midtermScore': midtermScore,
+      'finalScore': finalScore,
+      'totalScore': finalGrade,
+      'grade': classification,
+      'lastGradedAt': lastGradedDate?.toIso8601String(),
+      'status': completionStatus,
     };
   }
 
-  
   ClassGradeSummary toEntity() {
     return ClassGradeSummary(
       studentId: studentId,
@@ -90,7 +85,6 @@ class ClassGradeSummaryModel extends ClassGradeSummary {
     );
   }
 
-  
   factory ClassGradeSummaryModel.fromEntity(ClassGradeSummary entity) {
     return ClassGradeSummaryModel(
       studentId: entity.studentId,

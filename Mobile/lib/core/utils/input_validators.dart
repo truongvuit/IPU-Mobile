@@ -172,7 +172,7 @@ class InputValidators {
       'expression(',
       '<embed',
       '<object',
-      // SQL injection patterns
+      
       "';",
       '";',
       '--',

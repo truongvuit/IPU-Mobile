@@ -10,6 +10,7 @@ import '../../domain/entities/attendance.dart';
 
 abstract class TeacherApiDataSource {
   Future<TeacherProfileModel> getProfile();
+  Future<void> updateProfile(TeacherProfileModel profile);
   Future<List<TeacherClassModel>> getMyClasses();
   Future<List<TeacherScheduleModel>> getWeekSchedule(DateTime date);
   Future<List<TeacherStudentModel>> getClassStudents(int classId);
@@ -19,6 +20,7 @@ abstract class TeacherApiDataSource {
     int sessionId,
     List<Map<String, dynamic>> entries,
   );
+  Future<TeacherStudentModel> getStudentDetail(int studentId);
 }
 
 class TeacherApiDataSourceImpl implements TeacherApiDataSource {
@@ -46,6 +48,54 @@ class TeacherApiDataSourceImpl implements TeacherApiDataSource {
       }
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Network error');
+    }
+  }
+
+  @override
+  Future<void> updateProfile(TeacherProfileModel profile) async {
+    try {
+      // Chuyển đổi gender từ string sang boolean
+      bool? genderBoolean;
+      if (profile.gender != null) {
+        if (profile.gender == 'Nam') {
+          genderBoolean = true;
+        } else if (profile.gender == 'Nữ') {
+          genderBoolean = false;
+        }
+      }
+
+      // Sử dụng endpoint PUT /lecturers/me để giảng viên tự cập nhật
+      final response = await dioClient.put(
+        '/lecturers/me',
+        data: {
+          if (profile.fullName != null && profile.fullName!.isNotEmpty)
+            'fullName': profile.fullName,
+          if (profile.email != null && profile.email!.isNotEmpty)
+            'email': profile.email,
+          if (profile.phoneNumber != null && profile.phoneNumber!.isNotEmpty)
+            'phoneNumber': profile.phoneNumber,
+          if (profile.address != null && profile.address!.isNotEmpty)
+            'address': profile.address,
+          if (profile.dateOfBirth != null)
+            'dateOfBirth': profile.dateOfBirth!.toIso8601String().split('T')[0],
+          if (genderBoolean != null) 'gender': genderBoolean,
+          if (profile.specialization != null &&
+              profile.specialization!.isNotEmpty)
+            'specialization': profile.specialization,
+          if (profile.avatar != null && profile.avatar!.isNotEmpty)
+            'imagePath': profile.avatar,
+        },
+      );
+      if (response.statusCode != 200 || response.data['code'] != 1000) {
+        throw ServerException(
+          response.data['message'] ?? 'Cập nhật hồ sơ thất bại',
+        );
+      }
+    } on DioException catch (e) {
+      throw ServerException(e.response?.data['message'] ?? 'Lỗi kết nối mạng');
+    } catch (e) {
+      if (e is ServerException) rethrow;
+      throw ServerException('Cập nhật hồ sơ thất bại: $e');
     }
   }
 
@@ -84,27 +134,24 @@ class TeacherApiDataSourceImpl implements TeacherApiDataSource {
       if (response.statusCode == 200 && response.data['code'] == 1000) {
         final data = response.data['data'];
         final List<TeacherScheduleModel> schedules = [];
-        
-        
+
         final List<dynamic> days = data['days'] ?? [];
         for (final day in days) {
           final sessionDate = day['date'] as String?;
           final List<dynamic> periods = day['periods'] ?? [];
-          
+
           for (final period in periods) {
             final List<dynamic> sessions = period['sessions'] ?? [];
-            
+
             for (final session in sessions) {
-              
               final classId = session['classId']?.toString() ?? '';
-              
-              
+
               DateTime startTime = DateTime.now();
               DateTime endTime = DateTime.now().add(const Duration(hours: 1));
-              
+
               if (sessionDate != null) {
                 final dateOnly = DateTime.parse(sessionDate);
-                
+
                 final startTimeStr = session['startTime'] as String?;
                 if (startTimeStr != null) {
                   final timeParts = startTimeStr.split(':');
@@ -120,25 +167,27 @@ class TeacherApiDataSourceImpl implements TeacherApiDataSource {
                 } else {
                   startTime = dateOnly;
                 }
-                
-                
-                final durationMinutes = session['durationMinutes'] as int? ?? 60;
+
+                final durationMinutes =
+                    session['durationMinutes'] as int? ?? 60;
                 endTime = startTime.add(Duration(minutes: durationMinutes));
               }
-              
-              schedules.add(TeacherScheduleModel(
-                id: session['sessionId']?.toString() ?? '',
-                classId: classId,
-                className: session['className'] ?? '',
-                startTime: startTime,
-                endTime: endTime,
-                room: session['roomName'] ?? 'N/A',
-                note: session['note'],
-              ));
+
+              schedules.add(
+                TeacherScheduleModel(
+                  id: session['sessionId']?.toString() ?? '',
+                  classId: classId,
+                  className: session['className'] ?? '',
+                  startTime: startTime,
+                  endTime: endTime,
+                  room: session['roomName'] ?? 'N/A',
+                  note: session['note'],
+                ),
+              );
             }
           }
         }
-        
+
         return schedules;
       } else {
         throw ServerException(
@@ -215,14 +264,9 @@ class TeacherApiDataSourceImpl implements TeacherApiDataSource {
     List<Map<String, dynamic>> entries,
   ) async {
     try {
-      
-      
       final response = await dioClient.post(
         '${ApiEndpoints.teacherAttendance}/$sessionId/attendance',
-        data: {
-          'sessionId': sessionId,
-          'entries': entries,
-        },
+        data: {'sessionId': sessionId, 'entries': entries},
       );
 
       if (response.statusCode == 200 && response.data['code'] == 1000) {
@@ -239,29 +283,79 @@ class TeacherApiDataSourceImpl implements TeacherApiDataSource {
   }
 
   
-  AttendanceSession _parseAttendanceSession(Map<String, dynamic> data, int sessionId) {
+  
+  AttendanceSession _parseAttendanceSession(
+    Map<String, dynamic> data,
+    int sessionId,
+  ) {
     final entries = data['entries'] as List<dynamic>? ?? [];
+
+    
+    final serverClassId = data['classId']?.toString() ?? '';
+    final serverDate = data['sessionDate'] != null
+        ? DateTime.tryParse(data['sessionDate'].toString())
+        : (data['date'] != null
+              ? DateTime.tryParse(data['date'].toString())
+              : null);
+    final serverIsCompleted =
+        data['isCompleted'] as bool? ?? data['completed'] as bool? ?? false;
+    final serverCreatedAt = data['createdAt'] != null
+        ? DateTime.tryParse(data['createdAt'].toString())
+        : null;
+
     final records = entries.map((e) {
+      
+      final entryDate = e['date'] != null
+          ? DateTime.tryParse(e['date'].toString())
+          : (e['createdAt'] != null
+                ? DateTime.tryParse(e['createdAt'].toString())
+                : null);
+      final entryCreatedAt = e['createdAt'] != null
+          ? DateTime.tryParse(e['createdAt'].toString())
+          : null;
+
       return AttendanceRecord(
         id: '${sessionId}_${e['studentId']}',
         studentId: e['studentId']?.toString() ?? '',
-        classId: '', 
-        date: DateTime.now(),
+        classId: e['classId']?.toString() ?? serverClassId,
+        date: entryDate ?? serverDate ?? DateTime.now(),
         status: (e['absent'] == true) ? 'absent' : 'present',
         note: e['note'] as String?,
-        createdAt: DateTime.now(),
-        studentName: e['studentName'] as String?,
-        studentCode: null,
-        studentAvatar: null,
+        createdAt: entryCreatedAt ?? serverCreatedAt ?? DateTime.now(),
+        studentName: e['studentName'] as String? ?? e['fullName'] as String?,
+        studentCode: e['studentCode'] as String? ?? e['code'] as String?,
+        studentAvatar:
+            e['studentAvatar'] as String? ??
+            e['avatar'] as String? ??
+            e['imagePath'] as String?,
       );
     }).toList();
 
     return AttendanceSession(
       id: sessionId.toString(),
-      classId: '', 
-      date: DateTime.now(),
+      classId: serverClassId,
+      date: serverDate ?? DateTime.now(),
       records: records,
-      isCompleted: false, 
+      isCompleted: serverIsCompleted,
     );
+  }
+
+  @override
+  Future<TeacherStudentModel> getStudentDetail(int studentId) async {
+    try {
+      final response = await dioClient.get('/students/$studentId');
+
+      if (response.statusCode == 200 && response.data['code'] == 1000) {
+        return TeacherStudentModel.fromJson(response.data['data']);
+      } else {
+        throw ServerException(
+          response.data['message'] ?? 'Get student detail failed',
+        );
+      }
+    } on ServerException {
+      rethrow;
+    } catch (e) {
+      throw ServerException('Không thể tải thông tin học viên: $e');
+    }
   }
 }

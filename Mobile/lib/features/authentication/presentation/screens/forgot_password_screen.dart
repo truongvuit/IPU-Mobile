@@ -4,11 +4,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/routing/app_router.dart';
+import '../../../../core/widgets/common/app_button.dart';
+import '../../../../core/widgets/common/app_text_field.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
-import '../widgets/auth_button.dart';
-import '../widgets/custom_text_field.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -161,7 +161,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   Widget _buildEmailOrPhoneInput(bool isDark) {
-    return CustomTextField(
+    return AppTextField(
       label: 'Email hoặc số điện thoại',
       hintText: 'Nhập email hoặc số điện thoại',
       controller: _emailOrPhoneController,
@@ -185,7 +185,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       width: double.infinity,
       child: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
-          return AuthButton(
+          return AppButton(
             text: 'Gửi mã xác nhận',
             onPressed: _handleSubmit,
             isLoading: state is AuthLoading,

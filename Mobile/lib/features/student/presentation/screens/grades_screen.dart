@@ -8,12 +8,11 @@ import '../widgets/student_app_bar.dart';
 import '../../domain/entities/grade.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../core/routing/app_router.dart';
 import '../../../../core/widgets/skeleton_widget.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 
 class GradesScreen extends StatefulWidget {
-  final String? initialFilter; 
+  final String? initialFilter;
   final bool isTab;
   final VoidCallback? onMenuPressed;
 
@@ -31,19 +30,17 @@ class GradesScreen extends StatefulWidget {
 class _GradesScreenState extends State<GradesScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  String _selectedGradeFilter = 'all'; 
+  String _selectedGradeFilter = 'all';
   bool _hasLoadedGrades = false;
   bool _isLoading = false;
   String? _errorMessage;
 
-  
   List<Grade>? _cachedGrades;
 
   @override
   void initState() {
     super.initState();
 
-    
     if (widget.initialFilter != null && widget.initialFilter!.isNotEmpty) {
       _searchController.text = widget.initialFilter!;
       _searchQuery = widget.initialFilter!.toLowerCase();
@@ -55,7 +52,6 @@ class _GradesScreenState extends State<GradesScreen> {
       });
     });
 
-    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadGradesIfNeeded();
     });
@@ -66,7 +62,6 @@ class _GradesScreenState extends State<GradesScreen> {
 
     final state = context.read<StudentBloc>().state;
 
-    
     if (state is GradesLoaded) {
       _cachedGrades = state.grades;
       _hasLoadedGrades = true;
@@ -78,7 +73,6 @@ class _GradesScreenState extends State<GradesScreen> {
       return;
     }
 
-    
     _hasLoadedGrades = true;
     _isLoading = true;
     context.read<StudentBloc>().add(const LoadGradesByCourse(''));
@@ -117,7 +111,6 @@ class _GradesScreenState extends State<GradesScreen> {
   }
 
   bool _matchesGradeFilter(double score) {
-    
     switch (_selectedGradeFilter) {
       case 'excellent':
         return score >= 9;
@@ -152,7 +145,6 @@ class _GradesScreenState extends State<GradesScreen> {
             },
           ),
 
-          
           Padding(
             padding: EdgeInsets.all(AppSizes.paddingMedium),
             child: Container(
@@ -214,7 +206,6 @@ class _GradesScreenState extends State<GradesScreen> {
             ),
           ),
 
-          
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
@@ -255,7 +246,6 @@ class _GradesScreenState extends State<GradesScreen> {
   }
 
   Widget _buildGradesContent(bool isDark) {
-    
     if (_errorMessage != null && _cachedGrades == null) {
       return Center(
         child: Column(
@@ -294,25 +284,20 @@ class _GradesScreenState extends State<GradesScreen> {
       );
     }
 
-    
     if (_isLoading && _cachedGrades == null) {
       return _buildLoadingSkeleton();
     }
 
-    
     if (_cachedGrades != null) {
       final grades = _cachedGrades!;
 
-      
       final filteredGrades = grades.where((grade) {
-        
         final searchText = '${grade.courseName ?? ''} ${grade.className ?? ''}'
             .toLowerCase();
         if (!searchText.contains(_searchQuery)) {
           return false;
         }
 
-        
         if (_selectedGradeFilter != 'all') {
           final score = grade.totalScore ?? 0;
           return _matchesGradeFilter(score);
@@ -351,7 +336,6 @@ class _GradesScreenState extends State<GradesScreen> {
       );
     }
 
-    
     return _buildLoadingSkeleton();
   }
 
@@ -439,7 +423,6 @@ class _GradesScreenState extends State<GradesScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          
           Padding(
             padding: EdgeInsets.all(16.w),
             child: Row(
@@ -514,7 +497,6 @@ class _GradesScreenState extends State<GradesScreen> {
             ),
           ),
 
-          
           Container(
             color: isDark ? const Color(0xFF374151) : Colors.white,
             padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 8.w),
@@ -549,7 +531,6 @@ class _GradesScreenState extends State<GradesScreen> {
             ),
           ),
 
-          
           if (grade.comment != null && grade.comment!.isNotEmpty)
             Padding(
               padding: EdgeInsets.all(16.w),
@@ -581,7 +562,6 @@ class _GradesScreenState extends State<GradesScreen> {
               ),
             ),
 
-          
           if (grade.gradedByName != null || grade.lastGradedAt != null)
             Padding(
               padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 8.h),
@@ -632,7 +612,6 @@ class _GradesScreenState extends State<GradesScreen> {
               ),
             ),
 
-          
           Padding(
             padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 16.h),
             child: ClipRRect(
@@ -689,7 +668,6 @@ class _GradesScreenState extends State<GradesScreen> {
   }
 
   String _getGradeStatus(double score) {
-    
     if (score >= 9) return 'Xuất sắc';
     if (score >= 8) return 'Giỏi';
     if (score >= 6.5) return 'Khá';
@@ -698,10 +676,9 @@ class _GradesScreenState extends State<GradesScreen> {
   }
 
   Color _getStatusColor(double score) {
-    
-    if (score >= 9) return const Color(0xFF10B981); 
-    if (score >= 8) return const Color(0xFF3B82F6); 
-    if (score >= 6.5) return const Color(0xFFF59E0B); 
-    return const Color(0xFFEF4444); 
+    if (score >= 9) return const Color(0xFF10B981);
+    if (score >= 8) return const Color(0xFF3B82F6);
+    if (score >= 6.5) return const Color(0xFFF59E0B);
+    return const Color(0xFFEF4444);
   }
 }

@@ -1,11 +1,158 @@
 import '../../domain/entities/course_detail.dart';
 
+class CourseObjectiveModel extends CourseObjective {
+  const CourseObjectiveModel({required super.id, required super.name});
+
+  factory CourseObjectiveModel.fromJson(Map<String, dynamic> json) {
+    return CourseObjectiveModel(
+      id: json['id'] ?? 0,
+      name: json['objectiveName'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {'id': id, 'objectiveName': name};
+}
+
+class ModuleContentModel extends ModuleContent {
+  const ModuleContentModel({required super.id, required super.name});
+
+  factory ModuleContentModel.fromJson(Map<String, dynamic> json) {
+    return ModuleContentModel(
+      id: json['id'] ?? 0,
+      name: json['contentName'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {'id': id, 'contentName': name};
+}
+
+class ModuleDocumentModel extends ModuleDocument {
+  const ModuleDocumentModel({
+    required super.id,
+    super.fileName,
+    super.link,
+    super.description,
+    super.image,
+  });
+
+  factory ModuleDocumentModel.fromJson(Map<String, dynamic> json) {
+    return ModuleDocumentModel(
+      id: json['documentId'] ?? 0,
+      fileName: json['fileName'],
+      link: json['link'],
+      description: json['description'],
+      image: json['image'],
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'documentId': id,
+    'fileName': fileName,
+    'link': link,
+    'description': description,
+    'image': image,
+  };
+}
+
+class CourseModuleModel extends CourseModule {
+  const CourseModuleModel({
+    required super.id,
+    required super.name,
+    super.duration,
+    super.contents,
+    super.documents,
+  });
+
+  factory CourseModuleModel.fromJson(Map<String, dynamic> json) {
+    final contentsList = json['contents'] as List? ?? [];
+    final documentsList = json['documents'] as List? ?? [];
+
+    return CourseModuleModel(
+      id: json['moduleId'] ?? 0,
+      name: json['moduleName'] ?? '',
+      duration: json['duration'],
+      contents: contentsList
+          .map((c) => ModuleContentModel.fromJson(c as Map<String, dynamic>))
+          .toList(),
+      documents: documentsList
+          .map((d) => ModuleDocumentModel.fromJson(d as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'moduleId': id,
+    'moduleName': name,
+    'duration': duration,
+    'contents': (contents as List<ModuleContentModel>)
+        .map((c) => c.toJson())
+        .toList(),
+    'documents': (documents as List<ModuleDocumentModel>)
+        .map((d) => d.toJson())
+        .toList(),
+  };
+}
+
+class CourseClassInfoModel extends CourseClassInfo {
+  const CourseClassInfoModel({
+    required super.classId,
+    required super.className,
+    super.courseName,
+    super.roomName,
+    super.instructorName,
+    super.startDate,
+    super.endDate,
+    super.schedulePattern,
+    super.status,
+    super.maxCapacity,
+    super.currentEnrollment,
+    super.tuitionFee,
+  });
+
+  factory CourseClassInfoModel.fromJson(Map<String, dynamic> json) {
+    return CourseClassInfoModel(
+      classId: json['classId'] ?? 0,
+      className: json['className'] ?? '',
+      courseName: json['courseName'],
+      roomName: json['roomName'],
+      instructorName: json['instructorName'],
+      startDate: json['startDate'] != null
+          ? DateTime.tryParse(json['startDate'].toString())
+          : null,
+      endDate: json['endDate'] != null
+          ? DateTime.tryParse(json['endDate'].toString())
+          : null,
+      schedulePattern: json['schedulePattern'],
+      status: json['status'],
+      maxCapacity: json['maxCapacity'],
+      currentEnrollment: json['currentEnrollment'],
+      tuitionFee: json['tuitionFee']?.toDouble(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'classId': classId,
+    'className': className,
+    'courseName': courseName,
+    'roomName': roomName,
+    'instructorName': instructorName,
+    'startDate': startDate?.toIso8601String(),
+    'endDate': endDate?.toIso8601String(),
+    'schedulePattern': schedulePattern,
+    'status': status,
+    'maxCapacity': maxCapacity,
+    'currentEnrollment': currentEnrollment,
+    'tuitionFee': tuitionFee,
+  };
+}
+
 class CourseDetailModel extends CourseDetail {
   const CourseDetailModel({
     required super.id,
     required super.name,
     required super.totalHours,
     required super.tuitionFee,
+    super.promotionPrice,
     super.videoUrl,
     required super.isActive,
     required super.createdAt,
@@ -23,6 +170,9 @@ class CourseDetailModel extends CourseDetail {
     super.totalRevenue,
     super.averageRating,
     super.reviewCount,
+    super.objectives,
+    super.modules,
+    super.classInfos,
   });
 
   factory CourseDetailModel.fromJson(Map<String, dynamic> json) {
@@ -89,6 +239,7 @@ class CourseDetailModel extends CourseDetail {
       name: name,
       totalHours: totalHours,
       tuitionFee: tuitionFee,
+      promotionPrice: promotionPrice,
       videoUrl: videoUrl,
       isActive: isActive,
       createdAt: createdAt,
@@ -106,6 +257,9 @@ class CourseDetailModel extends CourseDetail {
       totalRevenue: totalRevenue,
       averageRating: averageRating,
       reviewCount: reviewCount,
+      objectives: objectives,
+      modules: modules,
+      classInfos: classInfos,
     );
   }
 
@@ -115,6 +269,7 @@ class CourseDetailModel extends CourseDetail {
       name: entity.name,
       totalHours: entity.totalHours,
       tuitionFee: entity.tuitionFee,
+      promotionPrice: entity.promotionPrice,
       videoUrl: entity.videoUrl,
       isActive: entity.isActive,
       createdAt: entity.createdAt,
@@ -132,6 +287,9 @@ class CourseDetailModel extends CourseDetail {
       totalRevenue: entity.totalRevenue,
       averageRating: entity.averageRating,
       reviewCount: entity.reviewCount,
+      objectives: entity.objectives,
+      modules: entity.modules,
+      classInfos: entity.classInfos,
     );
   }
 }
@@ -162,18 +320,34 @@ class UpdateCourseRequest {
   });
 
   Map<String, dynamic> toJson() {
-    return {
+    final json = <String, dynamic>{
       'tenkhoahoc': name,
       'sogiohoc': totalHours,
       'hocphi': tuitionFee,
-      'video': videoUrl,
-      'hinhanh': imageUrl,
-      'mota': description,
-      'dauvao': entryRequirement,
-      'daura': exitRequirement,
-      'madanhmuc': categoryId,
       'trangthai': isActive,
     };
+
+    // Only include optional fields if they have values
+    if (videoUrl != null && videoUrl!.isNotEmpty) {
+      json['video'] = videoUrl;
+    }
+    if (imageUrl != null && imageUrl!.isNotEmpty) {
+      json['hinhanh'] = imageUrl;
+    }
+    if (description != null && description!.isNotEmpty) {
+      json['mota'] = description;
+    }
+    if (entryRequirement != null && entryRequirement!.isNotEmpty) {
+      json['dauvao'] = entryRequirement;
+    }
+    if (exitRequirement != null && exitRequirement!.isNotEmpty) {
+      json['daura'] = exitRequirement;
+    }
+    if (categoryId != null) {
+      json['madanhmuc'] = categoryId;
+    }
+
+    return json;
   }
 
   factory UpdateCourseRequest.fromCourseDetail(CourseDetail course) {

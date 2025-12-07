@@ -9,15 +9,19 @@ abstract class AuthApiDataSource {
   Future<AuthTokensModel> login(String email, String password);
   Future<void> logout();
   Future<AuthTokensModel> refreshToken(String refreshToken);
-  Future<void> forgotPassword(String emailOrPhone);
-  Future<void> verifyCode(String code, String emailOrPhone);
-  Future<void> resendCode(String emailOrPhone);
-  Future<void> resetPassword(
-    String newPassword,
-    String verificationCode,
-    String emailOrPhone,
-  );
+  Future<void> forgotPassword(String email);
+  Future<bool> verifyResetCode(String code);
+  Future<void> resendCode(String email);
+  Future<void> resetPassword({
+    required String code,
+    required String newPassword,
+    required String confirmPassword,
+  });
   Future<UserModel> getCurrentUser();
+
+  
+  
+  @Deprecated('Backend endpoint not implemented')
   Future<void> changePassword(String currentPassword, String newPassword);
 }
 
@@ -86,50 +90,94 @@ class AuthApiDataSourceImpl implements AuthApiDataSource {
   }
 
   @override
-  Future<void> forgotPassword(String emailOrPhone) async {
+  Future<void> forgotPassword(String email) async {
     try {
-      await dioClient.post(
+      final response = await dioClient.post(
         ApiEndpoints.forgotPassword,
-        data: {'email_or_phone': emailOrPhone},
+        data: {'email': email},
       );
+
+      if (response.statusCode != 200 || response.data['code'] != 1000) {
+        throw ServerException(
+          response.data['message'] ?? 'Forgot password failed',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response != null && e.response!.data != null) {
+        throw ServerException(
+          e.response!.data['message'] ?? 'Forgot password failed',
+        );
+      }
+      throw ServerException(e.message ?? 'Network error');
     } catch (e) {
+      if (e is ServerException) rethrow;
       throw const ServerException('Forgot password failed');
     }
   }
 
   @override
-  Future<void> verifyCode(String code, String emailOrPhone) async {
+  Future<bool> verifyResetCode(String code) async {
     try {
-      await dioClient.post(
-        ApiEndpoints.verifyCode,
-        data: {'code': code, 'email_or_phone': emailOrPhone},
+      
+      final response = await dioClient.get(
+        '/auth/verify-reset-code',
+        queryParameters: {'code': code},
       );
+
+      if (response.statusCode == 200 && response.data['code'] == 1000) {
+        return true;
+      }
+      throw ServerException(
+        response.data['message'] ?? 'Invalid verification code',
+      );
+    } on DioException catch (e) {
+      if (e.response != null && e.response!.data != null) {
+        throw ServerException(
+          e.response!.data['message'] ?? 'Verification failed',
+        );
+      }
+      throw ServerException(e.message ?? 'Network error');
     } catch (e) {
+      if (e is ServerException) rethrow;
       throw const ServerException('Verify code failed');
     }
   }
 
   @override
-  Future<void> resendCode(String emailOrPhone) async {
-    await forgotPassword(emailOrPhone);
+  Future<void> resendCode(String email) async {
+    await forgotPassword(email);
   }
 
   @override
-  Future<void> resetPassword(
-    String newPassword,
-    String verificationCode,
-    String emailOrPhone,
-  ) async {
+  Future<void> resetPassword({
+    required String code,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
     try {
-      await dioClient.post(
+      final response = await dioClient.post(
         ApiEndpoints.resetPassword,
         data: {
-          'new_password': newPassword,
-          'verification_code': verificationCode,
-          'email_or_phone': emailOrPhone,
+          'code': code,
+          'newPassword': newPassword,
+          'confirmPassword': confirmPassword,
         },
       );
+
+      if (response.statusCode != 200 || response.data['code'] != 1000) {
+        throw ServerException(
+          response.data['message'] ?? 'Reset password failed',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response != null && e.response!.data != null) {
+        throw ServerException(
+          e.response!.data['message'] ?? 'Reset password failed',
+        );
+      }
+      throw ServerException(e.message ?? 'Network error');
     } catch (e) {
+      if (e is ServerException) rethrow;
       throw const ServerException('Reset password failed');
     }
   }
@@ -159,16 +207,40 @@ class AuthApiDataSourceImpl implements AuthApiDataSource {
     String currentPassword,
     String newPassword,
   ) async {
+    
+    
+    throw const ServerException(
+      'Chức năng đổi mật khẩu chưa được hỗ trợ. '
+      'Vui lòng sử dụng chức năng "Quên mật khẩu" để đặt lại mật khẩu.',
+    );
+
+    /* FUTURE IMPLEMENTATION - Uncomment when backend adds /auth/change-password:
     try {
-      await dioClient.post(
+      final response = await dioClient.post(
         ApiEndpoints.changePassword,
         data: {
-          'current_password': currentPassword,
-          'new_password': newPassword,
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+          'confirmPassword': newPassword,
         },
       );
+
+      if (response.statusCode != 200 || response.data['code'] != 1000) {
+        throw ServerException(
+          response.data['message'] ?? 'Đổi mật khẩu thất bại',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response != null && e.response!.data != null) {
+        throw ServerException(
+          e.response!.data['message'] ?? 'Đổi mật khẩu thất bại',
+        );
+      }
+      throw ServerException(e.message ?? 'Lỗi kết nối');
     } catch (e) {
-      throw const ServerException('Change password failed');
+      if (e is ServerException) rethrow;
+      throw const ServerException('Đổi mật khẩu thất bại');
     }
+    */
   }
 }

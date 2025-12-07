@@ -40,6 +40,10 @@ class AdminCourseSuccess extends AdminCourseState {
   List<Object> get props => [message];
 }
 
+class AdminCourseStatusToggled extends AdminCourseState {
+  const AdminCourseStatusToggled();
+}
+
 class AdminCourseError extends AdminCourseState {
   final String message;
 

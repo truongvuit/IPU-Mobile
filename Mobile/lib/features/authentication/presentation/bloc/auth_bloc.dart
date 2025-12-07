@@ -56,12 +56,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       final result = await authRepository.logout();
 
-      result.fold(
-        (failure) => emit(AuthFailure(message: failure.message)),
-        (_) => emit(const AuthUnauthenticated()),
-      );
+      
+      if (!isClosed) {
+        result.fold(
+          (failure) => emit(AuthFailure(message: failure.message)),
+          (_) => emit(const AuthUnauthenticated()),
+        );
+      }
     } catch (e) {
-      emit(AuthFailure(message: 'Đã xảy ra lỗi khi đăng xuất: $e'));
+      if (!isClosed) {
+        emit(AuthFailure(message: 'Đã xảy ra lỗi khi đăng xuất: $e'));
+      }
     }
   }
 
@@ -72,8 +77,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(const AuthLoading());
 
     try {
+      
       final result = await authRepository.forgotPassword(
-        emailOrPhone: event.emailOrPhone,
+        email: event.emailOrPhone,
       );
 
       result.fold((failure) => emit(AuthFailure(message: failure.message)), (
@@ -94,20 +100,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(const AuthLoading());
 
     try {
-      final result = await authRepository.verifyCode(
-        code: event.code,
-        emailOrPhone: event.emailOrPhone,
-      );
+      
+      final result = await authRepository.verifyResetCode(code: event.code);
 
-      result.fold(
-        (failure) => emit(AuthFailure(message: failure.message)),
-        (_) => emit(
-          CodeVerified(
-            emailOrPhone: event.emailOrPhone,
-            verificationCode: event.code,
-          ),
-        ),
-      );
+      result.fold((failure) => emit(AuthFailure(message: failure.message)), (
+        isValid,
+      ) {
+        if (isValid) {
+          emit(
+            CodeVerified(
+              emailOrPhone: event.emailOrPhone,
+              verificationCode: event.code,
+            ),
+          );
+        } else {
+          emit(const AuthFailure(message: 'Mã xác thực không hợp lệ'));
+        }
+      });
     } catch (e) {
       emit(AuthFailure(message: 'Mã xác thực không chính xác'));
     }
@@ -118,9 +127,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     try {
-      final result = await authRepository.resendCode(
-        emailOrPhone: event.emailOrPhone,
-      );
+      final result = await authRepository.resendCode(email: event.emailOrPhone);
 
       result.fold((failure) => emit(AuthFailure(message: failure.message)), (
         _,
@@ -154,10 +161,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(const AuthLoading());
 
     try {
+      
       final result = await authRepository.resetPassword(
+        code: event.verificationCode,
         newPassword: event.newPassword,
-        verificationCode: event.verificationCode,
-        emailOrPhone: event.emailOrPhone,
+        confirmPassword: event.confirmPassword,
       );
 
       result.fold(

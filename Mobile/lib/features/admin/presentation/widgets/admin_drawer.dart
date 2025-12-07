@@ -10,7 +10,6 @@ import '../../../authentication/presentation/bloc/auth_bloc.dart';
 import '../../../authentication/presentation/bloc/auth_state.dart';
 import '../../../authentication/presentation/bloc/auth_event.dart';
 
-
 class AdminDrawer extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTabSelected;
@@ -30,15 +29,12 @@ class AdminDrawer extends StatelessWidget {
       backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surface,
       child: Column(
         children: [
-          
           _buildDrawerHeader(context, isDark),
 
-          
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                
                 _buildSectionHeader(context, 'MENU CHÍNH'),
 
                 _DrawerMenuItem(
@@ -83,10 +79,9 @@ class AdminDrawer extends StatelessWidget {
 
                 Divider(
                   height: 1,
-                  color: isDark ? AppColors.gray700 : AppColors.gray200,
+                  color: isDark ? AppColors.neutral700 : AppColors.neutral200,
                 ),
 
-                
                 _buildSectionHeader(context, 'TÍNH NĂNG'),
 
                 _DrawerMenuItem(
@@ -124,10 +119,9 @@ class AdminDrawer extends StatelessWidget {
 
                 Divider(
                   height: 1,
-                  color: isDark ? AppColors.gray700 : AppColors.gray200,
+                  color: isDark ? AppColors.neutral700 : AppColors.neutral200,
                 ),
 
-                
                 _buildSectionHeader(context, 'CÀI ĐẶT'),
 
                 _DrawerMenuItem(
@@ -155,7 +149,6 @@ class AdminDrawer extends StatelessWidget {
             ),
           ),
 
-          
           _buildLogoutButton(context, isDark),
         ],
       ),
@@ -200,7 +193,6 @@ class AdminDrawer extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  
                   Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
@@ -261,7 +253,7 @@ class AdminDrawer extends StatelessWidget {
                 ],
               ),
               SizedBox(height: 12.h),
-              
+
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
                 decoration: BoxDecoration(
@@ -305,7 +297,7 @@ class AdminDrawer extends StatelessWidget {
         style: TextStyle(
           fontSize: 11.sp,
           fontWeight: FontWeight.w600,
-          color: isDark ? AppColors.gray500 : AppColors.gray500,
+          color: isDark ? AppColors.neutral500 : AppColors.neutral500,
           letterSpacing: 1.2,
         ),
       ),
@@ -318,7 +310,7 @@ class AdminDrawer extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(
           top: BorderSide(
-            color: isDark ? AppColors.gray700 : AppColors.gray200,
+            color: isDark ? AppColors.neutral700 : AppColors.neutral200,
           ),
         ),
       ),
@@ -344,37 +336,106 @@ class AdminDrawer extends StatelessWidget {
   }
 
   void _showLogoutConfirmation(BuildContext context) {
-    
     final authBloc = context.read<AuthBloc>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Xác nhận đăng xuất'),
-        content: const Text('Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Hủy'),
+      barrierDismissible: true,
+      builder: (dialogContext) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
+        child: Padding(
+          padding: EdgeInsets.all(20.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Xác nhận đăng xuất',
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Text(
+                'Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng?',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: isDark ? AppColors.neutral400 : AppColors.neutral600,
+                ),
+              ),
+              SizedBox(height: 24.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                          side: BorderSide(
+                            color: isDark
+                                ? AppColors.neutral600
+                                : AppColors.neutral300,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        'Hủy',
+                        style: TextStyle(
+                          color: isDark
+                              ? AppColors.neutral300
+                              : AppColors.neutral700,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(dialogContext); // Close dialog
+                        Navigator.pop(context); // Close drawer
+                        authBloc.add(LogoutRequested());
+                        // Navigate to welcome page
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          AppRouter.welcome,
+                          (route) => false,
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.error,
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                      ),
+                      child: const Text(
+                        'Đăng xuất',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              Navigator.pop(context);
-              authBloc.add(LogoutRequested());
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text(
-              'Đăng xuất',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
-
 
 class _DrawerMenuItem extends StatelessWidget {
   final IconData icon;
@@ -396,7 +457,7 @@ class _DrawerMenuItem extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final effectiveIconColor = isSelected
         ? AppColors.primary
-        : (isDark ? AppColors.gray400 : AppColors.gray600);
+        : (isDark ? AppColors.neutral400 : AppColors.neutral600);
 
     return ListTile(
       leading: Container(
@@ -424,7 +485,7 @@ class _DrawerMenuItem extends StatelessWidget {
               subtitle!,
               style: TextStyle(
                 fontSize: 11.sp,
-                color: isDark ? AppColors.gray500 : AppColors.gray500,
+                color: isDark ? AppColors.neutral500 : AppColors.neutral500,
               ),
             )
           : null,

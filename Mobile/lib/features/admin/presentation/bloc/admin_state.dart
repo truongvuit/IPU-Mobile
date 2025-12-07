@@ -38,25 +38,30 @@ class AdminDashboardLoaded extends AdminState {
   final AdminProfile profile;
   final AdminDashboardStats stats;
   final List<AdminActivity> recentActivities;
+  
+  final bool isFallbackData;
 
   const AdminDashboardLoaded({
     required this.profile,
     required this.stats,
     required this.recentActivities,
+    this.isFallbackData = false,
   });
 
   @override
-  List<Object?> get props => [profile, stats, recentActivities];
+  List<Object?> get props => [profile, stats, recentActivities, isFallbackData];
 
   AdminDashboardLoaded copyWith({
     AdminProfile? profile,
     AdminDashboardStats? stats,
     List<AdminActivity>? recentActivities,
+    bool? isFallbackData,
   }) {
     return AdminDashboardLoaded(
       profile: profile ?? this.profile,
       stats: stats ?? this.stats,
       recentActivities: recentActivities ?? this.recentActivities,
+      isFallbackData: isFallbackData ?? this.isFallbackData,
     );
   }
 }
@@ -82,6 +87,16 @@ class AdminProfileUpdated extends AdminState {
 
   @override
   List<Object?> get props => [profile];
+}
+
+
+class AdminProfileUpdateUnsupported extends AdminState {
+  final String message;
+
+  const AdminProfileUpdateUnsupported(this.message);
+
+  @override
+  List<Object?> get props => [message];
 }
 
 

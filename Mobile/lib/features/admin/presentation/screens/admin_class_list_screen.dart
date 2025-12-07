@@ -5,12 +5,14 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/skeleton_widget.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
+import '../../../../core/constants/app_sizes.dart';
 
 import '../bloc/admin_bloc.dart';
 import '../bloc/admin_event.dart';
 import '../bloc/admin_state.dart';
 
 import '../widgets/admin_class_card_compact.dart';
+import '../widgets/admin_search_bar.dart';
 import '../../domain/entities/admin_class.dart';
 import '../../../../core/routing/app_router.dart';
 
@@ -30,7 +32,6 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
   String _searchQuery = '';
   String? _selectedCourse;
 
-  
   static const int _pageSize = 20;
   int _displayedCount = 20;
   bool _isLoadingMore = false;
@@ -38,7 +39,10 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+    ); 
     _scrollController = ScrollController();
 
     _tabController.addListener(() {
@@ -57,7 +61,6 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
     });
 
     _scrollController.addListener(_onScroll);
-    
   }
 
   void _onScroll() {
@@ -116,9 +119,16 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.gray50,
+      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.neutral50,
       appBar: AppBar(
-        title: const Text('Quản lý lớp học'),
+        title: Text(
+          'Quản lý lớp học',
+          style: TextStyle(
+            fontSize: 18.sp,
+            fontWeight: FontWeight.w700,
+            fontFamily: 'Lexend',
+          ),
+        ),
         elevation: 0,
         bottom: TabBar(
           controller: _tabController,
@@ -126,13 +136,11 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
           tabs: const [
             Tab(text: 'Đang học'),
             Tab(text: 'Sắp tới'),
-            Tab(text: 'Đã kết thúc'),
           ],
         ),
       ),
       body: BlocBuilder<AdminBloc, AdminState>(
         buildWhen: (previous, current) {
-          
           return current is AdminLoading ||
               current is AdminError ||
               current is ClassListLoaded;
@@ -150,7 +158,6 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
             return _buildClassList(state, isDark, theme);
           }
 
-          
           final bloc = context.read<AdminBloc>();
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
@@ -203,9 +210,6 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
       case 1:
         baseList = state.upcomingClasses;
         break;
-      case 2:
-        baseList = state.completedClasses;
-        break;
       default:
         baseList = state.classes;
     }
@@ -218,13 +222,10 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
 
     return Column(
       children: [
-        
         _buildSearchAndFilterRow(courses, isDark, theme),
 
-        
         _buildResultCount(totalCount, isDark),
 
-        
         Expanded(
           child: filteredClasses.isEmpty
               ? const Center(
@@ -250,9 +251,14 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
                       }
 
                       final classItem = displayClasses[index];
-                      return AdminClassCardCompact(
-                        classItem: classItem,
-                        onTap: () => _navigateToClassDetail(classItem.id),
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: 8.h),
+                        child: AdminClassCardCompact(
+                          classItem: classItem,
+                          onTap: () => _navigateToClassDetail(classItem.id),
+                          onReschedule: () => _showRescheduleDialog(classItem),
+                          onChangeRoom: () => _showChangeRoomDialog(classItem),
+                        ),
                       );
                     },
                   ),
@@ -269,68 +275,157 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
       AppRouter.adminClassDetail,
       arguments: classId,
     ).then((_) {
-      
       if (mounted) {
         bloc.add(const LoadClassList());
       }
     });
   }
 
+  void _showRescheduleDialog(AdminClass classItem) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          left: 16,
+          right: 16,
+          top: 16,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Đổi lịch học - ${classItem.name}',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            SizedBox(height: 16.h),
+            Text('Lịch hiện tại: ${classItem.schedule}'),
+            SizedBox(height: 12.h),
+            
+            ListTile(
+              leading: const Icon(Icons.calendar_today),
+              title: const Text('Chọn ngày mới'),
+              subtitle: const Text('Nhấn để chọn ngày'),
+              onTap: () async {
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                );
+                if (date != null && mounted) {
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Đã chọn ngày: ${date.day}/${date.month}/${date.year}',
+                      ),
+                      action: SnackBarAction(
+                        label: 'Xác nhận',
+                        onPressed: () {
+                          
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Đổi lịch thành công!'),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  );
+                }
+              },
+            ),
+            SizedBox(height: 16.h),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showChangeRoomDialog(AdminClass classItem) {
+    
+    final rooms = [
+      'Phòng A101',
+      'Phòng A102',
+      'Phòng B201',
+      'Phòng B202',
+      'Phòng C301',
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Đổi phòng học - ${classItem.name}',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            SizedBox(height: 8.h),
+            Text('Phòng hiện tại: ${classItem.room}'),
+            SizedBox(height: 16.h),
+            const Text('Chọn phòng mới:'),
+            SizedBox(height: 8.h),
+            ...rooms.map(
+              (room) => ListTile(
+                leading: const Icon(Icons.meeting_room_outlined),
+                title: Text(room),
+                trailing: room == classItem.room
+                    ? const Icon(Icons.check, color: Colors.green)
+                    : null,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  if (room != classItem.room) {
+                    
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Đã đổi sang $room thành công!')),
+                    );
+                    
+                    context.read<AdminBloc>().add(const LoadClassList());
+                  }
+                },
+              ),
+            ),
+            SizedBox(height: 8.h),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSearchAndFilterRow(
-      List<String> courses, bool isDark, ThemeData theme) {
+    List<String> courses,
+    bool isDark,
+    ThemeData theme,
+  ) {
     return Container(
-      margin: EdgeInsets.all(12.w),
+      margin: EdgeInsets.all(AppSizes.p12),
       child: Row(
         children: [
           
           Expanded(
             flex: 2,
-            child: Container(
-              height: 44.h,
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.surfaceDark : Colors.white,
-                borderRadius: BorderRadius.circular(10.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Tìm kiếm...',
-                  hintStyle: TextStyle(
-                    color: isDark ? AppColors.gray400 : AppColors.gray500,
-                    fontSize: 13.sp,
-                  ),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: isDark ? AppColors.gray400 : AppColors.gray500,
-                    size: 18.sp,
-                  ),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: Icon(Icons.clear, size: 18.sp),
-                          onPressed: () => _searchController.clear(),
-                        )
-                      : null,
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 12.w,
-                    vertical: 12.h,
-                  ),
-                ),
-                style: TextStyle(fontSize: 13.sp),
-              ),
+            child: AdminSearchBar(
+              controller: _searchController,
+              hintText: 'Tìm kiếm...',
+              onClear: () => _searchController.clear(),
             ),
           ),
 
-          SizedBox(width: 10.w),
+          SizedBox(width: AppSizes.p12),
 
-          
           if (courses.isNotEmpty)
             Expanded(
               flex: 1,
@@ -356,17 +451,23 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
                       'Khóa học',
                       style: TextStyle(
                         fontSize: 12.sp,
-                        color: isDark ? AppColors.gray400 : AppColors.gray500,
+                        color: isDark
+                            ? AppColors.neutral400
+                            : AppColors.neutral500,
                       ),
                     ),
                     icon: Icon(
                       Icons.keyboard_arrow_down,
                       size: 18.sp,
-                      color: isDark ? AppColors.gray400 : AppColors.gray600,
+                      color: isDark
+                          ? AppColors.neutral400
+                          : AppColors.neutral600,
                     ),
                     style: TextStyle(
                       fontSize: 12.sp,
-                      color: isDark ? AppColors.textPrimaryDark : AppColors.gray800,
+                      color: isDark
+                          ? AppColors.textPrimaryDark
+                          : AppColors.neutral800,
                     ),
                     items: [
                       DropdownMenuItem<String?>(
@@ -376,15 +477,17 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
                           style: TextStyle(fontSize: 12.sp),
                         ),
                       ),
-                      ...courses.map((course) => DropdownMenuItem<String?>(
-                            value: course,
-                            child: Text(
-                              course,
-                              style: TextStyle(fontSize: 12.sp),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          )),
+                      ...courses.map(
+                        (course) => DropdownMenuItem<String?>(
+                          value: course,
+                          child: Text(
+                            course,
+                            style: TextStyle(fontSize: 12.sp),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
                     ],
                     onChanged: (value) {
                       setState(() {
@@ -435,7 +538,7 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
                     vertical: 4.h,
                   ),
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.gray800 : AppColors.gray100,
+                    color: isDark ? AppColors.neutral800 : AppColors.neutral100,
                     borderRadius: BorderRadius.circular(12.r),
                   ),
                   child: Row(
@@ -446,8 +549,9 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
                           _selectedCourse!,
                           style: TextStyle(
                             fontSize: 11.sp,
-                            color:
-                                isDark ? AppColors.gray300 : AppColors.gray700,
+                            color: isDark
+                                ? AppColors.neutral300
+                                : AppColors.neutral700,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -457,7 +561,9 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
                       Icon(
                         Icons.close,
                         size: 14.sp,
-                        color: isDark ? AppColors.gray400 : AppColors.gray500,
+                        color: isDark
+                            ? AppColors.neutral400
+                            : AppColors.neutral500,
                       ),
                     ],
                   ),
@@ -485,7 +591,7 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
               )
             : Text(
                 'Cuộn xuống để tải thêm',
-                style: TextStyle(fontSize: 11.sp, color: AppColors.gray500),
+                style: TextStyle(fontSize: 11.sp, color: AppColors.neutral500),
               ),
       ),
     );

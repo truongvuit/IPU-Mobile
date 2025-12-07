@@ -23,19 +23,15 @@ class ClassListScreen extends StatefulWidget {
   State<ClassListScreen> createState() => _ClassListScreenState();
 }
 
-class _ClassListScreenState extends State<ClassListScreen>
-    with SingleTickerProviderStateMixin {
+class _ClassListScreenState extends State<ClassListScreen> {
   final TextEditingController _searchController = TextEditingController();
-  late TabController _tabController;
   List<StudentClass> _allClasses = [];
   List<StudentClass> _activeClasses = [];
-  List<StudentClass> _completedClasses = [];
   bool _hasLoadedData = false;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadDataIfNeeded();
     });
@@ -43,10 +39,9 @@ class _ClassListScreenState extends State<ClassListScreen>
 
   void _loadDataIfNeeded() {
     if (!mounted || _hasLoadedData) return;
-    
+
     final state = context.read<StudentBloc>().state;
 
-    
     if (state is ClassesLoaded) {
       _hasLoadedData = true;
       _allClasses = state.classes;
@@ -54,18 +49,17 @@ class _ClassListScreenState extends State<ClassListScreen>
       setState(() {});
       return;
     }
-    
-    
+
     if (state is DashboardLoaded) {
       _hasLoadedData = true;
       _allClasses = state.upcomingClasses;
       _filterClasses();
       setState(() {});
-      
+
       context.read<StudentBloc>().add(const LoadMyClasses());
       return;
     }
-    
+
     if (state is! StudentLoading) {
       _hasLoadedData = true;
       context.read<StudentBloc>().add(const LoadMyClasses());
@@ -75,43 +69,27 @@ class _ClassListScreenState extends State<ClassListScreen>
   void _filterClasses() {
     final query = _searchController.text.toLowerCase();
 
-    
-    
-    
     _activeClasses = _allClasses.where((cls) {
       final matchesSearch =
           cls.courseName.toLowerCase().contains(query) ||
           cls.teacherName.toLowerCase().contains(query) ||
           cls.room.toLowerCase().contains(query);
+
       final statusLower = cls.status.toLowerCase();
-      
       final isNotCompleted =
           statusLower != 'completed' &&
           statusLower != 'finished' &&
           statusLower != 'đã kết thúc' &&
           statusLower != 'cancelled' &&
           statusLower != 'đã hủy';
-      return matchesSearch && isNotCompleted;
-    }).toList();
 
-    _completedClasses = _allClasses.where((cls) {
-      final matchesSearch =
-          cls.courseName.toLowerCase().contains(query) ||
-          cls.teacherName.toLowerCase().contains(query) ||
-          cls.room.toLowerCase().contains(query);
-      final statusLower = cls.status.toLowerCase();
-      final isCompleted =
-          statusLower == 'completed' ||
-          statusLower == 'finished' ||
-          statusLower == 'đã kết thúc';
-      return matchesSearch && isCompleted;
+      return matchesSearch && isNotCompleted;
     }).toList();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
-    _tabController.dispose();
     super.dispose();
   }
 
@@ -140,15 +118,10 @@ class _ClassListScreenState extends State<ClassListScreen>
                 showMenuButton: widget.isTab,
                 onMenuPressed: widget.onMenuPressed,
                 onBackPressed: () {
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    AppRouter.studentDashboard,
-                    (route) => false,
-                  );
+                  Navigator.pop(context);
                 },
               ),
 
-              
               Padding(
                 padding: EdgeInsets.fromLTRB(
                   padding,
@@ -195,45 +168,8 @@ class _ClassListScreenState extends State<ClassListScreen>
                 ),
               ),
 
-              
-              Container(
-                margin: EdgeInsets.symmetric(horizontal: padding),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1F2937) : Colors.white,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-                ),
-                child: TabBar(
-                  controller: _tabController,
-                  indicator: BoxDecoration(
-                    borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-                    color: AppColors.primary,
-                  ),
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  labelColor: Colors.white,
-                  unselectedLabelColor: isDark
-                      ? Colors.white70
-                      : AppColors.textSecondary,
-                  labelStyle: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: 'Lexend',
-                  ),
-                  unselectedLabelStyle: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Lexend',
-                  ),
-                  dividerColor: Colors.transparent,
-                  tabs: const [
-                    Tab(text: 'Đang học'),
-                    Tab(text: 'Đã kết thúc'),
-                  ],
-                ),
-              ),
-
               SizedBox(height: AppSizes.paddingSmall),
 
-              
               Expanded(
                 child: BlocBuilder<StudentBloc, StudentState>(
                   buildWhen: (previous, current) {
@@ -243,7 +179,6 @@ class _ClassListScreenState extends State<ClassListScreen>
                         current is DashboardLoaded;
                   },
                   builder: (context, state) {
-                    
                     if (state is StudentInitial ||
                         (state is! ClassesLoaded &&
                             state is! StudentLoading &&
@@ -266,32 +201,19 @@ class _ClassListScreenState extends State<ClassListScreen>
                       return _buildErrorState(state, isDark, isDesktop);
                     }
 
-                    
                     if (state is DashboardLoaded) {
                       _updateClassesList(state.upcomingClasses);
                     }
 
-                    
                     if (state is ClassesLoaded) {
                       _updateClassesList(state.classes);
                     }
 
-                    return TabBarView(
-                      controller: _tabController,
-                      children: [
-                        _buildClassList(
-                          _activeClasses,
-                          padding,
-                          isDark,
-                          'Chưa có lớp học đang diễn ra',
-                        ),
-                        _buildClassList(
-                          _completedClasses,
-                          padding,
-                          isDark,
-                          'Chưa có lớp học đã kết thúc',
-                        ),
-                      ],
+                    return _buildClassList(
+                      _activeClasses,
+                      padding,
+                      isDark,
+                      'Không có lớp học đang hoạt động',
                     );
                   },
                 ),

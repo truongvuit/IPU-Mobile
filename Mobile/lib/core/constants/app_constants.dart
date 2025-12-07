@@ -1,4 +1,4 @@
-// ignore_for_file: unused_field
+
 
 class AppConstants {
   static const double excellentGrade = 8.0;
@@ -17,26 +17,26 @@ class AppConstants {
   static const String statusOverdue = 'Quá hạn';
   static const String statusCancelled = 'Đã hủy';
 
-  // CẤU HÌNH URL CHO NHIỀU MÔI TRƯỜNG
+  
 
-  // DEVELOPMENT (Local Backend)
+  
   static const String _devBaseUrl = 'http://localhost:8080';
 
-  // ANDROID EMULATOR (từ máy host)
+  
   static const String _androidEmulatorUrl = 'http://10.0.2.2:8080';
 
-  // ANDROID/iOS DEVICE (LAN - thay YOUR_IP bằng IP máy chạy BE)
+  
   static const String _deviceLanUrl = 'http://192.168.1.100:8080';
 
-  // PRODUCTION
+  
   static const String _productionUrl = 'https://api.yourdomain.com';
 
-  // ACTIVE URL - ĐỔI DÒNG NÀY ĐỂ SWITCH MÔI TRƯỜNG
+  
   static String get baseUrl {
-    return _devBaseUrl; // Chrome/Desktop
-    // return _androidEmulatorUrl;   // Android Emulator
-    // return _deviceLanUrl;         // Android/iOS Device thật
-    // return _productionUrl;        // Production
+    return _devBaseUrl; 
+    
+    
+    
   }
 
   static const Duration connectionTimeout = Duration(seconds: 30);
@@ -87,7 +87,7 @@ class AppConstants {
   static const String supportEmail = 'support@trungtamngoaingu.com';
   static const String supportPhone = '1900-xxxx';
   
-  /// URL trang web đăng ký khóa học - sẽ append /{courseId}/register
+  
   static const String courseRegistrationWebUrl = 'https://trungtamngoaingu.com/courses';
 
   static const String appName = 'Trung Tâm Ngoại Ngữ';
@@ -150,7 +150,7 @@ class ApiEndpoints {
   static const String teacherMaterialUpdate = '/files';
   static const String teacherAttendance = '/lecturers/sessions';
   
-  // Teacher grades endpoints
+  
   static String teacherClassGrades(String classId) => '/lecturers/grades/class/$classId';
   static const String teacherSubmitGrade = '/lecturers/grades';
   static String teacherUpdateGrade(String gradeId) => '/lecturers/grades/$gradeId';

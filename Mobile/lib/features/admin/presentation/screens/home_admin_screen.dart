@@ -9,7 +9,6 @@ import '../../../authentication/presentation/bloc/auth_bloc.dart';
 import '../../../authentication/presentation/bloc/auth_state.dart';
 import '../bloc/admin_bloc.dart';
 import '../bloc/admin_event.dart';
-import '../bloc/admin_state.dart';
 import 'admin_dashboard_screen.dart';
 import 'admin_class_list_screen.dart';
 import 'admin_teacher_list_screen.dart';
@@ -141,7 +140,7 @@ class _HomeAdminScreenState extends State<HomeAdminScreen> {
             onTap: _onTabSelected,
             type: BottomNavigationBarType.fixed,
             selectedItemColor: AppColors.primary,
-            unselectedItemColor: isDark ? AppColors.gray400 : AppColors.gray600,
+            unselectedItemColor: isDark ? AppColors.neutral400 : AppColors.neutral600,
             backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surface,
             selectedFontSize: isCompact ? 10.sp : AppSizes.textXs,
             unselectedFontSize: isCompact ? 10.sp : AppSizes.textXs,

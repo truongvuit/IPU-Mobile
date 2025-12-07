@@ -80,7 +80,7 @@ class _AdminClassStudentListScreenState
                 height: 4.h,
                 margin: EdgeInsets.only(bottom: 16.h),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.gray600 : AppColors.gray300,
+                  color: isDark ? AppColors.neutral600 : AppColors.neutral300,
                   borderRadius: BorderRadius.circular(2.r),
                 ),
               ),
@@ -129,7 +129,7 @@ class _AdminClassStudentListScreenState
                       Text(
                         'Mã HV: ${student.displayCode}',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: isDark ? AppColors.gray400 : AppColors.gray600,
+                          color: isDark ? AppColors.neutral400 : AppColors.neutral600,
                         ),
                       ),
                     ],
@@ -196,13 +196,13 @@ class _AdminClassStudentListScreenState
                         borderRadius: BorderRadius.circular(12.r),
                       ),
                       side: BorderSide(
-                        color: isDark ? AppColors.gray600 : AppColors.gray300,
+                        color: isDark ? AppColors.neutral600 : AppColors.neutral300,
                       ),
                     ),
                     child: Text(
                       'Đóng',
                       style: TextStyle(
-                        color: isDark ? AppColors.gray300 : AppColors.gray700,
+                        color: isDark ? AppColors.neutral300 : AppColors.neutral700,
                       ),
                     ),
                   ),
@@ -269,7 +269,7 @@ class _AdminClassStudentListScreenState
         Icon(
           icon,
           size: 20.sp,
-          color: isDark ? AppColors.gray400 : AppColors.gray500,
+          color: isDark ? AppColors.neutral400 : AppColors.neutral500,
         ),
         SizedBox(width: 12.w),
         Column(
@@ -279,7 +279,7 @@ class _AdminClassStudentListScreenState
               label,
               style: TextStyle(
                 fontSize: 11.sp,
-                color: isDark ? AppColors.gray400 : AppColors.gray500,
+                color: isDark ? AppColors.neutral400 : AppColors.neutral500,
               ),
             ),
             Text(
@@ -325,7 +325,7 @@ class _AdminClassStudentListScreenState
           Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: isDark ? AppColors.gray400 : AppColors.gray600,
+              color: isDark ? AppColors.neutral400 : AppColors.neutral600,
               fontSize: 10.sp,
             ),
             textAlign: TextAlign.center,
@@ -451,8 +451,8 @@ class _AdminClassStudentListScreenState
                                         Icons.calendar_today_outlined,
                                         size: 14.sp,
                                         color: isDark
-                                            ? AppColors.gray400
-                                            : AppColors.gray500,
+                                            ? AppColors.neutral400
+                                            : AppColors.neutral500,
                                       ),
                                       SizedBox(width: 4.w),
                                       Text(
@@ -460,8 +460,8 @@ class _AdminClassStudentListScreenState
                                         style: TextStyle(
                                           fontSize: 12.sp,
                                           color: isDark
-                                              ? AppColors.gray400
-                                              : AppColors.gray500,
+                                              ? AppColors.neutral400
+                                              : AppColors.neutral500,
                                         ),
                                       ),
                                       SizedBox(width: 16.w),
@@ -469,8 +469,8 @@ class _AdminClassStudentListScreenState
                                         Icons.location_on_outlined,
                                         size: 14.sp,
                                         color: isDark
-                                            ? AppColors.gray400
-                                            : AppColors.gray500,
+                                            ? AppColors.neutral400
+                                            : AppColors.neutral500,
                                       ),
                                       SizedBox(width: 4.w),
                                       Text(
@@ -478,8 +478,8 @@ class _AdminClassStudentListScreenState
                                         style: TextStyle(
                                           fontSize: 12.sp,
                                           color: isDark
-                                              ? AppColors.gray400
-                                              : AppColors.gray500,
+                                              ? AppColors.neutral400
+                                              : AppColors.neutral500,
                                         ),
                                       ),
                                     ],
@@ -501,8 +501,8 @@ class _AdminClassStudentListScreenState
                         border: Border(
                           bottom: BorderSide(
                             color: isDark
-                                ? AppColors.gray700
-                                : AppColors.gray200,
+                                ? AppColors.neutral700
+                                : AppColors.neutral200,
                           ),
                         ),
                       ),
@@ -510,8 +510,8 @@ class _AdminClassStudentListScreenState
                         controller: _tabController,
                         labelColor: AppColors.primary,
                         unselectedLabelColor: isDark
-                            ? AppColors.gray400
-                            : AppColors.gray500,
+                            ? AppColors.neutral400
+                            : AppColors.neutral500,
                         indicatorColor: AppColors.primary,
                         indicatorWeight: 2,
                         labelStyle: TextStyle(
@@ -600,7 +600,7 @@ class _AdminClassStudentListScreenState
               child: Text(
                 'Chưa có dữ liệu',
                 style: TextStyle(
-                  color: isDark ? AppColors.gray400 : AppColors.gray500,
+                  color: isDark ? AppColors.neutral400 : AppColors.neutral500,
                 ),
               ),
             ),
@@ -624,7 +624,7 @@ class _AdminClassStudentListScreenState
         color: isDark ? AppColors.surfaceDark : Colors.white,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
-          color: isDark ? AppColors.gray700 : AppColors.gray200,
+          color: isDark ? AppColors.neutral700 : AppColors.neutral200,
         ),
       ),
       child: Column(
@@ -656,7 +656,7 @@ class _AdminClassStudentListScreenState
             label,
             style: TextStyle(
               fontSize: 12.sp,
-              color: isDark ? AppColors.gray400 : AppColors.gray500,
+              color: isDark ? AppColors.neutral400 : AppColors.neutral500,
             ),
           ),
         ],
@@ -681,7 +681,7 @@ class _AdminClassStudentListScreenState
         color: isDark ? AppColors.surfaceDark : Colors.white,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
-          color: isDark ? AppColors.gray700 : AppColors.gray200,
+          color: isDark ? AppColors.neutral700 : AppColors.neutral200,
         ),
       ),
       child: Column(
@@ -693,7 +693,7 @@ class _AdminClassStudentListScreenState
                 'Trung bình lớp',
                 style: TextStyle(
                   fontSize: 14.sp,
-                  color: isDark ? AppColors.gray300 : AppColors.gray600,
+                  color: isDark ? AppColors.neutral300 : AppColors.neutral600,
                 ),
               ),
               Text(
@@ -711,7 +711,7 @@ class _AdminClassStudentListScreenState
             borderRadius: BorderRadius.circular(4.r),
             child: LinearProgressIndicator(
               value: avgAttendance / 100,
-              backgroundColor: isDark ? AppColors.gray700 : AppColors.gray200,
+              backgroundColor: isDark ? AppColors.neutral700 : AppColors.neutral200,
               valueColor: AlwaysStoppedAnimation(
                 _getAttendanceColor(avgAttendance),
               ),
@@ -796,7 +796,7 @@ class _AdminClassStudentListScreenState
 
                   Container(
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.gray800 : AppColors.gray100,
+                      color: isDark ? AppColors.neutral800 : AppColors.neutral100,
                       borderRadius: BorderRadius.circular(12.r),
                     ),
                     child: TextField(
@@ -809,12 +809,12 @@ class _AdminClassStudentListScreenState
                       decoration: InputDecoration(
                         hintText: 'Tìm học viên',
                         hintStyle: TextStyle(
-                          color: isDark ? AppColors.gray500 : AppColors.gray400,
+                          color: isDark ? AppColors.neutral500 : AppColors.neutral400,
                           fontSize: 14.sp,
                         ),
                         prefixIcon: Icon(
                           Icons.search,
-                          color: isDark ? AppColors.gray500 : AppColors.gray400,
+                          color: isDark ? AppColors.neutral500 : AppColors.neutral400,
                           size: 20.sp,
                         ),
                         suffixIcon: _searchQuery.isNotEmpty
@@ -822,8 +822,8 @@ class _AdminClassStudentListScreenState
                                 icon: Icon(
                                   Icons.clear,
                                   color: isDark
-                                      ? AppColors.gray500
-                                      : AppColors.gray400,
+                                      ? AppColors.neutral500
+                                      : AppColors.neutral400,
                                   size: 20.sp,
                                 ),
                                 onPressed: () {
@@ -875,24 +875,24 @@ class _AdminClassStudentListScreenState
                       border: index == 0
                           ? Border.all(
                               color: isDark
-                                  ? AppColors.gray700
-                                  : AppColors.gray200,
+                                  ? AppColors.neutral700
+                                  : AppColors.neutral200,
                             )
                           : Border(
                               left: BorderSide(
                                 color: isDark
-                                    ? AppColors.gray700
-                                    : AppColors.gray200,
+                                    ? AppColors.neutral700
+                                    : AppColors.neutral200,
                               ),
                               right: BorderSide(
                                 color: isDark
-                                    ? AppColors.gray700
-                                    : AppColors.gray200,
+                                    ? AppColors.neutral700
+                                    : AppColors.neutral200,
                               ),
                               bottom: BorderSide(
                                 color: isDark
-                                    ? AppColors.gray700
-                                    : AppColors.gray200,
+                                    ? AppColors.neutral700
+                                    : AppColors.neutral200,
                               ),
                             ),
                       borderRadius: index == 0
@@ -917,6 +917,7 @@ class _AdminClassStudentListScreenState
   }
 
   Widget _buildAnalyticsTab(BuildContext context, List<ClassStudent> students) {
+    
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (students.isEmpty) {
@@ -1117,7 +1118,7 @@ class _AdminClassStudentListScreenState
             label,
             style: TextStyle(
               fontSize: 12.sp,
-              color: isDark ? AppColors.gray400 : AppColors.gray600,
+              color: isDark ? AppColors.neutral400 : AppColors.neutral600,
             ),
           ),
         ],
@@ -1138,7 +1139,7 @@ class _AdminClassStudentListScreenState
         Icon(
           icon,
           size: 20.sp,
-          color: color ?? (isDark ? AppColors.gray400 : AppColors.gray600),
+          color: color ?? (isDark ? AppColors.neutral400 : AppColors.neutral600),
         ),
         SizedBox(width: 8.w),
         Text(
@@ -1169,7 +1170,7 @@ class _AdminClassStudentListScreenState
         color: isDark ? AppColors.surfaceDark : Colors.white,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
-          color: isDark ? AppColors.gray700 : AppColors.gray200,
+          color: isDark ? AppColors.neutral700 : AppColors.neutral200,
         ),
       ),
       child: Column(
@@ -1241,7 +1242,7 @@ class _AdminClassStudentListScreenState
                   label,
                   style: TextStyle(
                     fontSize: 13.sp,
-                    color: isDark ? AppColors.gray300 : AppColors.gray700,
+                    color: isDark ? AppColors.neutral300 : AppColors.neutral700,
                   ),
                 ),
               ],
@@ -1261,7 +1262,7 @@ class _AdminClassStudentListScreenState
           borderRadius: BorderRadius.circular(4.r),
           child: LinearProgressIndicator(
             value: total > 0 ? count / total : 0,
-            backgroundColor: isDark ? AppColors.gray700 : AppColors.gray200,
+            backgroundColor: isDark ? AppColors.neutral700 : AppColors.neutral200,
             valueColor: AlwaysStoppedAnimation(color),
             minHeight: 6.h,
           ),
@@ -1292,7 +1293,7 @@ class _AdminClassStudentListScreenState
         color: isDark ? AppColors.surfaceDark : Colors.white,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
-          color: isDark ? AppColors.gray700 : AppColors.gray200,
+          color: isDark ? AppColors.neutral700 : AppColors.neutral200,
         ),
       ),
       child: Row(
@@ -1353,7 +1354,7 @@ class _AdminClassStudentListScreenState
           label,
           style: TextStyle(
             fontSize: 11.sp,
-            color: isDark ? AppColors.gray400 : AppColors.gray600,
+            color: isDark ? AppColors.neutral400 : AppColors.neutral600,
           ),
           textAlign: TextAlign.center,
         ),
@@ -1375,7 +1376,7 @@ class _AdminClassStudentListScreenState
         border: Border.all(
           color: showWarning
               ? AppColors.warning.withValues(alpha: 0.3)
-              : (isDark ? AppColors.gray700 : AppColors.gray200),
+              : (isDark ? AppColors.neutral700 : AppColors.neutral200),
         ),
       ),
       child: ListView.separated(
@@ -1384,7 +1385,7 @@ class _AdminClassStudentListScreenState
         itemCount: students.length,
         separatorBuilder: (context, index) => Divider(
           height: 1,
-          color: isDark ? AppColors.gray700 : AppColors.gray200,
+          color: isDark ? AppColors.neutral700 : AppColors.neutral200,
         ),
         itemBuilder: (context, index) {
           final student = students[index];
@@ -1434,7 +1435,7 @@ class _AdminClassStudentListScreenState
               student.displayCode,
               style: TextStyle(
                 fontSize: 12.sp,
-                color: isDark ? AppColors.gray400 : AppColors.gray500,
+                color: isDark ? AppColors.neutral400 : AppColors.neutral500,
               ),
             ),
             trailing: Container(
@@ -1473,7 +1474,7 @@ class _AdminClassStudentListScreenState
         color: isDark ? AppColors.surfaceDark : Colors.white,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
-          color: isDark ? AppColors.gray700 : AppColors.gray200,
+          color: isDark ? AppColors.neutral700 : AppColors.neutral200,
         ),
       ),
       child: ListView.separated(
@@ -1482,7 +1483,7 @@ class _AdminClassStudentListScreenState
         itemCount: students.length,
         separatorBuilder: (context, index) => Divider(
           height: 1,
-          color: isDark ? AppColors.gray700 : AppColors.gray200,
+          color: isDark ? AppColors.neutral700 : AppColors.neutral200,
         ),
         itemBuilder: (context, index) {
           final student = students[index];
@@ -1563,7 +1564,7 @@ class _AdminClassStudentListScreenState
               student.displayCode,
               style: TextStyle(
                 fontSize: 12.sp,
-                color: isDark ? AppColors.gray400 : AppColors.gray500,
+                color: isDark ? AppColors.neutral400 : AppColors.neutral500,
               ),
             ),
             trailing: Container(

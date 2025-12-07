@@ -38,11 +38,9 @@ class StudentRepositoryWithApi implements StudentRepository {
     StudentProfile profile,
   ) async {
     try {
-      
       final profileModel = StudentProfileModel.fromEntity(profile);
       await apiDataSource.updateProfile(profileModel);
 
-      
       final updatedProfile = await apiDataSource.getProfile();
       return Right(updatedProfile);
     } on ServerException catch (e) {
@@ -64,11 +62,35 @@ class StudentRepositoryWithApi implements StudentRepository {
     }
   }
 
+  List<Course> _filterActiveCourses(List<Course> courses) {
+    const activeStatuses = {
+      'active',
+      'open',
+      'ongoing',
+      'enrolling',
+      'available',
+      'đang mở',
+      'đang học',
+    };
+
+    return courses.where((course) {
+      if (course.availableClasses.isNotEmpty) {
+        return course.availableClasses.any((classInfo) {
+          final status = (classInfo.status ?? '').toLowerCase();
+          return activeStatuses.contains(status) ||
+              (status.isEmpty && classInfo.hasAvailableSlots);
+        });
+      }
+      return true;
+    }).toList();
+  }
+
   @override
   Future<Either<Failure, List<Course>>> getAllCourses() async {
     try {
       final result = await apiDataSource.getCourses();
-      return Right(result.cast<Course>());
+      final activeCourses = _filterActiveCourses(result.cast<Course>());
+      return Right(activeCourses);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
     } catch (e) {
@@ -145,9 +167,11 @@ class StudentRepositoryWithApi implements StudentRepository {
     try {
       final data = await apiDataSource.getStudentSchedule(date: startDate);
 
-      
       final List<Schedule> schedules = [];
       final days = data['days'] as List<dynamic>? ?? [];
+
+      final today = DateTime.now();
+      final todayStart = DateTime(today.year, today.month, today.day);
 
       for (final day in days) {
         final dayMap = day as Map<String, dynamic>;
@@ -155,6 +179,14 @@ class StudentRepositoryWithApi implements StudentRepository {
         if (dateStr == null) continue;
 
         final sessionDate = DateTime.parse(dateStr);
+
+        final sessionDay = DateTime(
+          sessionDate.year,
+          sessionDate.month,
+          sessionDate.day,
+        );
+        if (sessionDay.isBefore(todayStart)) continue;
+
         final periods = dayMap['periods'] as List<dynamic>? ?? [];
 
         for (final periodData in periods) {
@@ -188,15 +220,12 @@ class StudentRepositoryWithApi implements StudentRepository {
   Future<Either<Failure, List<Grade>>> getGradesByCourse(
     String courseId,
   ) async {
-    
-    
     try {
       final result = await apiDataSource.getGrades();
       List<Grade> grades = result
           .map((json) => Grade.fromJson(json as Map<String, dynamic>))
           .toList();
 
-      
       if (courseId.isNotEmpty) {
         grades = grades
             .where((g) => g.courseId?.toString() == courseId)
@@ -279,12 +308,28 @@ class StudentRepositoryWithApi implements StudentRepository {
   Future<Either<Failure, Review?>> getClassReview(String classId) async {
     try {
       final result = await apiDataSource.getReviewHistory();
-      
+
       final review = result
           .cast<Review>()
           .where((r) => r.classId.toString() == classId)
           .firstOrNull;
       return Right(review);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Grade?>> getGradesByClass(String classId) async {
+    try {
+      final result = await apiDataSource.getGrades();
+      final grade = result
+          .cast<Grade>()
+          .where((g) => g.classId.toString() == classId)
+          .firstOrNull;
+      return Right(grade);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
     } catch (e) {

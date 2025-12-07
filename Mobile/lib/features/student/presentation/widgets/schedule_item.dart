@@ -127,7 +127,7 @@ class ScheduleItem extends StatelessWidget {
                         SizedBox(width: 6.w),
                         Expanded(
                           child: Text(
-                            schedule.teacherName,
+                            schedule.teacherName.isEmpty ? 'TBA' : schedule.teacherName,
                             style: TextStyle(
                               fontSize: 14.sp,
                               color: isDark
@@ -156,14 +156,18 @@ class ScheduleItem extends StatelessWidget {
                               : const Color(0xFF64748B),
                         ),
                         SizedBox(width: 6.w),
-                        Text(
-                          schedule.room,
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            color: isDark
-                                ? const Color(0xFF9CA3AF)
-                                : const Color(0xFF64748B),
-                            fontFamily: 'Lexend',
+                        Expanded(
+                          child: Text(
+                            schedule.room.isEmpty ? 'TBA' : schedule.room,
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: isDark
+                                  ? const Color(0xFF9CA3AF)
+                                  : const Color(0xFF64748B),
+                              fontFamily: 'Lexend',
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],

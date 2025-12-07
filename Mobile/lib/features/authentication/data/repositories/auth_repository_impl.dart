@@ -27,12 +27,10 @@ class AuthRepositoryImpl implements AuthRepository {
 
       await localDataSource.saveTokens(tokens);
 
-      
       UserModel userModel;
       try {
         userModel = await apiDataSource.getCurrentUser();
       } catch (_) {
-        
         userModel = UserModel(
           id: tokens.userId ?? '0',
           email: email,
@@ -40,7 +38,7 @@ class AuthRepositoryImpl implements AuthRepository {
           isActive: true,
         );
       }
-      
+
       await localDataSource.saveUser(userModel);
       await localDataSource.setRememberMe(rememberMe);
 
@@ -55,29 +53,36 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, void>> logout() async {
     try {
-      await apiDataSource.logout();
-
-      final rememberMe = await localDataSource.getRememberMe();
-
-      if (!rememberMe) {
-        await localDataSource.clearTokens();
-        await localDataSource.clearUser();
+      
+      try {
+        await apiDataSource.logout();
+      } catch (_) {
+        
       }
 
+      
+      
+      
+      await localDataSource.clearTokens();
+      await localDataSource.clearUser();
       await localDataSource.setRememberMe(false);
 
       return const Right(null);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
+    } catch (e) {
+      
+      try {
+        await localDataSource.clearTokens();
+        await localDataSource.clearUser();
+        await localDataSource.setRememberMe(false);
+      } catch (_) {}
+      return const Right(null);
     }
   }
 
   @override
-  Future<Either<Failure, void>> forgotPassword({
-    required String emailOrPhone,
-  }) async {
+  Future<Either<Failure, void>> forgotPassword({required String email}) async {
     try {
-      await apiDataSource.forgotPassword(emailOrPhone);
+      await apiDataSource.forgotPassword(email);
       return const Right(null);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
@@ -85,24 +90,19 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, void>> verifyCode({
-    required String code,
-    required String emailOrPhone,
-  }) async {
+  Future<Either<Failure, bool>> verifyResetCode({required String code}) async {
     try {
-      await apiDataSource.verifyCode(code, emailOrPhone);
-      return const Right(null);
+      final result = await apiDataSource.verifyResetCode(code);
+      return Right(result);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
     }
   }
 
   @override
-  Future<Either<Failure, void>> resendCode({
-    required String emailOrPhone,
-  }) async {
+  Future<Either<Failure, void>> resendCode({required String email}) async {
     try {
-      await apiDataSource.resendCode(emailOrPhone);
+      await apiDataSource.resendCode(email);
       return const Right(null);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
@@ -111,15 +111,15 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, void>> resetPassword({
+    required String code,
     required String newPassword,
-    required String verificationCode,
-    required String emailOrPhone,
+    required String confirmPassword,
   }) async {
     try {
       await apiDataSource.resetPassword(
-        newPassword,
-        verificationCode,
-        emailOrPhone,
+        code: code,
+        newPassword: newPassword,
+        confirmPassword: confirmPassword,
       );
       return const Right(null);
     } on ServerException catch (e) {

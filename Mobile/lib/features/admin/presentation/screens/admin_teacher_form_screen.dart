@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/widgets/common/app_text_field.dart';
+import '../../../../core/widgets/common/app_button.dart';
 import '../../domain/entities/admin_teacher.dart';
 import '../bloc/admin_bloc.dart';
 import '../widgets/simple_admin_app_bar.dart';
@@ -126,12 +128,28 @@ class _AdminTeacherFormScreenState extends State<AdminTeacherFormScreen> {
 
       if (_isEditing) {
         
+        await bloc.adminRepository.updateTeacher(
+          teacherId: widget.teacher!.id,
+          name: _nameController.text.trim(),
+          phoneNumber: _phoneController.text.trim(),
+          email: _emailController.text.trim().isNotEmpty
+              ? _emailController.text.trim()
+              : null,
+          dateOfBirth: _dateOfBirth,
+          imageUrl: _imageUrl,
+        );
+
+        if (!mounted) return;
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Chức năng cập nhật đang được phát triển'),
-            backgroundColor: AppColors.warning,
+            content: Text('Cập nhật giảng viên thành công'),
+            backgroundColor: AppColors.success,
           ),
         );
+
+        Navigator.pop(context, true); 
+        return;
       } else {
         
         await bloc.adminRepository.createTeacher(
@@ -180,8 +198,6 @@ class _AdminTeacherFormScreenState extends State<AdminTeacherFormScreen> {
     showDialog(
       context: context,
       builder: (context) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
@@ -190,18 +206,9 @@ class _AdminTeacherFormScreenState extends State<AdminTeacherFormScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   DropdownButtonFormField<int>(
-                    value: selectedDegreeId,
-                    decoration: InputDecoration(
+                    initialValue: selectedDegreeId,
+                    decoration: const InputDecoration(
                       labelText: 'Loại bằng cấp',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppSizes.radiusMedium,
-                        ),
-                      ),
-                      filled: true,
-                      fillColor: isDark
-                          ? AppColors.surfaceDark
-                          : AppColors.surface,
                     ),
                     items: _degreeTypes.map((degree) {
                       return DropdownMenuItem<int>(
@@ -217,20 +224,9 @@ class _AdminTeacherFormScreenState extends State<AdminTeacherFormScreen> {
                   ),
                   SizedBox(height: AppSizes.paddingMedium),
 
-                  TextFormField(
+                  AppTextField(
                     controller: levelController,
-                    decoration: InputDecoration(
-                      labelText: 'Chi tiết (VD: IELTS 8.5, ĐH ABC...)',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppSizes.radiusMedium,
-                        ),
-                      ),
-                      filled: true,
-                      fillColor: isDark
-                          ? AppColors.surfaceDark
-                          : AppColors.surface,
-                    ),
+                    hintText: 'Chi tiết (VD: IELTS 8.5, ĐH ABC...)',
                     maxLines: 2,
                   ),
                 ],
@@ -283,19 +279,25 @@ class _AdminTeacherFormScreenState extends State<AdminTeacherFormScreen> {
       ),
       body: _isLoadingData
           ? const Center(child: CircularProgressIndicator())
-          : Form(
-              key: _formKey,
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(AppSizes.paddingMedium),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+          : SafeArea(
+              child: Form(
+                key: _formKey,
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.only(
+                    left: AppSizes.paddingMedium,
+                    right: AppSizes.paddingMedium,
+                    top: AppSizes.paddingMedium,
+                    bottom: MediaQuery.of(context).viewInsets.bottom + AppSizes.paddingMedium,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                     
                     _buildLabel('Họ tên *'),
                     SizedBox(height: AppSizes.p8),
-                    TextFormField(
+                    AppTextField(
                       controller: _nameController,
-                      decoration: _inputDecoration('Nhập họ tên', isDark),
+                      hintText: 'Nhập họ tên',
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Vui lòng nhập họ tên';
@@ -308,10 +310,10 @@ class _AdminTeacherFormScreenState extends State<AdminTeacherFormScreen> {
                     
                     _buildLabel('Email'),
                     SizedBox(height: AppSizes.p8),
-                    TextFormField(
+                    AppTextField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: _inputDecoration('Nhập email', isDark),
+                      hintText: 'Nhập email',
                       validator: (value) {
                         if (value != null &&
                             value.isNotEmpty &&
@@ -326,13 +328,10 @@ class _AdminTeacherFormScreenState extends State<AdminTeacherFormScreen> {
                     
                     _buildLabel('Số điện thoại *'),
                     SizedBox(height: AppSizes.p8),
-                    TextFormField(
+                    AppTextField(
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
-                      decoration: _inputDecoration(
-                        'Nhập số điện thoại',
-                        isDark,
-                      ),
+                      hintText: 'Nhập số điện thoại',
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Vui lòng nhập số điện thoại';
@@ -351,13 +350,13 @@ class _AdminTeacherFormScreenState extends State<AdminTeacherFormScreen> {
                     InkWell(
                       onTap: _selectDateOfBirth,
                       child: InputDecorator(
-                        decoration: _inputDecoration('Chọn ngày sinh', isDark)
-                            .copyWith(
-                              suffixIcon: const Icon(
-                                Icons.calendar_today,
-                                size: 20,
-                              ),
-                            ),
+                        decoration: const InputDecoration(
+                          hintText: 'Chọn ngày sinh',
+                          suffixIcon: Icon(
+                            Icons.calendar_today,
+                            size: 20,
+                          ),
+                        ),
                         child: Text(
                           _dateOfBirth != null
                               ? DateFormat('dd/MM/yyyy').format(_dateOfBirth!)
@@ -366,8 +365,8 @@ class _AdminTeacherFormScreenState extends State<AdminTeacherFormScreen> {
                             color: _dateOfBirth != null
                                 ? (isDark ? Colors.white : Colors.black)
                                 : (isDark
-                                      ? AppColors.gray400
-                                      : AppColors.gray500),
+                                      ? AppColors.neutral400
+                                      : AppColors.neutral500),
                           ),
                         ),
                       ),
@@ -414,13 +413,10 @@ class _AdminTeacherFormScreenState extends State<AdminTeacherFormScreen> {
                     
                     _buildLabel('Kinh nghiệm'),
                     SizedBox(height: AppSizes.p8),
-                    TextFormField(
+                    AppTextField(
                       controller: _experienceController,
                       maxLines: 3,
-                      decoration: _inputDecoration(
-                        'Mô tả kinh nghiệm giảng dạy...',
-                        isDark,
-                      ),
+                      hintText: 'Mô tả kinh nghiệm giảng dạy...',
                     ),
                     SizedBox(height: AppSizes.paddingMedium),
 
@@ -443,14 +439,14 @@ class _AdminTeacherFormScreenState extends State<AdminTeacherFormScreen> {
                         decoration: BoxDecoration(
                           color: isDark
                               ? AppColors.surfaceDark
-                              : AppColors.gray100,
+                              : AppColors.neutral100,
                           borderRadius: BorderRadius.circular(
                             AppSizes.radiusMedium,
                           ),
                           border: Border.all(
                             color: isDark
-                                ? AppColors.gray700
-                                : AppColors.gray300,
+                                ? AppColors.neutral700
+                                : AppColors.neutral300,
                           ),
                         ),
                         child: Center(
@@ -458,8 +454,8 @@ class _AdminTeacherFormScreenState extends State<AdminTeacherFormScreen> {
                             'Chưa có bằng cấp nào',
                             style: TextStyle(
                               color: isDark
-                                  ? AppColors.gray400
-                                  : AppColors.gray600,
+                                  ? AppColors.neutral400
+                                  : AppColors.neutral600,
                             ),
                           ),
                         ),
@@ -499,37 +495,12 @@ class _AdminTeacherFormScreenState extends State<AdminTeacherFormScreen> {
                     SizedBox(height: 32.h),
 
                     
-                    SizedBox(
+                    AppButton(
+                      text: _isEditing ? 'Cập nhật' : 'Thêm giảng viên',
+                      onPressed: _save,
+                      isLoading: _isLoading,
                       width: double.infinity,
                       height: 50.h,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _save,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              AppSizes.radiusMedium,
-                            ),
-                          ),
-                        ),
-                        child: _isLoading
-                            ? SizedBox(
-                                width: 24.w,
-                                height: 24.w,
-                                child: const CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Text(
-                                _isEditing ? 'Cập nhật' : 'Thêm giảng viên',
-                                style: TextStyle(
-                                  fontSize: AppSizes.textBase,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                      ),
                     ),
 
                     SizedBox(
@@ -539,6 +510,7 @@ class _AdminTeacherFormScreenState extends State<AdminTeacherFormScreen> {
                 ),
               ),
             ),
+            ),
     );
   }
 
@@ -546,17 +518,6 @@ class _AdminTeacherFormScreenState extends State<AdminTeacherFormScreen> {
     return Text(
       text,
       style: TextStyle(fontSize: AppSizes.textSm, fontWeight: FontWeight.w600),
-    );
-  }
-
-  InputDecoration _inputDecoration(String hint, bool isDark) {
-    return InputDecoration(
-      hintText: hint,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-      ),
-      filled: true,
-      fillColor: isDark ? AppColors.surfaceDark : AppColors.surface,
     );
   }
 }

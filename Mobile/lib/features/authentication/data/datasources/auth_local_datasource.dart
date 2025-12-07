@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/errors/exceptions.dart';
+import '../../../../core/auth/token_store.dart';
 import '../models/auth_tokens_model.dart';
 import '../models/user_model.dart';
 
@@ -18,25 +19,23 @@ abstract class AuthLocalDataSource {
 
 class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   final SharedPreferences sharedPreferences;
+  final TokenStore tokenStore;
 
-  AuthLocalDataSourceImpl({required this.sharedPreferences});
+  AuthLocalDataSourceImpl({
+    required this.sharedPreferences,
+    required this.tokenStore,
+  });
 
   @override
   Future<void> saveTokens(AuthTokensModel tokens) async {
-    await sharedPreferences.setString(
-      AppConstants.keyAuthToken,
-      tokens.accessToken,
-    );
-    await sharedPreferences.setString(
-      AppConstants.keyRefreshToken,
-      tokens.refreshToken,
-    );
+    await tokenStore.saveAccessToken(tokens.accessToken);
+    await tokenStore.saveRefreshToken(tokens.refreshToken);
   }
 
   @override
   Future<AuthTokensModel?> getTokens() async {
-    final accessToken = sharedPreferences.getString(AppConstants.keyAuthToken);
-    final refreshToken = sharedPreferences.getString(AppConstants.keyRefreshToken);
+    final accessToken = await tokenStore.getAccessToken();
+    final refreshToken = await tokenStore.getRefreshToken();
 
     if (accessToken != null && refreshToken != null) {
       return AuthTokensModel(
@@ -49,8 +48,7 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
 
   @override
   Future<void> clearTokens() async {
-    await sharedPreferences.remove(AppConstants.keyAuthToken);
-    await sharedPreferences.remove(AppConstants.keyRefreshToken);
+    await tokenStore.clearTokens();
   }
 
   @override

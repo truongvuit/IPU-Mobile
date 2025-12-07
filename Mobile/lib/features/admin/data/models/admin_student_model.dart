@@ -25,9 +25,9 @@ class AdminStudentModel extends AdminStudent {
           json['phoneNumber'] as String? ?? json['sdt'] as String? ?? '',
       avatarUrl: json['avatarUrl'] as String? ?? json['anhdaidien'] as String?,
       dateOfBirth: json['dateOfBirth'] != null
-          ? DateTime.tryParse(json['dateOfBirth'] as String)
+          ? DateTime.tryParse(json['dateOfBirth'].toString())
           : (json['ngaysinh'] != null
-                ? DateTime.tryParse(json['ngaysinh'] as String)
+                ? DateTime.tryParse(json['ngaysinh'].toString())
                 : null),
       address: json['address'] as String? ?? json['diachi'] as String?,
       occupation:
@@ -70,6 +70,24 @@ class AdminStudentModel extends AdminStudent {
       'enrollmentDate': enrollmentDate.toIso8601String(),
       'totalClassesEnrolled': totalClassesEnrolled,
       'enrolledClassIds': enrolledClassIds,
+    };
+  }
+
+  
+  
+  Map<String, dynamic> toUpdateJson() {
+    return {
+      'fullName': fullName,
+      'email': email,
+      'phoneNumber': phoneNumber,
+      'dateOfBirth': dateOfBirth?.toIso8601String().split(
+        'T',
+      )[0], 
+      'address': address,
+      'occupation': occupation,
+      'educationLevel': educationLevel,
+      'avatarUrl': avatarUrl,
+      
     };
   }
 

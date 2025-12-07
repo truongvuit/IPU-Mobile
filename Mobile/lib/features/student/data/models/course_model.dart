@@ -1,5 +1,38 @@
 import '../../domain/entities/course.dart';
 
+
+class CourseClassInfoModel extends CourseClassInfo {
+  const CourseClassInfoModel({
+    required super.classId,
+    required super.className,
+    super.instructorName,
+    super.startDate,
+    super.endDate,
+    super.schedulePattern,
+    super.status,
+    super.maxCapacity,
+    super.currentEnrollment,
+  });
+
+  factory CourseClassInfoModel.fromJson(Map<String, dynamic> json) {
+    return CourseClassInfoModel(
+      classId: json['classId'] as int,
+      className: json['className'] ?? '',
+      instructorName: json['instructorName'],
+      startDate: json['startDate'] != null
+          ? DateTime.parse(json['startDate'])
+          : null,
+      endDate: json['endDate'] != null
+          ? DateTime.parse(json['endDate'])
+          : null,
+      schedulePattern: json['schedulePattern'],
+      status: json['status'],
+      maxCapacity: json['maxCapacity'],
+      currentEnrollment: json['currentEnrollment'],
+    );
+  }
+}
+
 class CourseModel extends Course {
   const CourseModel({
     required super.id,
@@ -15,9 +48,18 @@ class CourseModel extends Course {
     super.isEnrolled,
     super.startDate,
     super.endDate,
+    super.availableClasses,
   });
 
   factory CourseModel.fromJson(Map<String, dynamic> json) {
+    
+    List<CourseClassInfo> classes = [];
+    if (json['classInfos'] != null) {
+      classes = (json['classInfos'] as List)
+          .map((c) => CourseClassInfoModel.fromJson(c as Map<String, dynamic>))
+          .toList();
+    }
+    
     return CourseModel(
       id: json['courseId']?.toString() ?? json['id']?.toString() ?? '',
       name: json['courseName'] ?? json['name'] ?? '',
@@ -34,6 +76,7 @@ class CourseModel extends Course {
           ? DateTime.parse(json['startDate'])
           : null,
       endDate: json['endDate'] != null ? DateTime.parse(json['endDate']) : null,
+      availableClasses: classes,
     );
   }
 
@@ -70,6 +113,7 @@ class CourseModel extends Course {
       isEnrolled: course.isEnrolled,
       startDate: course.startDate,
       endDate: course.endDate,
+      availableClasses: course.availableClasses,
     );
   }
 
@@ -88,6 +132,7 @@ class CourseModel extends Course {
     bool? isEnrolled,
     DateTime? startDate,
     DateTime? endDate,
+    List<CourseClassInfo>? availableClasses,
   }) {
     return CourseModel(
       id: id ?? this.id,
@@ -103,6 +148,7 @@ class CourseModel extends Course {
       isEnrolled: isEnrolled ?? this.isEnrolled,
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
+      availableClasses: availableClasses ?? this.availableClasses,
     );
   }
 }

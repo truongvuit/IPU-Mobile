@@ -4,6 +4,7 @@ import '../entities/promotion.dart';
 
 abstract class PromotionRepository {
   Future<Either<Failure, List<Promotion>>> getPromotions();
+  Future<Either<Failure, List<Promotion>>> getPromotionsByCourse(String courseId);
   Future<Either<Failure, Promotion>> getPromotionById(String id);
   Future<Either<Failure, void>> createPromotion(Promotion promotion);
   Future<Either<Failure, void>> updatePromotion(Promotion promotion);

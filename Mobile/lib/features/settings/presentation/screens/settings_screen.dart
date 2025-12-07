@@ -10,6 +10,7 @@ import '../bloc/settings_event.dart';
 import '../bloc/settings_state.dart';
 import '../../../authentication/presentation/bloc/auth_bloc.dart';
 import '../../../authentication/presentation/bloc/auth_event.dart';
+import '../../../authentication/presentation/bloc/auth_state.dart';
 
 class SettingsScreen extends StatelessWidget {
   final String userRole;
@@ -23,7 +24,26 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<SettingsBloc, SettingsState>(
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        
+        if (state is AuthUnauthenticated) {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRouter.welcome,
+            (route) => false,
+          );
+        } else if (state is AuthFailure) {
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Lỗi đăng xuất: ${state.message}'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      },
+      child: BlocBuilder<SettingsBloc, SettingsState>(
       builder: (context, state) {
         if (state is SettingsLoading) {
           return const Scaffold(
@@ -435,12 +455,6 @@ class SettingsScreen extends StatelessWidget {
                                                   context.read<AuthBloc>().add(
                                                     const LogoutRequested(),
                                                   );
-                                                  
-                                                  Navigator.pushNamedAndRemoveUntil(
-                                                    context,
-                                                    AppRouter.welcome,
-                                                    (route) => false,
-                                                  );
                                                 },
                                                 child: const Text(
                                                   'Đăng xuất',
@@ -613,6 +627,7 @@ class SettingsScreen extends StatelessWidget {
           },
         );
       },
+      ),
     );
   }
 }

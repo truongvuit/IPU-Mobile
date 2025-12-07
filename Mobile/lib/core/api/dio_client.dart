@@ -1,23 +1,33 @@
 import 'package:dio/dio.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../config/environment.dart';
+import '../auth/token_store.dart';
+import '../auth/session_expiry_notifier.dart';
 import '../network/dio_config.dart';
+import '../network/error_handler.dart';
+import '../errors/exceptions.dart';
 
 class DioClient {
   late final Dio dio;
-  final SharedPreferences sharedPreferences;
+  final TokenStore tokenStore;
   final Environment environment;
+  final SessionExpiryNotifier sessionExpiryNotifier;
 
-  DioClient({required this.sharedPreferences, Environment? environment})
-    : environment = environment ?? Environment.current {
+  DioClient({
+    required this.tokenStore,
+    Environment? environment,
+    SessionExpiryNotifier? sessionExpiryNotifier,
+  }) : environment = environment ?? Environment.current,
+       sessionExpiryNotifier =
+           sessionExpiryNotifier ?? SessionExpiryNotifier() {
     final dioConfig = DioConfig(
-      sharedPreferences: sharedPreferences,
+      tokenStore: tokenStore,
       environment: this.environment,
+      sessionExpiryNotifier: this.sessionExpiryNotifier,
     );
     dio = dioConfig.createDio();
   }
 
-  /// Get the base URL for the API
+  
   String get baseUrl => Environment.baseUrl;
 
   Future<Response> get(
@@ -25,11 +35,15 @@ class DioClient {
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) async {
-    return await dio.get(
-      path,
-      queryParameters: queryParameters,
-      options: options,
-    );
+    try {
+      return await dio.get(
+        path,
+        queryParameters: queryParameters,
+        options: options,
+      );
+    } on DioException catch (e) {
+      throw ServerException(ErrorHandler.getUserFriendlyMessage(e));
+    }
   }
 
   Future<Response> post(
@@ -38,12 +52,16 @@ class DioClient {
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) async {
-    return await dio.post(
-      path,
-      data: data,
-      queryParameters: queryParameters,
-      options: options,
-    );
+    try {
+      return await dio.post(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+    } on DioException catch (e) {
+      throw ServerException(ErrorHandler.getUserFriendlyMessage(e));
+    }
   }
 
   Future<Response> put(
@@ -52,27 +70,35 @@ class DioClient {
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) async {
-    return await dio.put(
-      path,
-      data: data,
-      queryParameters: queryParameters,
-      options: options,
-    );
+    try {
+      return await dio.put(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+    } on DioException catch (e) {
+      throw ServerException(ErrorHandler.getUserFriendlyMessage(e));
+    }
   }
 
-  /// PATCH request
+  
   Future<Response> patch(
     String path, {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) async {
-    return await dio.patch(
-      path,
-      data: data,
-      queryParameters: queryParameters,
-      options: options,
-    );
+    try {
+      return await dio.patch(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+    } on DioException catch (e) {
+      throw ServerException(ErrorHandler.getUserFriendlyMessage(e));
+    }
   }
 
   Future<Response> delete(
@@ -81,12 +107,16 @@ class DioClient {
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) async {
-    return await dio.delete(
-      path,
-      data: data,
-      queryParameters: queryParameters,
-      options: options,
-    );
+    try {
+      return await dio.delete(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+    } on DioException catch (e) {
+      throw ServerException(ErrorHandler.getUserFriendlyMessage(e));
+    }
   }
 
   Future<Response> uploadFile(
@@ -95,11 +125,15 @@ class DioClient {
     String fieldName = 'file',
     Map<String, dynamic>? data,
   }) async {
-    final formData = FormData.fromMap({
-      fieldName: await MultipartFile.fromFile(filePath),
-      if (data != null) ...data,
-    });
+    try {
+      final formData = FormData.fromMap({
+        fieldName: await MultipartFile.fromFile(filePath),
+        if (data != null) ...data,
+      });
 
-    return await dio.post(path, data: formData);
+      return await dio.post(path, data: formData);
+    } on DioException catch (e) {
+      throw ServerException(ErrorHandler.getUserFriendlyMessage(e));
+    }
   }
 }

@@ -47,7 +47,6 @@ class UpdateStudentInfo extends RegistrationEvent {
   ];
 }
 
-
 class SelectStudent extends RegistrationEvent {
   final String studentId;
   final String studentName;
@@ -65,12 +64,11 @@ class SelectStudent extends RegistrationEvent {
   List<Object?> get props => [studentId, studentName, phoneNumber, email];
 }
 
-
 class SelectClass extends RegistrationEvent {
   final String classId;
   final String className;
   final double tuitionFee;
-  final String? courseId; 
+  final String? courseId;
   final String? courseName;
 
   const SelectClass({
@@ -91,7 +89,6 @@ class SelectClass extends RegistrationEvent {
   ];
 }
 
-
 class RemoveClass extends RegistrationEvent {
   final String classId;
 
@@ -101,11 +98,9 @@ class RemoveClass extends RegistrationEvent {
   List<Object?> get props => [classId];
 }
 
-
 class ClearAllClasses extends RegistrationEvent {
   const ClearAllClasses();
 }
-
 
 class LoadAvailableClasses extends RegistrationEvent {
   final String? searchQuery;
@@ -116,22 +111,16 @@ class LoadAvailableClasses extends RegistrationEvent {
   List<Object?> get props => [searchQuery];
 }
 
-
 class FilterClasses extends RegistrationEvent {
   final String? courseId;
   final String? teacherId;
   final String? schedule;
 
-  const FilterClasses({
-    this.courseId,
-    this.teacherId,
-    this.schedule,
-  });
+  const FilterClasses({this.courseId, this.teacherId, this.schedule});
 
   @override
   List<Object?> get props => [courseId, teacherId, schedule];
 }
-
 
 class ClearClassFilter extends RegistrationEvent {
   const ClearClassFilter();
@@ -148,7 +137,7 @@ class ApplyPromotion extends RegistrationEvent {
 
 class LoadPromotions extends RegistrationEvent {
   final String? courseId;
-  final List<String>? selectedCourseIds; 
+  final List<String>? selectedCourseIds;
 
   const LoadPromotions({this.courseId, this.selectedCourseIds});
 
@@ -180,4 +169,14 @@ class UpdateNotes extends RegistrationEvent {
 
 class SubmitRegistration extends RegistrationEvent {
   const SubmitRegistration();
+}
+
+
+class CalculateCartPreview extends RegistrationEvent {
+  const CalculateCartPreview();
+}
+
+
+class ClearCartPreviewError extends RegistrationEvent {
+  const ClearCartPreviewError();
 }

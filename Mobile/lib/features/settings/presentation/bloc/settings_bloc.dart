@@ -102,10 +102,9 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         pushNotificationsEnabled: event.enabled,
       );
       final result = await repository.updateSettings(updatedSettings);
-      result.fold(
-        (error) => emit(SettingsError(error)),
-        (settings) => emit(SettingsUpdated(settings)),
-      );
+      result.fold((error) => emit(SettingsError(error)), (settings) {
+        emit(SettingsUpdated(settings));
+      });
     }
   }
 

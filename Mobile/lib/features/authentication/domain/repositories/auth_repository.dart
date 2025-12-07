@@ -11,25 +11,30 @@ abstract class AuthRepository {
 
   Future<Either<Failure, void>> logout();
 
-  Future<Either<Failure, void>> forgotPassword({required String emailOrPhone});
+  
+  
+  Future<Either<Failure, void>> forgotPassword({required String email});
 
-  Future<Either<Failure, void>> verifyCode({
-    required String code,
-    required String emailOrPhone,
-  });
+  
+  
+  Future<Either<Failure, bool>> verifyResetCode({required String code});
 
-  Future<Either<Failure, void>> resendCode({required String emailOrPhone});
+  
+  Future<Either<Failure, void>> resendCode({required String email});
 
+  
   Future<Either<Failure, void>> resetPassword({
+    required String code,
     required String newPassword,
-    required String verificationCode,
-    required String emailOrPhone,
+    required String confirmPassword,
   });
 
   Future<Either<Failure, User?>> getCurrentUser();
 
   Future<Either<Failure, void>> refreshToken();
 
+  
+  
   Future<Either<Failure, void>> changePassword({
     required String currentPassword,
     required String newPassword,

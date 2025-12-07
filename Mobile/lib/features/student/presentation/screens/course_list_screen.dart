@@ -11,6 +11,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/skeleton_widget.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
+import '../widgets/cart_bottom_sheet.dart';
 
 class CourseListScreen extends StatefulWidget {
   const CourseListScreen({super.key});
@@ -42,6 +43,35 @@ class _CourseListScreenState extends State<CourseListScreen> {
       backgroundColor: isDark
           ? const Color(0xFF111827)
           : const Color(0xFFF9FAFB),
+      floatingActionButton: Builder(
+        builder: (context) {
+          final bloc = context.read<StudentBloc>();
+          final cartCount = bloc.cartItemCount;
+
+          if (cartCount == 0) return const SizedBox.shrink();
+
+          return FloatingActionButton.extended(
+            onPressed: () => CartBottomSheet.show(context),
+            backgroundColor: AppColors.primary,
+            icon: Badge(
+              label: Text(
+                '$cartCount',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              backgroundColor: AppColors.error,
+              child: const Icon(Icons.shopping_cart, color: Colors.white),
+            ),
+            label: const Text(
+              'Giỏ hàng',
+              style: TextStyle(color: Colors.white),
+            ),
+          );
+        },
+      ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isDesktop = constraints.maxWidth >= 1024;
@@ -57,11 +87,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
                 title: 'Khám phá Khóa học',
                 showBackButton: true,
                 onBackPressed: () {
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    AppRouter.studentDashboard,
-                    (route) => false,
-                  );
+                  Navigator.pop(context);
                 },
               ),
 
@@ -133,33 +159,6 @@ class _CourseListScreenState extends State<CourseListScreen> {
                             vertical: 14.h,
                           ),
                         ),
-                      ),
-                    ),
-                    SizedBox(width: AppSizes.paddingSmall),
-
-                    Container(
-                      width: isDesktop ? 64.w : 56.w,
-                      height: isDesktop ? 64.h : 56.h,
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1F2937) : Colors.white,
-                        borderRadius: BorderRadius.circular(
-                          AppSizes.radiusMedium,
-                        ),
-                        border: Border.all(
-                          color: isDark
-                              ? const Color(0xFF374151)
-                              : const Color(0xFFDBDFE6),
-                        ),
-                      ),
-                      child: IconButton(
-                        icon: Icon(
-                          Icons.tune,
-                          size: isDesktop ? 28.w : 24.w,
-                          color: isDark ? Colors.white : AppColors.textPrimary,
-                        ),
-                        onPressed: () {
-                          _showFilterBottomSheet(context, isDark, isDesktop);
-                        },
                       ),
                     ),
                   ],
@@ -238,7 +237,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
                       if (state.courses.isEmpty) {
                         return EmptyStateWidget(
                           icon: Icons.search_off,
-                          message: 'Không tìm thấy khóa học nào',
+                          message: 'Không có khóa học đang mở',
                         );
                       }
 
@@ -283,75 +282,6 @@ class _CourseListScreenState extends State<CourseListScreen> {
           );
         },
       ),
-    );
-  }
-
-  void _showFilterBottomSheet(
-    BuildContext context,
-    bool isDark,
-    bool isDesktop,
-  ) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: isDark ? AppColors.gray800 : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Container(
-        padding: EdgeInsets.all(isDesktop ? 32.w : 24.w),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Lọc khóa học',
-              style: TextStyle(
-                fontSize: isDesktop ? 24.sp : 20.sp,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : AppColors.textPrimary,
-                fontFamily: 'Lexend',
-              ),
-            ),
-            SizedBox(height: 24.h),
-            _buildFilterOption(context, isDark, isDesktop, 'Tất cả', 'all'),
-            _buildFilterOption(context, isDark, isDesktop, 'IELTS', 'IELTS'),
-            _buildFilterOption(context, isDark, isDesktop, 'TOEIC', 'TOEIC'),
-            _buildFilterOption(
-              context,
-              isDark,
-              isDesktop,
-              'Giao tiếp',
-              'Communication',
-            ),
-            SizedBox(height: 16.h),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFilterOption(
-    BuildContext context,
-    bool isDark,
-    bool isDesktop,
-    String label,
-    String category,
-  ) {
-    return ListTile(
-      title: Text(
-        label,
-        style: TextStyle(
-          fontSize: isDesktop ? 18.sp : 16.sp,
-          fontFamily: 'Lexend',
-          color: isDark ? Colors.white : AppColors.textPrimary,
-        ),
-      ),
-      onTap: () {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Đã chọn: $label')));
-      },
     );
   }
 }

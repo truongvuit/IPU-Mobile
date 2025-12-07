@@ -1,5 +1,48 @@
 import 'package:equatable/equatable.dart';
 
+
+class CourseClassInfo extends Equatable {
+  final int classId;
+  final String className;
+  final String? instructorName;
+  final DateTime? startDate;
+  final DateTime? endDate;
+  final String? schedulePattern;
+  final String? status;
+  final int? maxCapacity;
+  final int? currentEnrollment;
+
+  const CourseClassInfo({
+    required this.classId,
+    required this.className,
+    this.instructorName,
+    this.startDate,
+    this.endDate,
+    this.schedulePattern,
+    this.status,
+    this.maxCapacity,
+    this.currentEnrollment,
+  });
+
+  bool get hasAvailableSlots =>
+      maxCapacity == null ||
+      currentEnrollment == null ||
+      currentEnrollment! < maxCapacity!;
+
+  @override
+  List<Object?> get props => [
+        classId,
+        className,
+        instructorName,
+        startDate,
+        endDate,
+        schedulePattern,
+        status,
+        maxCapacity,
+        currentEnrollment,
+      ];
+}
+
 class Course extends Equatable {
   final String id;
   final String name;
@@ -14,6 +57,7 @@ class Course extends Equatable {
   final bool isEnrolled;
   final DateTime? startDate;
   final DateTime? endDate;
+  final List<CourseClassInfo> availableClasses;
 
   const Course({
     required this.id,
@@ -29,7 +73,12 @@ class Course extends Equatable {
     this.isEnrolled = false,
     this.startDate,
     this.endDate,
+    this.availableClasses = const [],
   });
+
+  
+  List<int> get availableClassIds =>
+      availableClasses.map((c) => c.classId).toList();
 
   @override
   List<Object?> get props => [
@@ -46,6 +95,7 @@ class Course extends Equatable {
     isEnrolled,
     startDate,
     endDate,
+    availableClasses,
   ];
 
   Course copyWith({
@@ -62,6 +112,7 @@ class Course extends Equatable {
     bool? isEnrolled,
     DateTime? startDate,
     DateTime? endDate,
+    List<CourseClassInfo>? availableClasses,
   }) {
     return Course(
       id: id ?? this.id,
@@ -77,6 +128,7 @@ class Course extends Equatable {
       isEnrolled: isEnrolled ?? this.isEnrolled,
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
+      availableClasses: availableClasses ?? this.availableClasses,
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 
 import 'registration_event.dart';
 import 'registration_state.dart';
@@ -10,10 +11,12 @@ import '../../domain/repositories/admin_repository.dart';
 
 class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
   final AdminRepository? adminRepository;
-  
+
   
   List<Map<String, dynamic>> _cachedCourses = [];
+  
   List<Map<String, dynamic>> _cachedTeachers = [];
+  
   List<String> _cachedSchedules = [];
   List<AdminClass> _allClasses = [];
 
@@ -26,22 +29,30 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     on<SelectClass>(_onSelectClass);
     on<RemoveClass>(_onRemoveClass);
     on<ClearAllClasses>(_onClearAllClasses);
-    on<LoadAvailableClasses>(_onLoadAvailableClasses);
+
+    
+    on<LoadAvailableClasses>(_onLoadAvailableClasses, transformer: droppable());
+    on<LoadPromotions>(_onLoadPromotions, transformer: droppable());
+    on<SubmitRegistration>(_onSubmitRegistration, transformer: droppable());
+    
+    on<CalculateCartPreview>(
+      _onCalculateCartPreview,
+      transformer: restartable(),
+    );
+
     on<FilterClasses>(_onFilterClasses);
     on<ClearClassFilter>(_onClearClassFilter);
     on<ApplyPromotion>(_onApplyPromotion);
-    on<LoadPromotions>(_onLoadPromotions);
     on<RemovePromotion>(_onRemovePromotion);
     on<UpdatePaymentMethod>(_onUpdatePaymentMethod);
     on<UpdateNotes>(_onUpdateNotes);
-    on<SubmitRegistration>(_onSubmitRegistration);
+    on<ClearCartPreviewError>(_onClearCartPreviewError);
   }
 
   Future<void> _onInitializeRegistration(
     InitializeRegistration event,
     Emitter<RegistrationState> emit,
   ) async {
-    
     emit(const RegistrationInProgress(isNewStudent: true));
   }
 
@@ -50,7 +61,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     Emitter<RegistrationState> emit,
   ) async {
     RegistrationInProgress current;
-    
+
     if (state is RegistrationInProgress) {
       current = state as RegistrationInProgress;
     } else if (state is ClassesLoaded) {
@@ -60,8 +71,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     } else {
       return;
     }
-    
-    
+
     emit(
       current.copyWith(isNewStudent: event.isNewStudent, clearStudent: true),
     );
@@ -72,7 +82,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     Emitter<RegistrationState> emit,
   ) async {
     RegistrationInProgress current;
-    
+
     if (state is RegistrationInProgress) {
       current = state as RegistrationInProgress;
     } else if (state is ClassesLoaded) {
@@ -82,7 +92,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     } else {
       return;
     }
-    
+
     emit(
       current.copyWith(
         studentId: event.studentId,
@@ -99,7 +109,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     Emitter<RegistrationState> emit,
   ) async {
     RegistrationInProgress current;
-    
+
     if (state is RegistrationInProgress) {
       current = state as RegistrationInProgress;
     } else if (state is ClassesLoaded) {
@@ -109,7 +119,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     } else {
       return;
     }
-    
+
     emit(
       current.copyWith(
         isNewStudent: false,
@@ -137,7 +147,6 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
       return;
     }
 
-    
     final newClass = SelectedClassInfo(
       classId: event.classId,
       className: event.className,
@@ -146,7 +155,6 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
       tuitionFee: event.tuitionFee,
     );
 
-    
     final existingClasses = List<SelectedClassInfo>.from(
       current.selectedClasses,
     );
@@ -155,27 +163,29 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     );
 
     if (alreadySelected) {
-      
       existingClasses.removeWhere((c) => c.classId == event.classId);
     } else {
-      
       existingClasses.add(newClass);
     }
 
-    
     final updatedRegistration = current.copyWith(
       selectedClasses: existingClasses,
       clearPromotion: true,
       discount: 0,
+      clearCartPreview: true,
     );
 
-    
     if (classesLoadedState != null) {
-      emit(classesLoadedState.copyWith(
-        currentRegistration: updatedRegistration,
-      ));
+      emit(
+        classesLoadedState.copyWith(currentRegistration: updatedRegistration),
+      );
     } else {
       emit(updatedRegistration);
+    }
+
+    
+    if (existingClasses.isNotEmpty) {
+      add(const CalculateCartPreview());
     }
   }
 
@@ -202,15 +212,20 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
       selectedClasses: updatedClasses,
       clearPromotion: true,
       discount: 0,
+      clearCartPreview: true,
     );
 
-    
     if (classesLoadedState != null) {
-      emit(classesLoadedState.copyWith(
-        currentRegistration: updatedRegistration,
-      ));
+      emit(
+        classesLoadedState.copyWith(currentRegistration: updatedRegistration),
+      );
     } else {
       emit(updatedRegistration);
+    }
+
+    
+    if (updatedClasses.isNotEmpty) {
+      add(const CalculateCartPreview());
     }
   }
 
@@ -234,13 +249,13 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
       selectedClasses: [],
       clearPromotion: true,
       discount: 0,
+      clearCartPreview: true,
     );
 
-    
     if (classesLoadedState != null) {
-      emit(classesLoadedState.copyWith(
-        currentRegistration: updatedRegistration,
-      ));
+      emit(
+        classesLoadedState.copyWith(currentRegistration: updatedRegistration),
+      );
     } else {
       emit(updatedRegistration);
     }
@@ -250,7 +265,6 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     LoadAvailableClasses event,
     Emitter<RegistrationState> emit,
   ) async {
-    
     RegistrationInProgress savedState;
     if (state is RegistrationInProgress) {
       savedState = state as RegistrationInProgress;
@@ -269,19 +283,16 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
       List<Map<String, dynamic>> courses = [];
       List<Map<String, dynamic>> teachers = [];
 
-      
       if (adminRepository != null) {
         try {
-          
           final results = await Future.wait([
             adminRepository!.getClasses(),
-            adminRepository!.getCategories(), 
+            adminRepository!.getCategories(),
           ]);
-          
+
           classes = results[0] as List<AdminClass>;
           courses = results[1] as List<Map<String, dynamic>>;
-          
-          
+
           final teacherSet = <String, Map<String, dynamic>>{};
           for (final c in classes) {
             if (c.teacherId != null && !teacherSet.containsKey(c.teacherId)) {
@@ -293,16 +304,13 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
           }
           teachers = teacherSet.values.toList();
         } catch (e) {
-          
           classes = _getMockClasses();
         }
       } else {
-        
         await Future.delayed(const Duration(milliseconds: 500));
         classes = _getMockClasses();
       }
 
-      
       final scheduleSet = <String>{};
       for (final c in classes) {
         if (c.schedule.isNotEmpty) {
@@ -311,19 +319,20 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
       }
       final schedules = scheduleSet.toList()..sort();
 
-      
       _allClasses = classes;
       _cachedCourses = courses;
       _cachedTeachers = teachers;
       _cachedSchedules = schedules;
 
-      emit(ClassesLoaded(
-        classes: classes,
-        currentRegistration: savedState,
-        courses: courses,
-        teachers: teachers,
-        schedules: schedules,
-      ));
+      emit(
+        ClassesLoaded(
+          classes: classes,
+          currentRegistration: savedState,
+          courses: courses,
+          teachers: teachers,
+          schedules: schedules,
+        ),
+      );
     } catch (e) {
       emit(
         RegistrationError('Không thể tải danh sách lớp học: ${e.toString()}'),
@@ -331,48 +340,56 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     }
   }
 
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   Future<void> _onFilterClasses(
     FilterClasses event,
     Emitter<RegistrationState> emit,
   ) async {
     if (state is! ClassesLoaded) return;
-    
+
     final currentState = state as ClassesLoaded;
-    
-    
+
     List<AdminClass> filteredClasses = List.from(_allClasses);
-    
-    
+
     if (event.courseId != null && event.courseId!.isNotEmpty) {
       filteredClasses = filteredClasses
-          .where((c) => c.courseId == event.courseId || 
-                        c.courseName.toLowerCase().contains(
-                          _cachedCourses
-                              .firstWhere(
-                                (course) => course['id'].toString() == event.courseId,
-                                orElse: () => {'name': ''},
-                              )['name']
-                              .toString()
-                              .toLowerCase(),
-                        ))
+          .where(
+            (c) =>
+                c.courseId == event.courseId ||
+                c.courseName.toLowerCase().contains(
+                  _cachedCourses
+                      .firstWhere(
+                        (course) => course['id'].toString() == event.courseId,
+                        orElse: () => {'name': ''},
+                      )['name']
+                      .toString()
+                      .toLowerCase(),
+                ),
+          )
           .toList();
     }
-    
-    
+
     if (event.teacherId != null && event.teacherId!.isNotEmpty) {
       filteredClasses = filteredClasses
           .where((c) => c.teacherId == event.teacherId)
           .toList();
     }
-    
-    
+
     if (event.schedule != null && event.schedule!.isNotEmpty) {
       filteredClasses = filteredClasses
           .where((c) => c.schedule == event.schedule)
           .toList();
     }
 
-    
     String? courseName;
     String? teacherName;
     if (event.courseId != null) {
@@ -390,16 +407,18 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
       teacherName = teacher['name']?.toString();
     }
 
-    emit(currentState.copyWith(
-      classes: filteredClasses,
-      appliedFilter: ClassFilterInfo(
-        courseId: event.courseId,
-        courseName: courseName,
-        teacherId: event.teacherId,
-        teacherName: teacherName,
-        schedule: event.schedule,
+    emit(
+      currentState.copyWith(
+        classes: filteredClasses,
+        appliedFilter: ClassFilterInfo(
+          courseId: event.courseId,
+          courseName: courseName,
+          teacherId: event.teacherId,
+          teacherName: teacherName,
+          schedule: event.schedule,
+        ),
       ),
-    ));
+    );
   }
 
   Future<void> _onClearClassFilter(
@@ -407,13 +426,10 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     Emitter<RegistrationState> emit,
   ) async {
     if (state is! ClassesLoaded) return;
-    
+
     final currentState = state as ClassesLoaded;
-    
-    emit(currentState.copyWith(
-      classes: _allClasses,
-      clearFilter: true,
-    ));
+
+    emit(currentState.copyWith(classes: _allClasses, clearFilter: true));
   }
 
   Future<void> _onApplyPromotion(
@@ -434,14 +450,12 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     try {
       Promotion? promotion;
 
-      
       if (adminRepository != null) {
         try {
           promotion = await adminRepository!.validatePromotionCode(
             event.promotionCode,
           );
         } catch (e) {
-          
           if (state is PromotionsLoaded) {
             final loadedPromotions = (state as PromotionsLoaded).promotions;
             promotion = loadedPromotions.firstWhere(
@@ -453,7 +467,6 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
           }
         }
       } else {
-        
         promotion = _getMockPromotions().firstWhere(
           (p) => p.code.toUpperCase() == event.promotionCode.toUpperCase(),
           orElse: () => throw Exception('Mã khuyến mãi không hợp lệ'),
@@ -471,7 +484,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
       );
     } catch (e) {
       emit(RegistrationError(e.toString()));
-      emit(current); 
+      emit(current);
     }
   }
 
@@ -479,7 +492,6 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     LoadPromotions event,
     Emitter<RegistrationState> emit,
   ) async {
-    
     RegistrationInProgress savedState;
     if (state is RegistrationInProgress) {
       savedState = state as RegistrationInProgress;
@@ -491,7 +503,6 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
       savedState = const RegistrationInProgress();
     }
 
-    
     final courseId = event.courseId ?? savedState.courseId;
 
     emit(const RegistrationLoading());
@@ -499,22 +510,17 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     try {
       List<Promotion> promotions;
 
-      
       if (adminRepository != null) {
         try {
-          
           if (courseId != null) {
             promotions = await adminRepository!.getPromotionsByCourse(courseId);
           } else {
-            
             promotions = await adminRepository!.getActivePromotions();
           }
         } catch (e) {
-          
           promotions = _getMockPromotions();
         }
       } else {
-        
         await Future.delayed(const Duration(milliseconds: 500));
         promotions = _getMockPromotions();
       }
@@ -549,7 +555,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     Emitter<RegistrationState> emit,
   ) async {
     RegistrationInProgress current;
-    
+
     if (state is RegistrationInProgress) {
       current = state as RegistrationInProgress;
     } else if (state is ClassesLoaded) {
@@ -559,7 +565,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     } else {
       return;
     }
-    
+
     emit(current.copyWith(paymentMethod: event.paymentMethod));
   }
 
@@ -568,7 +574,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     Emitter<RegistrationState> emit,
   ) async {
     RegistrationInProgress current;
-    
+
     if (state is RegistrationInProgress) {
       current = state as RegistrationInProgress;
     } else if (state is ClassesLoaded) {
@@ -578,7 +584,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     } else {
       return;
     }
-    
+
     emit(current.copyWith(notes: event.notes));
   }
 
@@ -587,7 +593,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     Emitter<RegistrationState> emit,
   ) async {
     RegistrationInProgress current;
-    
+
     if (state is RegistrationInProgress) {
       current = state as RegistrationInProgress;
     } else if (state is ClassesLoaded) {
@@ -615,22 +621,17 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
         try {
           int studentIdInt;
 
-          
           if (current.isNewStudent) {
-            
             if (current.studentName == null || current.phoneNumber == null) {
               throw Exception('Vui lòng nhập tên và số điện thoại học viên');
             }
 
-            
             final createStudentResponse = await adminRepository!.createStudent(
               name: current.studentName!,
               phoneNumber: current.phoneNumber!,
               email: current.email,
             );
 
-            
-            
             studentIdInt =
                 createStudentResponse['studentId'] ??
                 createStudentResponse['id'] ??
@@ -641,7 +642,6 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
               throw Exception('Không thể tạo học viên mới');
             }
           } else {
-            
             if (current.studentId == null) {
               throw Exception('Vui lòng chọn học viên');
             }
@@ -655,7 +655,6 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
             }
           }
 
-          
           final classIds = current.selectedClasses.map((c) {
             final parsed =
                 int.tryParse(c.classId.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
@@ -669,22 +668,23 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
             throw Exception('Vui lòng chọn ít nhất một lớp học');
           }
 
-          
-          
           int paymentMethodId;
           switch (current.paymentMethod) {
             case PaymentMethod.cash:
-              paymentMethodId = 1;
+              paymentMethodId = 1; 
               break;
             case PaymentMethod.transfer:
-              paymentMethodId = 2;
+              paymentMethodId = 2; 
+              break;
+            case PaymentMethod.vnpay:
+              paymentMethodId = 3; 
               break;
             case PaymentMethod.card:
-              paymentMethodId = 3;
+              
+              paymentMethodId = 2;
               break;
           }
 
-          
           final response = await adminRepository!.registerCourses(
             studentId: studentIdInt,
             classIds: classIds,
@@ -692,12 +692,18 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
             notes: current.notes,
           );
 
-          
           final invoiceId =
               response['invoiceId'] ??
               response['mahoadon'] ??
               DateTime.now().millisecondsSinceEpoch.toString();
 
+          
+          final invoiceIdInt = int.tryParse(invoiceId.toString());
+
+          
+          
+          
+          
           final registration = QuickRegistration(
             id: invoiceId.toString(),
             studentName: current.studentName!,
@@ -706,28 +712,33 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
             email: current.email,
             classId: current.selectedClasses.map((c) => c.classId).join(','),
             className: current.className ?? '',
-            tuitionFee: current.tuitionFee,
-            discount: current.discount,
+            tuitionFee: current.cartPreview != null
+                ? current.totalTuitionFee
+                : current.tuitionFee,
+            discount: current.totalDiscount,
+            finalAmount: current.cartPreview != null
+                ? current.totalAmount
+                : null,
             promotionCode: current.promotionCode,
             paymentMethod: current.paymentMethod,
             notes: current.notes,
             registrationDate: DateTime.now(),
             status: 'completed',
+            invoiceId: invoiceIdInt,
           );
 
           emit(RegistrationSubmitted(registration));
           return;
         } catch (e) {
-          
           emit(RegistrationError('Đăng ký thất bại: ${e.toString()}'));
           emit(current);
           return;
         }
       }
 
-      
       await Future.delayed(const Duration(seconds: 1));
 
+      
       final registration = QuickRegistration(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         studentName: current.studentName ?? 'Unknown',
@@ -736,8 +747,11 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
         email: current.email,
         classId: current.selectedClasses.map((c) => c.classId).join(','),
         className: current.className ?? '',
-        tuitionFee: current.tuitionFee,
-        discount: current.discount,
+        tuitionFee: current.cartPreview != null
+            ? current.totalTuitionFee
+            : current.tuitionFee,
+        discount: current.totalDiscount,
+        finalAmount: current.cartPreview != null ? current.totalAmount : null,
         promotionCode: current.promotionCode,
         paymentMethod: current.paymentMethod,
         notes: current.notes,
@@ -752,7 +766,6 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     }
   }
 
-  
   List<AdminClass> _getMockClasses() {
     return [
       AdminClass(
@@ -767,7 +780,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
         startDate: DateTime(2024, 12, 25),
         totalStudents: 13,
         maxStudents: 15,
-        tuitionFee: 4500000, 
+        tuitionFee: 4500000,
       ),
       AdminClass(
         id: '2',
@@ -781,7 +794,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
         startDate: DateTime(2024, 11, 1),
         totalStudents: 8,
         maxStudents: 15,
-        tuitionFee: 5500000, 
+        tuitionFee: 5500000,
       ),
       AdminClass(
         id: '3',
@@ -795,7 +808,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
         startDate: DateTime(2024, 12, 15),
         totalStudents: 15,
         maxStudents: 15,
-        tuitionFee: 3000000, 
+        tuitionFee: 3000000,
       ),
     ];
   }
@@ -840,5 +853,145 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
         usageCount: 25,
       ),
     ];
+  }
+
+  
+  Future<void> _onCalculateCartPreview(
+    CalculateCartPreview event,
+    Emitter<RegistrationState> emit,
+  ) async {
+    RegistrationInProgress current;
+    ClassesLoaded? classesLoadedState;
+
+    if (state is RegistrationInProgress) {
+      current = state as RegistrationInProgress;
+    } else if (state is ClassesLoaded) {
+      classesLoadedState = state as ClassesLoaded;
+      current = classesLoadedState.currentRegistration;
+    } else if (state is PromotionsLoaded) {
+      current = (state as PromotionsLoaded).currentRegistration;
+    } else {
+      return;
+    }
+
+    
+    if (current.selectedClasses.isEmpty) {
+      return;
+    }
+
+    
+    final calculatingState = current.copyWith(isCalculatingPreview: true);
+    if (classesLoadedState != null) {
+      emit(classesLoadedState.copyWith(currentRegistration: calculatingState));
+    } else {
+      emit(calculatingState);
+    }
+
+    try {
+      if (adminRepository != null) {
+        
+        
+        final classIds = current.selectedClasses
+            .map((c) {
+              
+              return c.classId.replaceAll(RegExp(r'[^0-9]'), '');
+            })
+            .where((id) => id.isNotEmpty)
+            .toList();
+
+        if (classIds.isEmpty) {
+          throw Exception('Không có lớp học hợp lệ để tính toán');
+        }
+
+        
+        String? studentIdForPreview;
+        if (!current.isNewStudent && current.studentId != null) {
+          studentIdForPreview = current.studentId!.replaceAll(
+            RegExp(r'[^0-9]'),
+            '',
+          );
+          if (studentIdForPreview.isEmpty) studentIdForPreview = null;
+        }
+
+        final cartPreview = await adminRepository!.previewCart(
+          classIds,
+          studentId: studentIdForPreview,
+        );
+
+        
+        final updatedRegistration = current.copyWith(
+          cartPreview: cartPreview,
+          isCalculatingPreview: false,
+          
+          discount: cartPreview.summary.totalDiscountAmount,
+        );
+
+        if (classesLoadedState != null) {
+          emit(
+            classesLoadedState.copyWith(
+              currentRegistration: updatedRegistration,
+            ),
+          );
+        } else {
+          emit(updatedRegistration);
+        }
+      } else {
+        
+        final updatedRegistration = current.copyWith(
+          isCalculatingPreview: false,
+        );
+        if (classesLoadedState != null) {
+          emit(
+            classesLoadedState.copyWith(
+              currentRegistration: updatedRegistration,
+            ),
+          );
+        } else {
+          emit(updatedRegistration);
+        }
+      }
+    } catch (e) {
+      
+      final updatedRegistration = current.copyWith(
+        isCalculatingPreview: false,
+        cartPreviewError: e.toString().replaceFirst('Exception: ', ''),
+      );
+      if (classesLoadedState != null) {
+        emit(
+          classesLoadedState.copyWith(currentRegistration: updatedRegistration),
+        );
+      } else {
+        emit(updatedRegistration);
+      }
+    }
+  }
+
+  
+  void _onClearCartPreviewError(
+    ClearCartPreviewError event,
+    Emitter<RegistrationState> emit,
+  ) {
+    RegistrationInProgress current;
+    ClassesLoaded? classesLoadedState;
+
+    if (state is RegistrationInProgress) {
+      current = state as RegistrationInProgress;
+    } else if (state is ClassesLoaded) {
+      classesLoadedState = state as ClassesLoaded;
+      current = classesLoadedState.currentRegistration;
+    } else if (state is PromotionsLoaded) {
+      current = (state as PromotionsLoaded).currentRegistration;
+    } else {
+      return;
+    }
+
+    final updatedRegistration = current.copyWith(clearCartPreviewError: true);
+    if (classesLoadedState != null) {
+      emit(
+        classesLoadedState.copyWith(currentRegistration: updatedRegistration),
+      );
+    } else {
+      emit(updatedRegistration);
+    }
   }
 }

@@ -15,6 +15,8 @@ import '../../../../core/routing/app_router.dart';
 
 import '../widgets/admin_app_bar.dart';
 import '../widgets/admin_activity_item.dart';
+import '../widgets/admin_todays_focus_card.dart';
+import '../../domain/entities/admin_dashboard_stats.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -27,7 +29,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    
   }
 
   @override
@@ -127,6 +128,56 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                 ),
 
+                if (state.isFallbackData)
+                  SliverToBoxAdapter(
+                    child: Container(
+                      margin: EdgeInsets.symmetric(
+                        horizontal: AppSizes.paddingMedium,
+                        vertical: AppSizes.p8,
+                      ),
+                      padding: EdgeInsets.all(AppSizes.p12),
+                      decoration: BoxDecoration(
+                        color: AppColors.warning.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(
+                          AppSizes.radiusMedium,
+                        ),
+                        border: Border.all(
+                          color: AppColors.warning.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            color: AppColors.warning,
+                            size: 20.sp,
+                          ),
+                          SizedBox(width: AppSizes.p8),
+                          Expanded(
+                            child: Text(
+                              'Dữ liệu thống kê đang hiển thị ở chế độ giới hạn do lỗi kết nối',
+                              style: TextStyle(
+                                color: AppColors.warning,
+                                fontSize: 12.sp,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                SliverToBoxAdapter(
+                  child: AdminTodaysFocusCard(
+                    items: state.stats.generateFocusItems(),
+                    onItemTap: (item) {
+                      if (item.route != null) {
+                        Navigator.pushNamed(context, item.route!);
+                      }
+                    },
+                  ),
+                ),
+
                 SliverPadding(
                   padding: EdgeInsets.symmetric(
                     horizontal: AppSizes.paddingMedium,
@@ -149,6 +200,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           AppColors.primary,
                           AppColors.primary.withValues(alpha: 0.7),
                         ],
+                        trendValue: state.stats.classesGrowth,
+                        trendDirection: state.stats.classesGrowthDirection,
                         onTap: () {
                           final homeState = context
                               .findAncestorStateOfType<State>();
@@ -164,6 +217,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           AppColors.success,
                           AppColors.success.withValues(alpha: 0.7),
                         ],
+                        trendValue: state.stats.registrationsGrowth,
+                        trendDirection:
+                            state.stats.registrationsGrowthDirection,
                         onTap: () {
                           Navigator.pushNamed(
                             context,
@@ -180,6 +236,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           AppColors.info,
                           AppColors.info.withValues(alpha: 0.7),
                         ],
+                        trendValue: state.stats.studentsGrowth,
+                        trendDirection: state.stats.studentsGrowthDirection,
                         onTap: () {},
                       ),
                       _LargeStatCard(
@@ -387,6 +445,8 @@ class _LargeStatCard extends StatelessWidget {
   final Color iconColor;
   final List<Color> gradient;
   final VoidCallback? onTap;
+  final double? trendValue;
+  final TrendDirection? trendDirection;
 
   const _LargeStatCard({
     required this.title,
@@ -395,6 +455,8 @@ class _LargeStatCard extends StatelessWidget {
     required this.iconColor,
     required this.gradient,
     this.onTap,
+    this.trendValue,
+    this.trendDirection,
   });
 
   @override
@@ -405,7 +467,7 @@ class _LargeStatCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
         child: Container(
-          padding: EdgeInsets.all(10.w),
+          padding: EdgeInsets.all(8.w),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
@@ -427,14 +489,14 @@ class _LargeStatCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: EdgeInsets.all(5.w),
+                padding: EdgeInsets.all(4.w),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8.r),
+                  borderRadius: BorderRadius.circular(6.r),
                 ),
-                child: Icon(icon, color: Colors.white, size: 18.sp),
+                child: Icon(icon, color: Colors.white, size: 14.sp),
               ),
-              SizedBox(height: 6.h),
+              SizedBox(height: 4.h),
               Flexible(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -446,22 +508,50 @@ class _LargeStatCard extends StatelessWidget {
                         value,
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 20.sp,
+                          fontSize: 16.sp,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                    SizedBox(height: 2.h),
+                    SizedBox(height: 1.h),
                     Text(
                       title,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.9),
-                        fontSize: 10.sp,
+                        fontSize: 9.sp,
                         fontWeight: FontWeight.w500,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+
+                    if (trendValue != null && trendDirection != null)
+                      Padding(
+                        padding: EdgeInsets.only(top: 1.h),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              trendDirection == TrendDirection.up
+                                  ? Icons.trending_up
+                                  : trendDirection == TrendDirection.down
+                                  ? Icons.trending_down
+                                  : Icons.trending_flat,
+                              color: Colors.white.withValues(alpha: 0.8),
+                              size: 10.sp,
+                            ),
+                            SizedBox(width: 2.w),
+                            Text(
+                              '${trendValue!.abs().toStringAsFixed(1)}%',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.8),
+                                fontSize: 8.sp,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -502,7 +592,7 @@ class _QuickActionCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
             border: Border.all(
-              color: isDark ? AppColors.gray700 : AppColors.gray200,
+              color: isDark ? AppColors.neutral700 : AppColors.neutral200,
             ),
           ),
           child: Column(

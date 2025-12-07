@@ -36,7 +36,7 @@ class AdminActivityItem extends StatelessWidget {
       case ActivityType.profileUpdate:
         return AppColors.warning;
       case ActivityType.other:
-        return AppColors.gray500;
+        return AppColors.neutral500;
     }
   }
 
@@ -49,7 +49,7 @@ class AdminActivityItem extends StatelessWidget {
       color: isDark ? AppColors.surfaceDark : AppColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-        side: BorderSide(color: isDark ? AppColors.gray700 : AppColors.gray200),
+        side: BorderSide(color: isDark ? AppColors.neutral700 : AppColors.neutral200),
       ),
       child: InkWell(
         onTap: onTap,
@@ -88,7 +88,7 @@ class AdminActivityItem extends StatelessWidget {
                     Text(
                       activity.description,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: isDark ? AppColors.gray400 : AppColors.gray600,
+                        color: isDark ? AppColors.neutral400 : AppColors.neutral600,
                         fontSize: AppSizes.textSm,
                       ),
                       maxLines: 2,
@@ -98,7 +98,7 @@ class AdminActivityItem extends StatelessWidget {
                     Text(
                       activity.displayTime,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: isDark ? AppColors.gray500 : AppColors.gray500,
+                        color: isDark ? AppColors.neutral500 : AppColors.neutral500,
                         fontSize: AppSizes.textXs,
                       ),
                     ),

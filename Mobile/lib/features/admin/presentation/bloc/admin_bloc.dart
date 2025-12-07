@@ -7,12 +7,20 @@ import '../../domain/repositories/admin_repository.dart';
 import '../../domain/entities/admin_profile.dart';
 import '../../domain/entities/admin_dashboard_stats.dart';
 import '../../domain/entities/admin_activity.dart';
+import '../../domain/entities/admin_student.dart';
 
 class AdminBloc extends Bloc<AdminEvent, AdminState> {
   final AdminRepository _repository;
 
-  
   bool _isLoadingDashboard = false;
+  bool _hasLoadedDashboard = false;
+  DateTime? _lastDashboardLoadTime;
+
+  // Cache dashboard data to preserve across tab switches
+  AdminProfile? _cachedProfile;
+  AdminDashboardStats? _cachedStats;
+  List<AdminActivity>? _cachedActivities;
+  bool _cachedIsFallback = false;
 
   AdminRepository get adminRepository => _repository;
 
@@ -42,9 +50,43 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     LoadAdminDashboard event,
     Emitter<AdminState> emit,
   ) async {
-    
+    // Guard 1: Already loading
     if (_isLoadingDashboard) return;
+
+    // Guard 2: Already loaded in current state
     if (state is AdminDashboardLoaded) return;
+
+    // Guard 3: Loaded within last 2 seconds (debounce rapid calls)
+    if (_hasLoadedDashboard && _lastDashboardLoadTime != null) {
+      final elapsed = DateTime.now().difference(_lastDashboardLoadTime!);
+      if (elapsed.inSeconds < 2) {
+        // Use cached data if available
+        if (_cachedProfile != null && _cachedStats != null) {
+          emit(
+            AdminDashboardLoaded(
+              profile: _cachedProfile!,
+              stats: _cachedStats!,
+              recentActivities: _cachedActivities ?? [],
+              isFallbackData: _cachedIsFallback,
+            ),
+          );
+        }
+        return;
+      }
+    }
+
+    // If we have cached data, use it immediately (for tab re-entry)
+    if (_cachedProfile != null && _cachedStats != null) {
+      emit(
+        AdminDashboardLoaded(
+          profile: _cachedProfile!,
+          stats: _cachedStats!,
+          recentActivities: _cachedActivities ?? [],
+          isFallbackData: _cachedIsFallback,
+        ),
+      );
+      return;
+    }
 
     _isLoadingDashboard = true;
     emit(const AdminLoading());
@@ -83,14 +125,25 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
         activities = [];
       }
 
+      // Cache the data for tab re-entry
+      _cachedProfile = profile;
+      _cachedStats = stats;
+      _cachedActivities = activities;
+      _cachedIsFallback = stats.isFallback;
+      _hasLoadedDashboard = true;
+      _lastDashboardLoadTime = DateTime.now();
+
       emit(
         AdminDashboardLoaded(
           profile: profile,
           stats: stats,
           recentActivities: activities,
+          isFallbackData: stats.isFallback,
         ),
       );
     } catch (e) {
+      _hasLoadedDashboard = true;
+      _lastDashboardLoadTime = DateTime.now();
       emit(
         AdminDashboardLoaded(
           profile: const AdminProfile(
@@ -325,19 +378,27 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
 
     try {
       final updates = event.updates;
-      final updatedStudent = await _repository.updateStudent(
-        studentId: event.studentId,
+
+      final studentToUpdate = AdminStudent(
+        id: event.studentId,
         fullName: updates['fullName'] as String? ?? '',
+        email: updates['email'] as String? ?? '',
         phoneNumber: updates['phoneNumber'] as String? ?? '',
-        email: updates['email'] as String?,
+        avatarUrl: updates['avatarUrl'] as String?,
         address: updates['address'] as String?,
         occupation: updates['occupation'] as String?,
-        educationLevel: updates['educationLevel'] as String?,
         dateOfBirth: updates['dateOfBirth'] != null
             ? DateTime.tryParse(updates['dateOfBirth'] as String)
             : null,
-        password: updates['password'] as String?,
+        enrollmentDate: updates['enrollmentDate'] != null
+            ? DateTime.tryParse(updates['enrollmentDate'] as String) ??
+                  DateTime.now()
+            : DateTime.now(),
+        totalClassesEnrolled: updates['totalClassesEnrolled'] as int? ?? 0,
+        enrolledClassIds: (updates['enrolledClassIds'] as List<String>?) ?? [],
       );
+
+      final updatedStudent = await _repository.updateStudent(studentToUpdate);
 
       emit(StudentUpdated(updatedStudent));
     } catch (e) {

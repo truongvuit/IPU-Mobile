@@ -18,5 +18,8 @@ abstract class AdminCourseRepository {
     UpdateCourseRequest request,
   );
 
+  
+  Future<Either<Failure, void>> toggleCourseStatus(String id);
+
   Future<Either<Failure, void>> deleteCourse(String id);
 }

@@ -376,7 +376,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
         color: isDark ? AppColors.surfaceDark : AppColors.surface,
         borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
         border: Border.all(
-          color: isDark ? AppColors.gray700 : AppColors.gray200,
+          color: isDark ? AppColors.neutral700 : AppColors.neutral200,
         ),
       ),
       child: Column(
@@ -418,7 +418,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
                           style: TextStyle(
                             fontSize: 11.sp,
                             color: isDark
-                                ? AppColors.gray400
+                                ? AppColors.neutral400
                                 : AppColors.textSecondary,
                           ),
                         ),
@@ -465,7 +465,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
             border: Border.all(
-              color: isDark ? AppColors.gray700 : AppColors.gray200,
+              color: isDark ? AppColors.neutral700 : AppColors.neutral200,
             ),
           ),
           child: Row(
@@ -491,7 +491,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
               ),
               Icon(
                 Icons.chevron_right,
-                color: isDark ? AppColors.gray400 : AppColors.gray500,
+                color: isDark ? AppColors.neutral400 : AppColors.neutral500,
               ),
             ],
           ),

@@ -2,7 +2,7 @@
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/routing/app_router.dart';
-import '../widgets/auth_button.dart';
+import '../../../../core/widgets/common/app_button.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -111,7 +111,7 @@ class WelcomeScreen extends StatelessWidget {
                       
                       Padding(
                         padding: EdgeInsets.only(bottom: 24.h),
-                        child: AuthButton(
+                        child: AppButton(
                           text: 'Bắt đầu ngay',
                           onPressed: () {
                             Navigator.pushReplacementNamed(

@@ -1,11 +1,15 @@
 import 'package:dio/dio.dart';
 import '../../../../core/api/dio_client.dart';
+import '../../../../core/api/specs/student_api_spec.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../models/course_model.dart';
+import '../models/grade_model.dart';
 import '../models/review_model.dart';
 import '../models/student_class_model.dart';
 import '../models/student_profile_model.dart';
+import '../models/weekly_schedule_model.dart';
+import '../../domain/entities/student_cart_preview.dart';
 
 abstract class StudentApiDataSource {
   Future<StudentProfileModel> getProfile();
@@ -26,15 +30,26 @@ abstract class StudentApiDataSource {
 
   Future<StudentClassModel> getClassDetail(String classId);
 
-  Future<Map<String, dynamic>> getScheduleByWeek({required DateTime date});
+  
+  Future<WeeklyScheduleResponse> getScheduleByWeek({required DateTime date});
 
-  Future<Map<String, dynamic>> getStudentSchedule({required DateTime date});
+  
+  Future<WeeklyScheduleResponse> getStudentSchedule({required DateTime date});
 
   Future<String> uploadAvatar(String filePath);
 
+  
+  
+  @Deprecated(
+    'Endpoint /enrollments does not exist. Use createOrder for enrollment.',
+  )
   Future<void> enrollCourse(Map<String, dynamic> data);
 
-  Future<List<dynamic>> getGrades();
+  
+  Future<List<GradeModel>> getGrades();
+
+  
+  Future<GradeModel?> getGradesByClass(String classId);
 
   Future<void> submitReview({
     required int classId,
@@ -45,6 +60,20 @@ abstract class StudentApiDataSource {
   });
 
   Future<List<ReviewModel>> getReviewHistory();
+
+  
+  Future<StudentCartPreview> getCartPreview(List<int> classIds);
+
+  Future<Map<String, dynamic>> createOrder({
+    required List<int> classIds,
+    int? paymentMethodId,
+  });
+
+  
+  Future<Map<String, dynamic>> createPayment({
+    required int invoiceId,
+    required double totalAmount,
+  });
 }
 
 class StudentApiDataSourceImpl implements StudentApiDataSource {
@@ -250,7 +279,7 @@ class StudentApiDataSourceImpl implements StudentApiDataSource {
   }
 
   @override
-  Future<Map<String, dynamic>> getScheduleByWeek({
+  Future<WeeklyScheduleResponse> getScheduleByWeek({
     required DateTime date,
   }) async {
     try {
@@ -260,7 +289,9 @@ class StudentApiDataSourceImpl implements StudentApiDataSource {
       );
 
       if (response.statusCode == 200 && response.data['code'] == 1000) {
-        return response.data['data'] as Map<String, dynamic>;
+        return WeeklyScheduleResponse.fromJson(
+          response.data['data'] as Map<String, dynamic>,
+        );
       } else {
         throw ServerException(
           response.data['message'] ?? 'Get schedule failed',
@@ -274,12 +305,13 @@ class StudentApiDataSourceImpl implements StudentApiDataSource {
       }
       throw ServerException(e.message ?? 'Network error');
     } catch (e) {
+      if (e is ServerException) rethrow;
       throw const ServerException('Get schedule failed');
     }
   }
 
   @override
-  Future<Map<String, dynamic>> getStudentSchedule({
+  Future<WeeklyScheduleResponse> getStudentSchedule({
     required DateTime date,
   }) async {
     try {
@@ -289,7 +321,9 @@ class StudentApiDataSourceImpl implements StudentApiDataSource {
       );
 
       if (response.statusCode == 200 && response.data['code'] == 1000) {
-        return response.data['data'] as Map<String, dynamic>;
+        return WeeklyScheduleResponse.fromJson(
+          response.data['data'] as Map<String, dynamic>,
+        );
       } else {
         throw ServerException(
           response.data['message'] ?? 'Get student schedule failed',
@@ -303,6 +337,7 @@ class StudentApiDataSourceImpl implements StudentApiDataSource {
       }
       throw ServerException(e.message ?? 'Network error');
     } catch (e) {
+      if (e is ServerException) rethrow;
       throw const ServerException('Get student schedule failed');
     }
   }
@@ -337,37 +372,28 @@ class StudentApiDataSourceImpl implements StudentApiDataSource {
   }
 
   @override
+  @Deprecated(
+    'Endpoint /enrollments does not exist. Use createOrder for enrollment.',
+  )
   Future<void> enrollCourse(Map<String, dynamic> data) async {
-    try {
-      final response = await dioClient.post(
-        ApiEndpoints.enrollments,
-        data: data,
-      );
-
-      if (response.statusCode != 200 || response.data['code'] != 1000) {
-        throw ServerException(response.data['message'] ?? 'Enrollment failed');
-      }
-    } on DioException catch (e) {
-      if (e.response != null && e.response!.data != null) {
-        throw ServerException(
-          e.response!.data['message'] ?? 'Enrollment failed',
-        );
-      }
-      throw ServerException(e.message ?? 'Network error');
-    } catch (e) {
-      throw ServerException('Enrollment failed: $e');
-    }
+    
+    
+    throw const ServerException(
+      'Direct enrollment is not supported. Please use the checkout flow.',
+    );
   }
 
   @override
-  Future<List<dynamic>> getGrades() async {
+  Future<List<GradeModel>> getGrades() async {
     try {
       final response = await dioClient.get(ApiEndpoints.studentGrades);
 
       if (response.statusCode == 200 && response.data['code'] == 1000) {
         final data = response.data['data'];
         if (data is List) {
-          return data;
+          return data
+              .map((json) => GradeModel.fromJson(json as Map<String, dynamic>))
+              .toList();
         }
         return [];
       } else {
@@ -383,6 +409,37 @@ class StudentApiDataSourceImpl implements StudentApiDataSource {
     } catch (e) {
       if (e is ServerException) rethrow;
       throw ServerException('Get grades failed: $e');
+    }
+  }
+
+  @override
+  Future<GradeModel?> getGradesByClass(String classId) async {
+    try {
+      final response = await dioClient.get(
+        StudentApiSpec.getGradesByClass(classId),
+      );
+
+      if (response.statusCode == 200 && response.data['code'] == 1000) {
+        final data = response.data['data'];
+        if (data is Map<String, dynamic>) {
+          return GradeModel.fromJson(data);
+        }
+        return null;
+      } else {
+        throw ServerException(
+          response.data['message'] ?? 'Get grades by class failed',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response != null && e.response!.data != null) {
+        throw ServerException(
+          e.response!.data['message'] ?? 'Get grades by class failed',
+        );
+      }
+      throw ServerException(e.message ?? 'Network error');
+    } catch (e) {
+      if (e is ServerException) rethrow;
+      throw ServerException('Get grades by class failed: $e');
     }
   }
 
@@ -455,6 +512,115 @@ class StudentApiDataSourceImpl implements StudentApiDataSource {
     } catch (e) {
       if (e is ServerException) rethrow;
       throw ServerException('Get review history failed: $e');
+    }
+  }
+
+  
+
+  @override
+  Future<StudentCartPreview> getCartPreview(List<int> classIds) async {
+    try {
+      final response = await dioClient.post(
+        StudentApiSpec.cartPreview,
+        data: {'courseClassIds': classIds},
+      );
+
+      if (response.statusCode == 200 && response.data['code'] == 1000) {
+        return StudentCartPreview.fromJson(
+          response.data['data'] as Map<String, dynamic>,
+        );
+      } else {
+        throw ServerException(
+          response.data['message'] ?? 'Get cart preview failed',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response != null && e.response!.data != null) {
+        throw ServerException(
+          e.response!.data['message'] ?? 'Get cart preview failed',
+        );
+      }
+      throw ServerException(e.message ?? 'Network error');
+    } catch (e) {
+      if (e is ServerException) rethrow;
+      throw ServerException('Get cart preview failed: $e');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> createOrder({
+    required List<int> classIds,
+    int? paymentMethodId,
+  }) async {
+    try {
+      final response = await dioClient.post(
+        StudentApiSpec.createOrder,
+        data: {
+          'classIds': classIds,
+          if (paymentMethodId != null) 'paymentMethodId': paymentMethodId,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data['code'] == 1000) {
+        return response.data['data'] as Map<String, dynamic>;
+      } else {
+        throw ServerException(
+          response.data['message'] ?? 'Create order failed',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response != null && e.response!.data != null) {
+        throw ServerException(
+          e.response!.data['message'] ?? 'Create order failed',
+        );
+      }
+      throw ServerException(e.message ?? 'Network error');
+    } catch (e) {
+      if (e is ServerException) rethrow;
+      throw ServerException('Create order failed: $e');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> createPayment({
+    required int invoiceId,
+    required double totalAmount,
+  }) async {
+    try {
+      final response = await dioClient.post(
+        '/orders/payment/create',
+        data: {
+          
+          
+          'amount': totalAmount.round().toString(),
+          'invoiceId': invoiceId,
+          'orderInfo': 'Thanh toan khoa hoc',
+        },
+        
+        
+        
+        options: Options(
+          headers: {'X-Client-Type': 'mobile', 'X-User-Role': 'STUDENT'},
+        ),
+      );
+
+      if (response.statusCode == 200 && response.data['code'] == 1000) {
+        return response.data['data'] as Map<String, dynamic>;
+      } else {
+        throw ServerException(
+          response.data['message'] ?? 'Create payment failed',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response != null && e.response!.data != null) {
+        throw ServerException(
+          e.response!.data['message'] ?? 'Create payment failed',
+        );
+      }
+      throw ServerException(e.message ?? 'Network error');
+    } catch (e) {
+      if (e is ServerException) rethrow;
+      throw ServerException('Create payment failed: $e');
     }
   }
 }

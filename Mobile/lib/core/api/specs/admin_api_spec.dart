@@ -54,4 +54,7 @@ class AdminApiSpec {
   static const String getStudentReport = '$_adminBase/reports/students';
   static const String getTeacherReport = '$_adminBase/reports/teachers';
   static const String getClassroomReport = '$_adminBase/reports/classrooms';
+
+  
+  static const String cartPreview = '/cart/preview';
 }

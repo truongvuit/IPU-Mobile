@@ -6,11 +6,9 @@ import 'package:intl/intl.dart';
 import '../bloc/student_bloc.dart';
 import '../bloc/student_event.dart';
 import '../bloc/student_state.dart';
-import '../../domain/entities/student_class.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/constants/app_sizes.dart';
-import '../../../../core/routing/app_router.dart';
 import '../../../../core/widgets/custom_image.dart';
+import '../widgets/class_detail/class_detail_widgets.dart';
 
 class ClassDetailScreen extends StatefulWidget {
   final String classId;
@@ -89,7 +87,6 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
             if (state is ClassDetailLoaded) {
               final studentClass = state.studentClass;
 
-              
               String scheduleText = 'Chưa có lịch';
               if (studentClass.schedule.isNotEmpty) {
                 final weekdays = <int>{};
@@ -140,7 +137,6 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                       background: Stack(
                         fit: StackFit.expand,
                         children: [
-                          
                           if (studentClass.imageUrl.isEmpty)
                             Container(
                               decoration: const BoxDecoration(
@@ -148,7 +144,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                   colors: [
-                                    Color(0xFFFF6B35), 
+                                    Color(0xFFFF6B35),
                                     Color(0xFFE85A24),
                                   ],
                                 ),
@@ -235,37 +231,12 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
 
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 16.w),
-                          child: _buildSection(
-                            isDark,
-                            'Thông tin cơ bản',
-                            Column(
-                              children: [
-                                _buildInfoRow(
-                                  Icons.calendar_month,
-                                  'Lịch học',
-                                  scheduleText,
-                                  isDark,
-                                ),
-                                SizedBox(height: 12.h),
-                                _buildInfoRow(
-                                  studentClass.isOnline
-                                      ? Icons.videocam
-                                      : Icons.meeting_room,
-                                  studentClass.isOnline
-                                      ? 'Online'
-                                      : 'Phòng học',
-                                  studentClass.room,
-                                  isDark,
-                                ),
-                                SizedBox(height: 12.h),
-                                _buildInfoRow(
-                                  Icons.access_time,
-                                  'Thời gian',
-                                  '${timeFormat.format(studentClass.startTime)} - ${timeFormat.format(studentClass.endTime)}',
-                                  isDark,
-                                ),
-                              ],
-                            ),
+                          child: ClassBasicInfoSection(
+                            isDark: isDark,
+                            scheduleText: scheduleText,
+                            isOnline: studentClass.isOnline,
+                            room: studentClass.room,
+                            timeText: '${timeFormat.format(studentClass.startTime)} - ${timeFormat.format(studentClass.endTime)}',
                           ),
                         ),
 
@@ -273,153 +244,27 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
 
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 16.w),
-                          child: _buildSection(
-                            isDark,
-                            'Giảng viên',
-                            Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 32.r,
-                                  backgroundColor: AppColors.primary.withValues(
-                                    alpha: 0.2,
-                                  ),
-                                  backgroundImage: const AssetImage(
-                                    'assets/images/avatar-default.png',
-                                  ),
-                                ),
-                                SizedBox(width: 16.w),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        studentClass.teacherName,
-                                        style: TextStyle(
-                                          fontSize: 18.sp,
-                                          fontWeight: FontWeight.w600,
-                                          color: isDark
-                                              ? Colors.white
-                                              : AppColors.textPrimary,
-                                          fontFamily: 'Lexend',
-                                        ),
-                                      ),
-                                      
-                                      if (studentClass.teacherEmail != null &&
-                                          studentClass
-                                              .teacherEmail!
-                                              .isNotEmpty) ...[
-                                        SizedBox(height: 4.h),
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              Icons.email_outlined,
-                                              size: 14.sp,
-                                              color: AppColors.textSecondary,
-                                            ),
-                                            SizedBox(width: 4.w),
-                                            Expanded(
-                                              child: Text(
-                                                studentClass.teacherEmail!,
-                                                style: TextStyle(
-                                                  fontSize: 13.sp,
-                                                  color:
-                                                      AppColors.textSecondary,
-                                                  fontFamily: 'Lexend',
-                                                ),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                      if (studentClass.teacherSpecialization !=
-                                          null) ...[
-                                        SizedBox(height: 4.h),
-                                        Text(
-                                          'Chuyên ngành: ${studentClass.teacherSpecialization}',
-                                          style: TextStyle(
-                                            fontSize: 13.sp,
-                                            color: AppColors.textSecondary,
-                                            fontFamily: 'Lexend',
-                                          ),
-                                        ),
-                                      ],
-                                      if (studentClass.teacherCertificates !=
-                                          null) ...[
-                                        SizedBox(height: 2.h),
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              Icons.verified,
-                                              size: 14.sp,
-                                              color: AppColors.success,
-                                            ),
-                                            SizedBox(width: 4.w),
-                                            Expanded(
-                                              child: Text(
-                                                studentClass
-                                                    .teacherCertificates!,
-                                                style: TextStyle(
-                                                  fontSize: 12.sp,
-                                                  color: AppColors.success,
-                                                  fontFamily: 'Lexend',
-                                                ),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
+                          child: ClassTeacherCard(
+                            isDark: isDark,
+                            teacherName: studentClass.teacherName,
+                            teacherEmail: studentClass.teacherEmail,
+                            teacherSpecialization: studentClass.teacherSpecialization,
+                            teacherCertificates: studentClass.teacherCertificates,
                           ),
                         ),
 
                         SizedBox(height: 12.h),
 
-                        
                         if (studentClass.courseType != null ||
                             studentClass.level != null ||
                             studentClass.duration != null)
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: 16.w),
-                            child: _buildSection(
-                              isDark,
-                              'Thông tin khóa học',
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (studentClass.courseType != null) ...[
-                                    _buildCourseInfoRow(
-                                      Icons.school_outlined,
-                                      'Loại khóa học',
-                                      studentClass.courseType!,
-                                      isDark,
-                                    ),
-                                    SizedBox(height: 10.h),
-                                  ],
-                                  if (studentClass.level != null) ...[
-                                    _buildCourseInfoRow(
-                                      Icons.signal_cellular_alt,
-                                      'Trình độ',
-                                      studentClass.level!,
-                                      isDark,
-                                    ),
-                                    SizedBox(height: 10.h),
-                                  ],
-                                  if (studentClass.duration != null)
-                                    _buildCourseInfoRow(
-                                      Icons.timer_outlined,
-                                      'Thời lượng',
-                                      studentClass.duration!,
-                                      isDark,
-                                    ),
-                                ],
-                              ),
+                            child: ClassCourseInfoSection(
+                              isDark: isDark,
+                              courseType: studentClass.courseType,
+                              level: studentClass.level,
+                              duration: studentClass.duration,
                             ),
                           ),
 
@@ -431,9 +276,9 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                         if (studentClass.students.isNotEmpty)
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: 16.w),
-                            child: _buildStudentListSection(
-                              isDark,
-                              studentClass.students,
+                            child: ClassStudentListSection(
+                              isDark: isDark,
+                              students: studentClass.students,
                             ),
                           ),
 
@@ -441,75 +286,9 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
 
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 16.w),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  AppRouter.studentGrades,
-                                  arguments: studentClass.courseName,
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                foregroundColor: Colors.white,
-                                padding: EdgeInsets.symmetric(vertical: 16.h),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppSizes.radiusMedium,
-                                  ),
-                                ),
-                              ),
-                              child: Text(
-                                'Xem điểm số',
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w700,
-                                  fontFamily: 'Lexend',
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        SizedBox(height: 12.h),
-
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16.w),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton(
-                              onPressed: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  AppRouter.studentRating,
-                                  arguments: studentClass
-                                      .id, 
-                                );
-                              },
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: AppColors.primary,
-                                padding: EdgeInsets.symmetric(vertical: 16.h),
-                                side: BorderSide(
-                                  color: AppColors.primary,
-                                  width: 2,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppSizes.radiusMedium,
-                                  ),
-                                ),
-                              ),
-                              child: Text(
-                                'Đánh giá khóa học',
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w700,
-                                  fontFamily: 'Lexend',
-                                ),
-                              ),
-                            ),
+                          child: ClassDetailActions(
+                            classId: studentClass.id,
+                            className: studentClass.courseName,
                           ),
                         ),
 
@@ -523,300 +302,6 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
 
             return const SizedBox.shrink();
           },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSection(bool isDark, String title, Widget content) {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1F2937) : Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w700,
-              color: isDark ? Colors.white : AppColors.textPrimary,
-              fontFamily: 'Lexend',
-            ),
-          ),
-          SizedBox(height: 12.h),
-          content,
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(IconData icon, String label, String value, bool isDark) {
-    return Row(
-      children: [
-        Container(
-          width: 40.w,
-          height: 40.h,
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8.r),
-          ),
-          child: Icon(icon, color: AppColors.primary, size: 22.w),
-        ),
-        SizedBox(width: 12.w),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: AppColors.textSecondary,
-                  fontFamily: 'Lexend',
-                ),
-              ),
-              SizedBox(height: 2.h),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : AppColors.textPrimary,
-                  fontFamily: 'Lexend',
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCourseInfoRow(
-    IconData icon,
-    String label,
-    String value,
-    bool isDark,
-  ) {
-    return Row(
-      children: [
-        Icon(icon, size: 20.sp, color: AppColors.primary),
-        SizedBox(width: 12.w),
-        Expanded(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13.sp,
-              color: AppColors.textSecondary,
-              fontFamily: 'Lexend',
-            ),
-          ),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w600,
-            color: isDark ? Colors.white : AppColors.textPrimary,
-            fontFamily: 'Lexend',
-          ),
-        ),
-      ],
-    );
-  }
-
-  
-  Widget _buildStudentListSection(bool isDark, List<ClassStudent> students) {
-    const int maxVisible = 5;
-    final bool hasMore = students.length > maxVisible;
-    final displayStudents = hasMore
-        ? students.take(maxVisible).toList()
-        : students;
-
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1F2937) : Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Danh sách học viên (${students.length})',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : AppColors.textPrimary,
-                  fontFamily: 'Lexend',
-                ),
-              ),
-              if (hasMore)
-                TextButton(
-                  onPressed: () {
-                    _showAllStudentsModal(context, students, isDark);
-                  },
-                  child: Text(
-                    'Xem tất cả',
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          SizedBox(height: 12.h),
-          ...displayStudents.map(
-            (student) => _buildStudentItem(student, isDark),
-          ),
-          if (hasMore)
-            Padding(
-              padding: EdgeInsets.only(top: 8.h),
-              child: Center(
-                child: Text(
-                  '+ ${students.length - maxVisible} học viên khác',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: AppColors.textSecondary,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStudentItem(ClassStudent student, bool isDark) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 8.h),
-      padding: EdgeInsets.all(12.w),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF374151) : AppColors.neutral50,
-        borderRadius: BorderRadius.circular(8.r),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 18.r,
-            backgroundColor: AppColors.primary.withValues(alpha: 0.2),
-            backgroundImage:
-                (student.avatarUrl != null && student.avatarUrl!.isNotEmpty)
-                ? NetworkImage(student.avatarUrl!)
-                : const AssetImage('assets/images/avatar-default.png')
-                      as ImageProvider,
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  student.name,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w500,
-                    color: isDark ? Colors.white : AppColors.textPrimary,
-                    fontFamily: 'Lexend',
-                  ),
-                ),
-                Text(
-                  student.code,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: AppColors.textSecondary,
-                    fontFamily: 'Lexend',
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showAllStudentsModal(
-    BuildContext context,
-    List<ClassStudent> students,
-    bool isDark,
-  ) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        builder: (context, scrollController) => Container(
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1F2937) : Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-          ),
-          child: Column(
-            children: [
-              
-              Container(
-                margin: EdgeInsets.symmetric(vertical: 12.h),
-                width: 40.w,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  color: AppColors.neutral300,
-                  borderRadius: BorderRadius.circular(2.r),
-                ),
-              ),
-              
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Danh sách học viên (${students.length})',
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : AppColors.textPrimary,
-                        fontFamily: 'Lexend',
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: Icon(Icons.close, color: AppColors.textSecondary),
-                    ),
-                  ],
-                ),
-              ),
-              Divider(color: AppColors.border),
-              
-              Expanded(
-                child: ListView.builder(
-                  controller: scrollController,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 8.h,
-                  ),
-                  itemCount: students.length,
-                  itemBuilder: (context, index) {
-                    return _buildStudentItem(students[index], isDark);
-                  },
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

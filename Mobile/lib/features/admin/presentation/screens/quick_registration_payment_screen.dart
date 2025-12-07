@@ -5,10 +5,14 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/routing/app_router.dart';
+import '../../../../core/di/injector.dart';
+import '../../../../features/payment/data/vnpay_service.dart';
 
 import '../bloc/registration_bloc.dart';
 import '../bloc/registration_event.dart';
 import '../bloc/registration_state.dart';
+import '../widgets/simple_admin_app_bar.dart';
 
 import '../../domain/entities/quick_registration.dart';
 
@@ -59,6 +63,44 @@ class _QuickRegistrationPaymentScreenState
     context.read<RegistrationBloc>().add(const SubmitRegistration());
   }
 
+  Future<void> _handleVNPayPayment(int invoiceId, double amount) async {
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      final vnpayService = getIt<VNPayService>();
+      final paymentUrl = await vnpayService.createPaymentUrl(
+        invoiceId: invoiceId,
+        amount: amount.toInt(),
+        orderInfo: 'Thanh toán học phí - Hóa đơn #$invoiceId',
+        userRole: 'ADMIN',
+      );
+
+      if (!mounted) return;
+
+      Navigator.of(context).pop();
+
+      Navigator.of(context).pushNamed(
+        AppRouter.vnpayPayment,
+        arguments: {'paymentUrl': paymentUrl, 'invoiceId': invoiceId},
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      Navigator.of(context).pop();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Không thể tạo thanh toán: ${e.toString()}'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -68,7 +110,7 @@ class _QuickRegistrationPaymentScreenState
       backgroundColor: isDark
           ? AppColors.backgroundDark
           : AppColors.backgroundLight,
-      appBar: AppBar(title: const Text('Xác nhận Thanh toán')),
+      appBar: const SimpleAdminAppBar(title: 'Xác nhận Thanh toán'),
       body: BlocConsumer<RegistrationBloc, RegistrationState>(
         listener: (context, state) {
           if (state is RegistrationError) {
@@ -79,13 +121,20 @@ class _QuickRegistrationPaymentScreenState
               ),
             );
           } else if (state is RegistrationSubmitted) {
-            _showSuccessDialog(state.registration);
+            if (_selectedPaymentMethod == PaymentMethod.vnpay &&
+                state.registration.invoiceId != null) {
+              _handleVNPayPayment(
+                state.registration.invoiceId!,
+                state.registration.totalAmount,
+              );
+            } else {
+              _showSuccessDialog(state.registration);
+            }
           }
         },
         builder: (context, state) {
-          
           RegistrationInProgress? registrationData;
-          
+
           if (state is RegistrationInProgress) {
             registrationData = state;
           } else if (state is ClassesLoaded) {
@@ -96,7 +145,6 @@ class _QuickRegistrationPaymentScreenState
 
           final isSubmitting = state is RegistrationSubmitting;
 
-          
           if (isSubmitting) {
             return Center(
               child: Column(
@@ -113,7 +161,6 @@ class _QuickRegistrationPaymentScreenState
             );
           }
 
-          
           if (registrationData == null) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -126,7 +173,6 @@ class _QuickRegistrationPaymentScreenState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      
                       Container(
                         width: double.infinity,
                         padding: EdgeInsets.all(AppSizes.p24),
@@ -158,7 +204,7 @@ class _QuickRegistrationPaymentScreenState
                               style: theme.textTheme.headlineLarge?.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 36, 
+                                fontSize: 36,
                               ),
                             ),
                           ],
@@ -167,7 +213,6 @@ class _QuickRegistrationPaymentScreenState
 
                       SizedBox(height: AppSizes.p20),
 
-                      
                       Text(
                         'Phương thức thanh toán',
                         style: theme.textTheme.titleMedium?.copyWith(
@@ -194,15 +239,15 @@ class _QuickRegistrationPaymentScreenState
                       SizedBox(height: AppSizes.p8),
 
                       _buildPaymentMethodCard(
-                        icon: Icons.credit_card,
-                        label: 'Quét thẻ',
-                        method: PaymentMethod.card,
+                        icon: Icons.payment,
+                        label: 'VNPay',
+                        method: PaymentMethod.vnpay,
                         isDark: isDark,
+                        isOnline: true,
                       ),
 
                       SizedBox(height: AppSizes.p20),
 
-                      
                       Text(
                         'Ghi chú (không bắt buộc)',
                         style: theme.textTheme.titleMedium?.copyWith(
@@ -227,8 +272,8 @@ class _QuickRegistrationPaymentScreenState
                             ),
                             borderSide: BorderSide(
                               color: isDark
-                                  ? AppColors.gray700
-                                  : AppColors.gray200,
+                                  ? AppColors.neutral700
+                                  : AppColors.neutral200,
                             ),
                           ),
                           contentPadding: EdgeInsets.symmetric(
@@ -240,94 +285,127 @@ class _QuickRegistrationPaymentScreenState
 
                       SizedBox(height: AppSizes.p16),
 
-                      
-                      Container(
-                        padding: EdgeInsets.all(AppSizes.p12),
-                        decoration: BoxDecoration(
-                          color: _paymentConfirmed
-                              ? AppColors.success.withValues(alpha: 0.1)
-                              : (isDark
-                                    ? AppColors.surfaceDark
-                                    : AppColors.surface),
-                          borderRadius: BorderRadius.circular(
-                            AppSizes.radiusMedium,
-                          ),
-                          border: Border.all(
+                      if (_selectedPaymentMethod != PaymentMethod.vnpay)
+                        Container(
+                          padding: EdgeInsets.all(AppSizes.p12),
+                          decoration: BoxDecoration(
                             color: _paymentConfirmed
-                                ? AppColors.success
+                                ? AppColors.success.withValues(alpha: 0.1)
                                 : (isDark
-                                      ? AppColors.gray700
-                                      : AppColors.gray200),
-                            width: _paymentConfirmed ? 2 : 1,
+                                      ? AppColors.surfaceDark
+                                      : AppColors.surface),
+                            borderRadius: BorderRadius.circular(
+                              AppSizes.radiusMedium,
+                            ),
+                            border: Border.all(
+                              color: _paymentConfirmed
+                                  ? AppColors.success
+                                  : (isDark
+                                        ? AppColors.neutral700
+                                        : AppColors.neutral200),
+                              width: _paymentConfirmed ? 2 : 1,
+                            ),
                           ),
-                        ),
-                        child: InkWell(
-                          onTap: () {
-                            setState(() {
-                              _paymentConfirmed = !_paymentConfirmed;
-                            });
-                          },
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 24.w,
-                                height: 24.w,
-                                decoration: BoxDecoration(
-                                  color: _paymentConfirmed
-                                      ? AppColors.success
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(4.r),
-                                  border: Border.all(
+                          child: InkWell(
+                            onTap: () {
+                              setState(() {
+                                _paymentConfirmed = !_paymentConfirmed;
+                              });
+                            },
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 24.w,
+                                  height: 24.w,
+                                  decoration: BoxDecoration(
                                     color: _paymentConfirmed
                                         ? AppColors.success
-                                        : AppColors.gray400,
-                                    width: 2,
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(4.r),
+                                    border: Border.all(
+                                      color: _paymentConfirmed
+                                          ? AppColors.success
+                                          : AppColors.neutral400,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: _paymentConfirmed
+                                      ? Icon(
+                                          Icons.check,
+                                          color: Colors.white,
+                                          size: 16.sp,
+                                        )
+                                      : null,
+                                ),
+                                SizedBox(width: 10.w),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Xác nhận đã thu tiền',
+                                        style: TextStyle(
+                                          fontSize: 14.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: _paymentConfirmed
+                                              ? AppColors.success
+                                              : null,
+                                        ),
+                                      ),
+                                      SizedBox(height: 2.h),
+                                      Text(
+                                        'Tôi xác nhận đã nhận đủ ${_formatCurrency(registrationData.totalAmount)} từ học viên',
+                                        style: TextStyle(
+                                          fontSize: 11.sp,
+                                          color: isDark
+                                              ? AppColors.neutral400
+                                              : AppColors.neutral600,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                child: _paymentConfirmed
-                                    ? Icon(
-                                        Icons.check,
-                                        color: Colors.white,
-                                        size: 16.sp,
-                                      )
-                                    : null,
+                              ],
+                            ),
+                          ),
+                        ),
+
+                      if (_selectedPaymentMethod == PaymentMethod.vnpay)
+                        Container(
+                          padding: EdgeInsets.all(AppSizes.p12),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(
+                              AppSizes.radiusMedium,
+                            ),
+                            border: Border.all(
+                              color: AppColors.primary.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                color: AppColors.primary,
+                                size: 20.sp,
                               ),
                               SizedBox(width: 10.w),
                               Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Xác nhận đã thu tiền',
-                                      style: TextStyle(
-                                        fontSize: 14.sp,
-                                        fontWeight: FontWeight.w600,
-                                        color: _paymentConfirmed
-                                            ? AppColors.success
-                                            : null,
-                                      ),
-                                    ),
-                                    SizedBox(height: 2.h),
-                                    Text(
-                                      'Tôi xác nhận đã nhận đủ ${_formatCurrency(registrationData.totalAmount)} từ học viên',
-                                      style: TextStyle(
-                                        fontSize: 11.sp,
-                                        color: isDark
-                                            ? AppColors.gray400
-                                            : AppColors.gray600,
-                                      ),
-                                    ),
-                                  ],
+                                child: Text(
+                                  'Sau khi nhấn "Thanh toán VNPay", bạn sẽ được chuyển đến trang thanh toán VNPay để hoàn tất giao dịch.',
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: AppColors.primary,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      ),
 
                       SizedBox(height: AppSizes.p16),
 
-                      
                       Container(
                         padding: EdgeInsets.all(AppSizes.p12),
                         decoration: BoxDecoration(
@@ -352,7 +430,7 @@ class _QuickRegistrationPaymentScreenState
                               'Học viên',
                               registrationData.studentName ?? '-',
                             ),
-                            
+
                             if (registrationData
                                 .selectedClasses
                                 .isNotEmpty) ...[
@@ -471,7 +549,6 @@ class _QuickRegistrationPaymentScreenState
                   ),
                 ),
 
-                
                 Positioned(
                   bottom: 0,
                   left: 0,
@@ -497,8 +574,10 @@ class _QuickRegistrationPaymentScreenState
                           : _submitRegistration,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _paymentConfirmed
-                            ? AppColors.success
-                            : AppColors.gray400,
+                            ? (_selectedPaymentMethod == PaymentMethod.vnpay
+                                  ? AppColors.primary
+                                  : AppColors.success)
+                            : AppColors.neutral400,
                         padding: EdgeInsets.symmetric(vertical: 14.h),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(
@@ -520,7 +599,10 @@ class _QuickRegistrationPaymentScreenState
                               children: [
                                 Icon(
                                   _paymentConfirmed
-                                      ? Icons.check_circle
+                                      ? (_selectedPaymentMethod ==
+                                                PaymentMethod.vnpay
+                                            ? Icons.payment
+                                            : Icons.check_circle)
                                       : Icons.warning_amber,
                                   color: Colors.white,
                                   size: 20.sp,
@@ -528,7 +610,10 @@ class _QuickRegistrationPaymentScreenState
                                 SizedBox(width: 8.w),
                                 Text(
                                   _paymentConfirmed
-                                      ? 'Hoàn tất đăng ký'
+                                      ? (_selectedPaymentMethod ==
+                                                PaymentMethod.vnpay
+                                            ? 'Thanh toán VNPay'
+                                            : 'Hoàn tất đăng ký')
                                       : 'Vui lòng xác nhận đã thu tiền',
                                   style: TextStyle(
                                     fontSize: 14.sp,
@@ -554,6 +639,7 @@ class _QuickRegistrationPaymentScreenState
     required String label,
     required PaymentMethod method,
     required bool isDark,
+    bool isOnline = false,
   }) {
     final isSelected = _selectedPaymentMethod == method;
 
@@ -561,6 +647,10 @@ class _QuickRegistrationPaymentScreenState
       onTap: () {
         setState(() {
           _selectedPaymentMethod = method;
+
+          if (method == PaymentMethod.vnpay) {
+            _paymentConfirmed = true;
+          }
         });
       },
       borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
@@ -574,20 +664,19 @@ class _QuickRegistrationPaymentScreenState
           border: Border.all(
             color: isSelected
                 ? AppColors.primary
-                : (isDark ? AppColors.gray700 : AppColors.gray200),
+                : (isDark ? AppColors.neutral700 : AppColors.neutral200),
             width: isSelected ? 2 : 1,
           ),
         ),
         child: Row(
           children: [
-            
             Container(
               width: AppSizes.p24,
               height: AppSizes.p24,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? AppColors.primary : AppColors.gray400,
+                  color: isSelected ? AppColors.primary : AppColors.neutral400,
                   width: 2,
                 ),
                 color: isSelected ? AppColors.primary : Colors.transparent,
@@ -602,24 +691,22 @@ class _QuickRegistrationPaymentScreenState
             ),
             SizedBox(width: AppSizes.paddingMedium),
 
-            
             Container(
               padding: EdgeInsets.all(AppSizes.p8),
               decoration: BoxDecoration(
                 color: isSelected
                     ? AppColors.primary.withValues(alpha: 0.2)
-                    : (isDark ? AppColors.gray700 : AppColors.gray100),
+                    : (isDark ? AppColors.neutral700 : AppColors.neutral100),
                 borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
               ),
               child: Icon(
                 icon,
-                color: isSelected ? AppColors.primary : AppColors.gray600,
+                color: isSelected ? AppColors.primary : AppColors.neutral600,
                 size: AppSizes.iconMedium,
               ),
             ),
             SizedBox(width: AppSizes.p12),
 
-            
             Text(
               label,
               style: TextStyle(
@@ -675,7 +762,6 @@ class _QuickRegistrationPaymentScreenState
   }
 
   void _showSuccessDialog(QuickRegistration registration) {
-    
     final classNames = registration.className.split(', ');
     final isMultiClass = classNames.length > 1;
 
@@ -686,80 +772,187 @@ class _QuickRegistrationPaymentScreenState
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.check_circle, color: AppColors.success, size: 64),
-            SizedBox(height: AppSizes.paddingMedium),
-            Text(
-              'Đăng ký thành công!',
-              style: TextStyle(
-                fontSize: AppSizes.textXl,
-                fontWeight: FontWeight.bold,
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.check_circle, color: AppColors.success, size: 64),
+              SizedBox(height: AppSizes.paddingMedium),
+              Text(
+                'Đăng ký thành công!',
+                style: TextStyle(
+                  fontSize: AppSizes.textXl,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            SizedBox(height: AppSizes.p12),
-            Text(
-              isMultiClass
-                  ? 'Học viên ${registration.studentName} đã được đăng ký vào ${classNames.length} lớp học'
-                  : 'Học viên ${registration.studentName} đã được đăng ký vào lớp ${registration.className}',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: AppSizes.textSm),
-            ),
-            if (isMultiClass) ...[
-              SizedBox(height: AppSizes.p8),
+              SizedBox(height: AppSizes.p12),
+              Text(
+                isMultiClass
+                    ? 'Học viên ${registration.studentName} đã được đăng ký vào ${classNames.length} lớp học'
+                    : 'Học viên ${registration.studentName} đã được đăng ký vào lớp ${registration.className}',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: AppSizes.textSm),
+              ),
+              if (isMultiClass) ...[
+                SizedBox(height: AppSizes.p8),
+                Container(
+                  constraints: BoxConstraints(maxHeight: 80.h),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: classNames
+                          .map(
+                            (name) => Padding(
+                              padding: EdgeInsets.symmetric(vertical: 2.h),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.check,
+                                    size: 14.sp,
+                                    color: AppColors.success,
+                                  ),
+                                  SizedBox(width: 4.w),
+                                  Expanded(
+                                    child: Text(
+                                      name,
+                                      style: TextStyle(
+                                        fontSize: AppSizes.textSm,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                ),
+              ],
+              SizedBox(height: AppSizes.p16),
+              // Account credentials box
               Container(
-                constraints: BoxConstraints(maxHeight: 100.h),
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: classNames
-                        .map(
-                          (name) => Padding(
-                            padding: EdgeInsets.symmetric(vertical: 2.h),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.check,
-                                  size: 14.sp,
+                padding: EdgeInsets.all(AppSizes.p12),
+                decoration: BoxDecoration(
+                  color: AppColors.info.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+                  border: Border.all(color: AppColors.info),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.account_circle,
+                          color: AppColors.info,
+                          size: 18.sp,
+                        ),
+                        SizedBox(width: 6.w),
+                        Text(
+                          'THÔNG TIN TÀI KHOẢN',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.info,
+                            fontSize: 12.sp,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: AppSizes.p8),
+                    _buildCredentialRow(
+                      'Tên đăng nhập:',
+                      registration.phoneNumber,
+                    ),
+                    _buildCredentialRow('Mật khẩu:', '123456'),
+                    SizedBox(height: AppSizes.p8),
+                    if (registration.email != null &&
+                        registration.email!.isNotEmpty)
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          vertical: 4.h,
+                          horizontal: 8.w,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.success.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(4.r),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.email,
+                              color: AppColors.success,
+                              size: 14.sp,
+                            ),
+                            SizedBox(width: 4.w),
+                            Expanded(
+                              child: Text(
+                                'Đã gửi thông tin vào: ${registration.email}',
+                                style: TextStyle(
+                                  fontSize: 11.sp,
                                   color: AppColors.success,
                                 ),
-                                SizedBox(width: 4.w),
-                                Expanded(
-                                  child: Text(
-                                    name,
-                                    style: TextStyle(fontSize: AppSizes.textSm),
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
-                        )
-                        .toList(),
+                          ],
+                        ),
+                      ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      'Vui lòng yêu cầu học viên đổi mật khẩu sau lần đăng nhập đầu',
+                      style: TextStyle(
+                        fontSize: 10.sp,
+                        fontStyle: FontStyle.italic,
+                        color: AppColors.neutral600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: AppSizes.p24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pop();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    padding: EdgeInsets.symmetric(vertical: AppSizes.p12),
+                  ),
+                  child: const Text(
+                    'Hoàn tất',
+                    style: TextStyle(color: Colors.white),
                   ),
                 ),
               ),
             ],
-            SizedBox(height: AppSizes.p24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); 
-                  Navigator.of(context).pop(); 
-                  Navigator.of(context).pop(); 
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: EdgeInsets.symmetric(vertical: AppSizes.p12),
-                ),
-                child: const Text(
-                  'Hoàn tất',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildCredentialRow(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 2.h),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 100.w,
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 12.sp, color: AppColors.neutral600),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
       ),
     );
   }

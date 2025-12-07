@@ -46,12 +46,29 @@ class _PromotionListScreenContentState
           ),
         ],
       ),
-      body: BlocBuilder<PromotionBloc, PromotionState>(
+      body: BlocConsumer<PromotionBloc, PromotionState>(
+        listener: (context, state) {
+          if (state is PromotionOperationSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.green,
+              ),
+            );
+          } else if (state is PromotionError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Lỗi: ${state.message}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        },
         builder: (context, state) {
           if (state is PromotionLoading) {
             return const Center(child: CircularProgressIndicator());
-          } else if (state is PromotionError) {
-            return Center(child: Text('Lỗi: ${state.message}'));
+          } else if (state is PromotionOperationSuccess) {
+            return const Center(child: CircularProgressIndicator());
           } else if (state is PromotionLoaded) {
             final filteredPromotions = _filterStatus == null
                 ? state.promotions
@@ -78,14 +95,14 @@ class _PromotionListScreenContentState
       floatingActionButton: FloatingActionButton(
         heroTag: 'promotion_list_fab',
         onPressed: () async {
+          final bloc = context.read<PromotionBloc>();
           final result = await Navigator.pushNamed(
             context,
             AppRouter.adminPromotionForm,
           );
-          if (result == true && mounted) {
-            context.read<PromotionBloc>().add(
-              promotion_events.LoadPromotions(),
-            );
+          if (!mounted) return;
+          if (result == true) {
+            bloc.add(promotion_events.LoadPromotions());
           }
         },
         child: const Icon(Icons.add),
@@ -122,15 +139,15 @@ class _PromotionListScreenContentState
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () async {
+          final bloc = context.read<PromotionBloc>();
           final result = await Navigator.pushNamed(
             context,
             AppRouter.adminPromotionDetail,
             arguments: promotion.id,
           );
-          if (result == true && mounted) {
-            context.read<PromotionBloc>().add(
-              promotion_events.LoadPromotions(),
-            );
+          if (!mounted) return;
+          if (result == true) {
+            bloc.add(promotion_events.LoadPromotions());
           }
         },
         borderRadius: BorderRadius.circular(12),
@@ -139,7 +156,6 @@ class _PromotionListScreenContentState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(
@@ -147,9 +163,11 @@ class _PromotionListScreenContentState
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -172,7 +190,7 @@ class _PromotionListScreenContentState
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.15),
+                        color: statusColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -181,6 +199,26 @@ class _PromotionListScreenContentState
                           color: statusColor,
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+
+                    SizedBox(
+                      height: 24,
+                      width: 32,
+                      child: Transform.scale(
+                        scale: 0.65,
+                        child: Switch(
+                          value: promotion.status == PromotionStatus.active,
+                          activeTrackColor: Colors.green,
+                          onChanged: (value) {
+                            context.read<PromotionBloc>().add(
+                              promotion_events.TogglePromotionStatus(
+                                promotion.id,
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ),
@@ -213,7 +251,10 @@ class _PromotionListScreenContentState
                     promotion.discountType == DiscountType.percentage
                         ? '${promotion.discountValue.toInt()}%'
                         : '${promotion.discountValue.toInt()}đ',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
                   ),
                   const Spacer(),
                   Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
@@ -245,39 +286,63 @@ class _PromotionListScreenContentState
   }
 
   void _showFilterDialog() {
+    String getStatusLabel(PromotionStatus status) {
+      switch (status) {
+        case PromotionStatus.active:
+          return 'Đang chạy';
+        case PromotionStatus.scheduled:
+          return 'Sắp diễn ra';
+        case PromotionStatus.expired:
+          return 'Hết hạn';
+        case PromotionStatus.draft:
+          return 'Bản nháp';
+      }
+    }
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => SimpleDialog(
         title: const Text('Lọc theo trạng thái'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: const Text('Tất cả'),
-              leading: Radio<PromotionStatus?>(
-                value: null,
-                groupValue: _filterStatus,
-                onChanged: (value) {
-                  setState(() => _filterStatus = value);
-                  Navigator.pop(context);
-                },
-              ),
-            ),
-            ...PromotionStatus.values.map(
-              (status) => ListTile(
-                title: Text(status.toString().split('.').last),
-                leading: Radio<PromotionStatus>(
-                  value: status,
-                  groupValue: _filterStatus,
-                  onChanged: (value) {
-                    setState(() => _filterStatus = value);
-                    Navigator.pop(context);
-                  },
+        children: [
+          SimpleDialogOption(
+            onPressed: () {
+              setState(() => _filterStatus = null);
+              Navigator.pop(dialogContext);
+            },
+            child: Row(
+              children: [
+                Icon(
+                  _filterStatus == null
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_off,
+                  color: _filterStatus == null ? AppColors.primary : null,
                 ),
+                const SizedBox(width: 12),
+                const Text('Tất cả'),
+              ],
+            ),
+          ),
+          ...PromotionStatus.values.map(
+            (status) => SimpleDialogOption(
+              onPressed: () {
+                setState(() => _filterStatus = status);
+                Navigator.pop(dialogContext);
+              },
+              child: Row(
+                children: [
+                  Icon(
+                    _filterStatus == status
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_off,
+                    color: _filterStatus == status ? AppColors.primary : null,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(getStatusLabel(status)),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

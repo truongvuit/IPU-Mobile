@@ -44,7 +44,7 @@ class AdminStatCard extends StatelessWidget {
           Text(
             title,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: isDark ? AppColors.gray300 : AppColors.gray600,
+              color: isDark ? AppColors.neutral300 : AppColors.neutral600,
               fontSize: AppSizes.textXs,
             ),
           ),
@@ -54,7 +54,7 @@ class AdminStatCard extends StatelessWidget {
             style: theme.textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,
               fontSize: AppSizes.textXl,
-              color: isDark ? Colors.white : AppColors.gray900,
+              color: isDark ? Colors.white : AppColors.neutral900,
             ),
           ),
         ],

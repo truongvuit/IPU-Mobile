@@ -1,23 +1,33 @@
+import 'dart:async';
 import 'package:dio/dio.dart';
 import 'dart:developer';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../config/environment.dart';
+import '../auth/token_store.dart';
+import '../auth/session_expiry_notifier.dart';
 import 'api_exception.dart';
 
-/// Interceptor để tự động thêm Authorization header
+
 class AuthInterceptor extends Interceptor {
-  final SharedPreferences sharedPreferences;
+  final TokenStore tokenStore;
   final Dio dio;
+  final SessionExpiryNotifier sessionExpiryNotifier;
 
-  // Sử dụng cùng key với AuthLocalDataSource
-  static const String _accessTokenKey = 'auth_token';
-  static const String _refreshTokenKey = 'refresh_token';
+  
+  Future<String?>? _refreshFuture;
+  bool _isRefreshing = false;
 
-  AuthInterceptor({required this.sharedPreferences, required this.dio});
+  AuthInterceptor({
+    required this.tokenStore,
+    required this.dio,
+    SessionExpiryNotifier? sessionExpiryNotifier,
+  }) : sessionExpiryNotifier = sessionExpiryNotifier ?? SessionExpiryNotifier();
 
   @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    final token = sharedPreferences.getString(_accessTokenKey);
+  void onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
+    final token = await tokenStore.getAccessToken();
     if (token != null && token.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $token';
     }
@@ -26,55 +36,116 @@ class AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
-    // Handle 401 Unauthorized - Refresh token
+    
+    if (err.requestOptions.path.contains('/auth/refreshtoken')) {
+      return handler.next(err);
+    }
+
+    
     if (err.response?.statusCode == 401) {
-      final refreshToken = sharedPreferences.getString(_refreshTokenKey);
-      if (refreshToken != null && refreshToken.isNotEmpty) {
-        try {
-          // Gọi API refresh token
-          final response = await dio.post(
-            '/auth/refreshtoken',
-            data: {'refreshToken': refreshToken},
-            options: Options(headers: {'Authorization': ''}),
-          );
+      try {
+        
+        String? newToken;
+        if (_isRefreshing && _refreshFuture != null) {
+          newToken = await _refreshFuture;
+        } else {
+          
+          _refreshFuture = _performRefresh();
+          newToken = await _refreshFuture;
+        }
 
-          final newAccessToken = response.data['data']['accessToken'];
-          final newRefreshToken = response.data['data']['refreshToken'];
-
-          // Lưu token mới
-          await sharedPreferences.setString(_accessTokenKey, newAccessToken);
-          await sharedPreferences.setString(_refreshTokenKey, newRefreshToken);
-
-          // Retry request với token mới
+        if (newToken != null) {
+          
           final requestOptions = err.requestOptions;
-          requestOptions.headers['Authorization'] = 'Bearer $newAccessToken';
+          requestOptions.headers['Authorization'] = 'Bearer $newToken';
           final retryResponse = await dio.fetch(requestOptions);
           return handler.resolve(retryResponse);
-        } catch (e) {
-          // Refresh token failed - logout user
-          await sharedPreferences.remove(_accessTokenKey);
-          await sharedPreferences.remove(_refreshTokenKey);
+        } else {
+          
           return handler.reject(err);
         }
+      } catch (e) {
+        return handler.reject(err);
       }
     }
     super.onError(err, handler);
   }
+
+  
+  Future<String?> _performRefresh() async {
+    if (_isRefreshing) {
+      return _refreshFuture;
+    }
+
+    _isRefreshing = true;
+    try {
+      final refreshToken = await tokenStore.getRefreshToken();
+      if (refreshToken == null || refreshToken.isEmpty) {
+        await _handleRefreshFailure();
+        return null;
+      }
+
+      
+      final response = await dio.post(
+        '/auth/refreshtoken',
+        data: {'refreshToken': refreshToken},
+        options: Options(headers: {'Authorization': ''}),
+      );
+
+      final newAccessToken = response.data['data']['accessToken'];
+      final newRefreshToken = response.data['data']['refreshToken'];
+
+      
+      await tokenStore.saveAccessToken(newAccessToken);
+      await tokenStore.saveRefreshToken(newRefreshToken);
+
+      return newAccessToken;
+    } catch (e) {
+      await _handleRefreshFailure();
+      return null;
+    } finally {
+      _isRefreshing = false;
+      _refreshFuture = null;
+    }
+  }
+
+  
+  Future<void> _handleRefreshFailure() async {
+    await tokenStore.clearTokens();
+    sessionExpiryNotifier.notifySessionExpired();
+  }
 }
 
-/// Interceptor để log requests/responses (chỉ dùng trong development)
+
 class LoggingInterceptor extends Interceptor {
   final Environment environment;
 
   LoggingInterceptor({required this.environment});
+
+  
+  Map<String, dynamic> _sanitizeHeaders(Map<String, dynamic> headers) {
+    final sanitized = Map<String, dynamic>.from(headers);
+    if (sanitized.containsKey('Authorization')) {
+      sanitized['Authorization'] = '[REDACTED]';
+    }
+    return sanitized;
+  }
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     if (Environment.enableLogging) {
       log('═══ REQUEST ═══');
       log('${options.method} ${options.uri}');
-      log('Headers: ${options.headers}');
-      if (options.data != null) log('Body: ${options.data}');
+      log('Headers: ${_sanitizeHeaders(options.headers)}');
+      if (options.data != null) {
+        
+        final dataStr = options.data.toString();
+        if (dataStr.contains('password') || dataStr.contains('Token')) {
+          log('Body: [REDACTED - contains sensitive data]');
+        } else {
+          log('Body: ${options.data}');
+        }
+      }
     }
     super.onRequest(options, handler);
   }
@@ -84,7 +155,13 @@ class LoggingInterceptor extends Interceptor {
     if (Environment.enableLogging) {
       log('═══ RESPONSE ═══');
       log('${response.statusCode} ${response.requestOptions.uri}');
-      log('Data: ${response.data}');
+      
+      final dataStr = response.data.toString();
+      if (dataStr.contains('Token') || dataStr.contains('accessToken')) {
+        log('Data: [REDACTED - contains token]');
+      } else {
+        log('Data: ${response.data}');
+      }
     }
     super.onResponse(response, handler);
   }
@@ -95,13 +172,19 @@ class LoggingInterceptor extends Interceptor {
       log('═══ ERROR ═══');
       log('${err.response?.statusCode} ${err.requestOptions.uri}');
       log('Message: ${err.message}');
-      log('Data: ${err.response?.data}');
+      
+      if (err.response?.data != null) {
+        final dataStr = err.response?.data.toString() ?? '';
+        if (!dataStr.contains('Token') && !dataStr.contains('password')) {
+          log('Data: ${err.response?.data}');
+        }
+      }
     }
     super.onError(err, handler);
   }
 }
 
-/// Interceptor để handle errors và convert sang ApiException
+
 class ErrorInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {

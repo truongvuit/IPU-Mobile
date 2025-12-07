@@ -23,6 +23,8 @@ class AdminCourseRepositoryImpl implements AdminCourseRepository {
         categoryId: categoryId,
         isActive: isActive,
       );
+      
+      
       final entities = models.map((model) => model.toEntity()).toList();
       return Right(entities);
     } catch (e) {
@@ -48,6 +50,16 @@ class AdminCourseRepositoryImpl implements AdminCourseRepository {
     try {
       final model = await dataSource.updateCourse(id, request);
       return Right(model.toEntity());
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> toggleCourseStatus(String id) async {
+    try {
+      await dataSource.toggleCourseStatus(id);
+      return const Right(null);
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }

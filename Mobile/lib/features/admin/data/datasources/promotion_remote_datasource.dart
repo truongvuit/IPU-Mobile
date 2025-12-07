@@ -5,6 +5,7 @@ import '../models/promotion_model.dart';
 
 abstract class PromotionRemoteDataSource {
   Future<List<PromotionModel>> getPromotions();
+  Future<List<PromotionModel>> getPromotionsByCourse(String courseId);
   Future<PromotionModel> getPromotionById(String id);
   Future<void> createPromotion(PromotionModel promotion);
   Future<void> updatePromotion(PromotionModel promotion);
@@ -28,6 +29,20 @@ class PromotionRemoteDataSourceImpl implements PromotionRemoteDataSource {
       return data.map((json) => _mapToPromotionModel(json)).toList();
     }
     throw const ServerException('Không thể lấy danh sách khuyến mãi');
+  }
+
+  @override
+  Future<List<PromotionModel>> getPromotionsByCourse(String courseId) async {
+    if (dioClient == null) {
+      throw const ServerException('Chưa khởi tạo API client');
+    }
+
+    final response = await dioClient!.get('/promotions/course/$courseId');
+    if (response.statusCode == 200 && response.data['code'] == 1000) {
+      final List<dynamic> data = response.data['data'] ?? [];
+      return data.map((json) => _mapToPromotionModel(json)).toList();
+    }
+    throw const ServerException('Không thể lấy khuyến mãi theo khóa học');
   }
 
   @override
@@ -67,6 +82,11 @@ class PromotionRemoteDataSourceImpl implements PromotionRemoteDataSource {
       throw const ServerException('Chưa khởi tạo API client');
     }
 
+    
+    if (promotion.id.isEmpty) {
+      throw const ServerException('ID khuyến mãi không được để trống');
+    }
+
     final response = await dioClient!.put(
       '/promotions/${promotion.id}',
       data: _toRequestJson(promotion),
@@ -85,7 +105,8 @@ class PromotionRemoteDataSourceImpl implements PromotionRemoteDataSource {
       throw const ServerException('Chưa khởi tạo API client');
     }
 
-    final response = await dioClient!.delete('/promotions/$id');
+    
+    final response = await dioClient!.put('/promotions/$id/toggle');
     if (response.statusCode == 200 && response.data['code'] == 1000) {
       return;
     }
@@ -95,68 +116,93 @@ class PromotionRemoteDataSourceImpl implements PromotionRemoteDataSource {
   }
 
   Map<String, dynamic> _toRequestJson(PromotionModel promotion) {
+    
+    int promotionTypeId;
+    switch (promotion.promotionType) {
+      case PromotionType.single:
+        promotionTypeId = 1;
+        break;
+      case PromotionType.combo:
+        promotionTypeId = 2;
+        break;
+    }
+
     return {
-      'name': promotion.title,
-      'code': promotion.code,
+      'name': promotion.title, 
       'description': promotion.description,
-      'discountPercent': promotion.discountType == DiscountType.percentage
-          ? promotion.discountValue.toInt()
-          : 0,
-      'discountAmount': promotion.discountType == DiscountType.fixedAmount
-          ? promotion.discountValue
-          : 0,
+      'discountPercent': promotion.discountValue
+          .toInt(), 
       'startDate': promotion.startDate.toIso8601String().split('T')[0],
       'endDate': promotion.endDate.toIso8601String().split('T')[0],
-      'active': promotion.status == PromotionStatus.active,
-      'usageLimit': promotion.usageLimit,
-      'minOrderValue': promotion.minOrderValue,
-      'applicableCourseIds': promotion.applicableCourseIds
-          ?.map((e) => int.tryParse(e) ?? 0)
-          .toList(),
-      'promotionType': promotion.promotionType.toString().split('.').last,
-      'requireAllCourses': promotion.requireAllCourses,
+      'promotionTypeId': promotionTypeId, 
+      'courseIds': promotion.applicableCourseIds != null
+          ? promotion.applicableCourseIds!
+                .map((e) => int.tryParse(e))
+                .where(
+                  (id) => id != null,
+                ) 
+                .toList()
+          : null,
     };
+    
   }
 
   PromotionModel _mapToPromotionModel(Map<String, dynamic> json) {
-    final statusStr = (json['status'] ?? 'active').toString().toLowerCase();
+    
+    
     PromotionStatus status;
-    switch (statusStr) {
-      case 'active':
-        status = PromotionStatus.active;
-        break;
-      case 'expired':
-        status = PromotionStatus.expired;
-        break;
-      case 'upcoming':
-        status = PromotionStatus.scheduled;
-        break;
-      case 'inactive':
-        status = PromotionStatus.draft;
-        break;
-      default:
-        status = PromotionStatus.draft;
+    if (json.containsKey('active')) {
+      final isActive = json['active'] ?? false;
+      status = isActive ? PromotionStatus.active : PromotionStatus.draft;
+    } else {
+      final statusStr = (json['status'] ?? 'active').toString().toLowerCase();
+      switch (statusStr) {
+        case 'active':
+          status = PromotionStatus.active;
+          break;
+        case 'expired':
+          status = PromotionStatus.expired;
+          break;
+        case 'upcoming':
+          status = PromotionStatus.scheduled;
+          break;
+        case 'inactive':
+          status = PromotionStatus.draft;
+          break;
+        default:
+          status = PromotionStatus.draft;
+      }
     }
 
     
     List<String>? applicableCourseIds;
     List<String>? applicableCourseNames;
 
-    if (json['applicableCourseIds'] != null) {
+    if (json['courses'] != null) {
+      final coursesList = json['courses'] as List<dynamic>;
+      applicableCourseIds = coursesList
+          .map((c) => (c['courseId'] ?? '').toString())
+          .toList();
+      applicableCourseNames = coursesList
+          .map((c) => (c['courseName'] ?? '').toString())
+          .toList();
+    } else if (json['applicableCourseIds'] != null) {
+      
       applicableCourseIds = (json['applicableCourseIds'] as List<dynamic>)
           .map((e) => e.toString())
           .toList();
-    }
-
-    if (json['applicableCourseNames'] != null) {
-      applicableCourseNames = (json['applicableCourseNames'] as List<dynamic>)
-          .map((e) => e.toString())
-          .toList();
+      if (json['applicableCourseNames'] != null) {
+        applicableCourseNames = (json['applicableCourseNames'] as List<dynamic>)
+            .map((e) => e.toString())
+            .toList();
+      }
     }
 
     return PromotionModel(
       id: (json['id'] ?? '').toString(),
-      code: json['code'] ?? json['name'] ?? 'KM${json['id'] ?? ''}',
+      code:
+          json['name'] ??
+          'KM${json['id'] ?? ''}', 
       title: json['name'] ?? '',
       description: json['description'] ?? '',
       discountType: DiscountType.percentage,

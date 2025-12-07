@@ -28,14 +28,14 @@ class TodayFocusCard extends StatelessWidget {
         padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [AppColors.primary, AppColors.primary.withOpacity(0.7)],
+            colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.7)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(16.r),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.3),
+              color: AppColors.primary.withValues(alpha: 0.3),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -53,7 +53,7 @@ class TodayFocusCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                   ),
                 ),
               ],
@@ -73,14 +73,14 @@ class TodayFocusCard extends StatelessWidget {
                 Icon(
                   Icons.access_time,
                   size: 16.sp,
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha: 0.9),
                 ),
                 SizedBox(width: 6.w),
                 Text(
                   timeSlot,
                   style: TextStyle(
                     fontSize: 13.sp,
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                   ),
                 ),
                 const Spacer(),
@@ -90,7 +90,7 @@ class TodayFocusCard extends StatelessWidget {
                     vertical: 4.h,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12.r),
                   ),
                   child: Row(
@@ -102,7 +102,7 @@ class TodayFocusCard extends StatelessWidget {
                       ),
                       SizedBox(width: 4.w),
                       Text(
-                        isOnline ? 'Online' : room,
+                        isOnline ? 'Online' : (room.isNotEmpty ? room : 'TBA'),
                         style: TextStyle(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w600,

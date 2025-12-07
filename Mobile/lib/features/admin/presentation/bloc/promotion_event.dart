@@ -36,3 +36,12 @@ class DeletePromotion extends PromotionEvent {
   @override
   List<Object> get props => [id];
 }
+
+class TogglePromotionStatus extends PromotionEvent {
+  final String id;
+
+  const TogglePromotionStatus(this.id);
+
+  @override
+  List<Object> get props => [id];
+}

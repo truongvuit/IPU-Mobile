@@ -24,7 +24,7 @@ class ClassSelectionCard extends StatelessWidget {
       case ClassStatus.ongoing:
         return AppColors.success;
       case ClassStatus.completed:
-        return AppColors.gray500;
+        return AppColors.neutral500;
     }
   }
 
@@ -54,7 +54,7 @@ class ClassSelectionCard extends StatelessWidget {
         side: BorderSide(
           color: isSelected
               ? AppColors.primary
-              : (isDark ? AppColors.gray700 : AppColors.gray200),
+              : (isDark ? AppColors.neutral700 : AppColors.neutral200),
           width: isSelected ? 2 : 1,
         ),
       ),
@@ -68,7 +68,6 @@ class ClassSelectionCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              
               Row(
                 children: [
                   Expanded(
@@ -102,19 +101,20 @@ class ClassSelectionCard extends StatelessWidget {
               ),
               SizedBox(height: AppSizes.p8),
 
-              
               Row(
                 children: [
                   Icon(
                     Icons.calendar_today,
                     size: AppSizes.textSm,
-                    color: isDark ? AppColors.gray400 : AppColors.gray600,
+                    color: isDark ? AppColors.neutral400 : AppColors.neutral600,
                   ),
                   SizedBox(width: AppSizes.p8),
                   Text(
                     '${classItem.schedule} | ${classItem.timeRange}',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: isDark ? AppColors.gray400 : AppColors.gray600,
+                      color: isDark
+                          ? AppColors.neutral400
+                          : AppColors.neutral600,
                       fontSize: AppSizes.textXs,
                     ),
                   ),
@@ -122,27 +122,64 @@ class ClassSelectionCard extends StatelessWidget {
               ),
               SizedBox(height: AppSizes.p4),
 
-              
               Row(
                 children: [
                   Icon(
                     Icons.person_outline,
                     size: AppSizes.textSm,
-                    color: isDark ? AppColors.gray400 : AppColors.gray600,
+                    color: isDark ? AppColors.neutral400 : AppColors.neutral600,
                   ),
                   SizedBox(width: AppSizes.p8),
-                  Text(
-                    'Giảng viên: ${classItem.teacherName}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: isDark ? AppColors.gray400 : AppColors.gray600,
-                      fontSize: AppSizes.textXs,
+                  Expanded(
+                    child: Text(
+                      'Giảng viên: ${classItem.teacherName}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: isDark
+                            ? AppColors.neutral400
+                            : AppColors.neutral600,
+                        fontSize: AppSizes.textXs,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: AppSizes.p8),
+              SizedBox(height: AppSizes.p4),
 
               
+              if (classItem.room.isNotEmpty)
+                Padding(
+                  padding: EdgeInsets.only(bottom: AppSizes.p4),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.meeting_room_outlined,
+                        size: AppSizes.textSm,
+                        color: isDark
+                            ? AppColors.neutral400
+                            : AppColors.neutral600,
+                      ),
+                      SizedBox(width: AppSizes.p8),
+                      Expanded(
+                        child: Text(
+                          classItem.room,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: isDark
+                                ? AppColors.neutral400
+                                : AppColors.neutral600,
+                            fontSize: AppSizes.textXs,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              SizedBox(height: AppSizes.p8),
+
               Row(
                 children: [
                   Expanded(
@@ -151,8 +188,8 @@ class ClassSelectionCard extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: classItem.enrollmentPercentage / 100,
                         backgroundColor: isDark
-                            ? AppColors.gray700
-                            : AppColors.gray200,
+                            ? AppColors.neutral700
+                            : AppColors.neutral200,
                         valueColor: AlwaysStoppedAnimation<Color>(
                           classItem.isFull
                               ? AppColors.error

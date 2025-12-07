@@ -1,5 +1,5 @@
 class AppStrings {
-  // Common
+  
   static const String appName = 'Trung Tâm Ngoại Ngữ';
   static const String error = 'Đã có lỗi xảy ra';
   static const String retry = 'Thử lại';
@@ -12,7 +12,7 @@ class AppStrings {
   static const String noData = 'Không có dữ liệu';
   static const String loading = 'Đang tải...';
   
-  // Greetings
+  
   static String welcomeGreeting(String userName) {
     final hour = DateTime.now().hour;
     String greeting;
@@ -26,7 +26,7 @@ class AppStrings {
     return '$greeting, $userName!';
   }
   
-  // Day names
+  
   static String dayOfWeek(int day) {
     switch (day) {
       case 1: return 'Thứ 2';
@@ -40,7 +40,7 @@ class AppStrings {
     }
   }
 
-  // Auth
+  
   static const String login = 'Đăng nhập';
   static const String logout = 'Đăng xuất';
   static const String forgotPassword = 'Quên mật khẩu?';
@@ -48,13 +48,13 @@ class AppStrings {
   static const String password = 'Mật khẩu';
   static const String rememberMe = 'Ghi nhớ đăng nhập';
 
-  // Student
+  
   static const String studentDashboard = 'Trang chủ';
   static const String studentSchedule = 'Lịch học';
   static const String studentGrades = 'Điểm số';
   static const String studentProfile = 'Tài khoản';
 
-  // Teacher
+  
   static const String teacherDashboard = 'Trang chủ';
   static const String teacherSchedule = 'Lịch dạy';
   static const String teacherClasses = 'Lớp học';
