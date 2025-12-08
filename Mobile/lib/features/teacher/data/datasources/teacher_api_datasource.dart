@@ -68,8 +68,7 @@ class TeacherApiDataSourceImpl implements TeacherApiDataSource {
       final response = await dioClient.put(
         '/lecturers/me',
         data: {
-          if (profile.fullName != null && profile.fullName!.isNotEmpty)
-            'fullName': profile.fullName,
+          if (profile.fullName.isNotEmpty) 'fullName': profile.fullName,
           if (profile.email != null && profile.email!.isNotEmpty)
             'email': profile.email,
           if (profile.phoneNumber != null && profile.phoneNumber!.isNotEmpty)
@@ -82,8 +81,8 @@ class TeacherApiDataSourceImpl implements TeacherApiDataSource {
           if (profile.specialization != null &&
               profile.specialization!.isNotEmpty)
             'specialization': profile.specialization,
-          if (profile.avatar != null && profile.avatar!.isNotEmpty)
-            'imagePath': profile.avatar,
+          if (profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty)
+            'imagePath': profile.avatarUrl,
         },
       );
       if (response.statusCode != 200 || response.data['code'] != 1000) {
@@ -282,15 +281,12 @@ class TeacherApiDataSourceImpl implements TeacherApiDataSource {
     }
   }
 
-  
-  
   AttendanceSession _parseAttendanceSession(
     Map<String, dynamic> data,
     int sessionId,
   ) {
     final entries = data['entries'] as List<dynamic>? ?? [];
 
-    
     final serverClassId = data['classId']?.toString() ?? '';
     final serverDate = data['sessionDate'] != null
         ? DateTime.tryParse(data['sessionDate'].toString())
@@ -304,7 +300,6 @@ class TeacherApiDataSourceImpl implements TeacherApiDataSource {
         : null;
 
     final records = entries.map((e) {
-      
       final entryDate = e['date'] != null
           ? DateTime.tryParse(e['date'].toString())
           : (e['createdAt'] != null
