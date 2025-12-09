@@ -33,6 +33,9 @@ class StudentGridItem extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textTheme = Theme.of(context).textTheme;
 
+    final hasScore = student.averageScore != null;
+    final hasAttendance = (student.attendanceRate) > 0;
+
     final nameParts = student.fullName.split(' ');
     final initials = nameParts.length >= 2
         ? '${nameParts.first[0]}${nameParts.last[0]}'
@@ -130,26 +133,63 @@ class StudentGridItem extends StatelessWidget {
                 ],
               ),
 
-              if (showStats) ...[
-                SizedBox(height: 8.h),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildCompactStat(
-                      icon: Icons.star_rounded,
-                      value: student.averageScore?.toStringAsFixed(1) ?? '--',
-                      color: student.averageScore != null
-                          ? _getScoreColor(student.averageScore!)
-                          : AppColors.neutral500,
-                    ),
-                    _buildCompactStat(
-                      icon: Icons.check_circle_rounded,
-                      value: '${student.attendanceRate.toStringAsFixed(0)}%',
-                      color: _getAttendanceColor(student.attendanceRate),
-                    ),
-                  ],
+              if (showStats)
+                Padding(
+                  padding: EdgeInsets.only(top: 8.h),
+                  child: () {
+                    if (!hasScore && !hasAttendance) {
+                      return Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10.w,
+                          vertical: 6.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? AppColors.neutral800
+                              : AppColors.neutral100,
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Text(
+                          'Chưa có dữ liệu',
+                          style: textTheme.bodySmall?.copyWith(
+                            color: AppColors.neutral500,
+                            fontSize: 11.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      );
+                    }
+
+                    final stats = <Widget>[];
+
+                    if (hasScore) {
+                      stats.add(
+                        _buildCompactStat(
+                          icon: Icons.star_rounded,
+                          value: student.averageScore!.toStringAsFixed(1),
+                          color: _getScoreColor(student.averageScore!),
+                        ),
+                      );
+                    }
+
+                    if (hasAttendance) {
+                      stats.add(
+                        _buildCompactStat(
+                          icon: Icons.check_circle_rounded,
+                          value: '${student.attendanceRate.toStringAsFixed(0)}%',
+                          color: _getAttendanceColor(student.attendanceRate),
+                        ),
+                      );
+                    }
+
+                    return Row(
+                      mainAxisAlignment: stats.length == 1
+                          ? MainAxisAlignment.start
+                          : MainAxisAlignment.spaceEvenly,
+                      children: stats,
+                    );
+                  }(),
                 ),
-              ],
             ],
           ),
         ),

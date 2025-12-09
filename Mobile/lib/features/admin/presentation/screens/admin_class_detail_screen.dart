@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../core/widgets/skeleton_widget.dart';
 
 import '../bloc/admin_bloc.dart';
 import '../widgets/simple_admin_app_bar.dart';
@@ -69,17 +68,13 @@ class _AdminClassDetailScreenState extends State<AdminClassDetailScreen> {
       body: BlocBuilder<AdminBloc, AdminState>(
         builder: (context, state) {
           if (state is AdminLoading) {
-            return SingleChildScrollView(
-              padding: EdgeInsets.all(AppSizes.paddingMedium),
+            return Center(
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SkeletonWidget.rectangular(height: 200.h),
-                  SizedBox(height: AppSizes.paddingMedium),
-                  SkeletonWidget.rectangular(height: 100.h),
-                  SizedBox(height: AppSizes.paddingMedium),
-                  SkeletonWidget.rectangular(height: 150.h),
-                  SizedBox(height: AppSizes.paddingMedium),
-                  SkeletonWidget.rectangular(height: 100.h),
+                  Icon(Icons.hourglass_empty, size: 48.sp, color: AppColors.primary),
+                  SizedBox(height: 16.h),
+                  Text('Đang tải chi tiết lớp...', style: TextStyle(fontSize: 14.sp)),
                 ],
               ),
             );
@@ -278,29 +273,6 @@ class _AdminClassDetailScreenState extends State<AdminClassDetailScreen> {
 
                     SizedBox(height: AppSizes.paddingMedium),
 
-                    GridView.count(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: 2,
-                      mainAxisSpacing: AppSizes.p12,
-                      crossAxisSpacing: AppSizes.p12,
-                      childAspectRatio: 2.5,
-                      children: [
-                        _ActionButton(
-                          label: 'Xem phản hồi',
-                          icon: Icons.rate_review_outlined,
-                          color: AppColors.warning,
-                          onTap: () {
-                            Navigator.pushNamed(
-                              context,
-                              AppRouter.adminClassFeedback,
-                              arguments: widget.classId,
-                            ).then((_) => _loadClassDetail());
-                          },
-                        ),
-                      ],
-                    ),
-
                     SizedBox(height: AppSizes.p20),
 
                     Row(
@@ -382,6 +354,40 @@ class _AdminClassDetailScreenState extends State<AdminClassDetailScreen> {
                             ),
                           ],
                         ],
+                      ),
+                    ),
+
+                    SizedBox(height: AppSizes.p20),
+
+                    // Nút xem phản hồi ở cuối màn hình
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pushNamed(
+                            context,
+                            AppRouter.adminClassFeedback,
+                            arguments: widget.classId,
+                          ).then((_) => _loadClassDetail());
+                        },
+                        icon: Icon(
+                          Icons.rate_review_outlined,
+                          color: AppColors.warning,
+                        ),
+                        label: Text(
+                          'Xem phản hồi',
+                          style: TextStyle(
+                            color: AppColors.warning,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(vertical: 14.h),
+                          side: BorderSide(color: AppColors.warning, width: 1.5),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+                          ),
+                        ),
                       ),
                     ),
 

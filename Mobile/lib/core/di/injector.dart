@@ -2,12 +2,10 @@ import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
-
 import '../api/dio_client.dart';
 import '../auth/token_store.dart';
 import '../auth/session_expiry_notifier.dart';
 import '../network/network_info.dart';
-
 
 import '../../features/authentication/data/datasources/auth_api_datasource.dart';
 import '../../features/authentication/data/datasources/auth_local_datasource.dart';
@@ -15,13 +13,11 @@ import '../../features/authentication/data/repositories/auth_repository_impl.dar
 import '../../features/authentication/domain/repositories/auth_repository.dart';
 import '../../features/authentication/presentation/bloc/auth_bloc.dart';
 
-
 import '../../features/student/data/datasources/student_api_datasource.dart';
 import '../../features/student/data/datasources/student_local_datasource.dart';
 import '../../features/student/data/repositories/student_repository_with_api.dart';
 import '../../features/student/domain/repositories/student_repository.dart';
 import '../../features/student/presentation/bloc/student_bloc.dart';
-
 
 import '../../features/teacher/data/datasources/teacher_api_datasource.dart';
 import '../../features/teacher/data/datasources/teacher_local_datasource.dart';
@@ -29,12 +25,10 @@ import '../../features/teacher/data/repositories/teacher_repository_with_api.dar
 import '../../features/teacher/domain/repositories/teacher_repository.dart';
 import '../../features/teacher/presentation/bloc/teacher_bloc.dart';
 
-
 import '../../features/settings/data/datasources/settings_local_datasource.dart';
 import '../../features/settings/data/repositories/settings_repository_impl.dart';
 import '../../features/settings/domain/repositories/settings_repository.dart';
 import '../../features/settings/presentation/bloc/settings_bloc.dart';
-
 
 import '../../features/admin/data/datasources/admin_api_datasource.dart';
 import '../../features/admin/data/datasources/admin_remote_datasource.dart';
@@ -57,17 +51,14 @@ import '../../features/admin/domain/repositories/promotion_repository.dart';
 import '../../features/admin/data/repositories/promotion_repository_impl.dart';
 import '../../features/admin/presentation/bloc/promotion_bloc.dart';
 
-
 import '../../features/payment/data/payment_api_data_source.dart';
 import '../../features/payment/data/vnpay_service.dart';
-
 
 import '../services/deep_link_service.dart';
 
 final getIt = GetIt.instance;
 
 Future<void> initializeDependencies() async {
-  
   if (getIt.isRegistered<SharedPreferences>()) {
     await getIt.reset();
   }
@@ -75,10 +66,8 @@ Future<void> initializeDependencies() async {
   final sharedPreferences = await SharedPreferences.getInstance();
   getIt.registerLazySingleton<SharedPreferences>(() => sharedPreferences);
 
-  
   getIt.registerLazySingleton<TokenStore>(() => SecureTokenStore());
 
-  
   getIt.registerLazySingleton<SessionExpiryNotifier>(
     () => SessionExpiryNotifier(),
   );
@@ -92,7 +81,6 @@ Future<void> initializeDependencies() async {
 
   getIt.registerLazySingleton<Connectivity>(() => Connectivity());
 
-  
   getIt.registerLazySingleton<NetworkInfo>(
     () => NetworkInfoImpl(getIt<Connectivity>()),
   );
@@ -134,6 +122,7 @@ Future<void> initializeDependencies() async {
     ),
   );
 
+  // Use registerFactory so new instance is created each time (prevents closed bloc issue after logout)
   getIt.registerFactory<StudentBloc>(
     () => StudentBloc(repository: getIt<StudentRepository>()),
   );
@@ -153,7 +142,8 @@ Future<void> initializeDependencies() async {
     ),
   );
 
-  getIt.registerFactory<TeacherBloc>(
+  // Changed to singleton to preserve cache and prevent "Cannot add events after close" error
+  getIt.registerLazySingleton<TeacherBloc>(
     () => TeacherBloc(repository: getIt<TeacherRepository>()),
   );
 
@@ -247,6 +237,5 @@ Future<void> initializeDependencies() async {
     () => VNPayService(paymentApiDataSource: getIt<PaymentApiDataSource>()),
   );
 
-  
   getIt.registerLazySingleton<DeepLinkService>(() => DeepLinkService());
 }

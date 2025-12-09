@@ -4,7 +4,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../core/widgets/skeleton_widget.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 import '../../../../core/widgets/custom_image.dart';
 import '../../../../core/widgets/permission_gate.dart';
@@ -601,15 +600,15 @@ class _AdminTeacherListScreenState extends State<AdminTeacherListScreen> {
   }
 
   Widget _buildLoadingState() {
-    return ListView.builder(
-      padding: EdgeInsets.all(AppSizes.paddingMedium),
-      itemCount: 5,
-      itemBuilder: (context, index) {
-        return Container(
-          margin: EdgeInsets.only(bottom: AppSizes.p12),
-          child: SkeletonWidget.rectangular(height: 80.h),
-        );
-      },
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.hourglass_empty, size: 48.sp, color: AppColors.primary),
+          SizedBox(height: 16.h),
+          Text('Đang tải danh sách...', style: TextStyle(fontSize: 14.sp)),
+        ],
+      ),
     );
   }
 }

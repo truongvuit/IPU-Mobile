@@ -9,7 +9,6 @@ import '../widgets/student_app_bar.dart';
 import '../widgets/class_card.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../core/widgets/skeleton_widget.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 import '../../domain/entities/student_class.dart';
 
@@ -179,25 +178,56 @@ class _ClassListScreenState extends State<ClassListScreen> {
                         current is DashboardLoaded;
                   },
                   builder: (context, state) {
-                    if (state is StudentInitial ||
-                        (state is! ClassesLoaded &&
-                            state is! StudentLoading &&
-                            !_hasLoadedData)) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (mounted && !_hasLoadedData) {
-                          _hasLoadedData = true;
-                          context.read<StudentBloc>().add(
-                            const LoadMyClasses(),
-                          );
-                        }
-                      });
+                    // For unrelated states, trigger load if needed
+                    if (state is! ClassesLoaded &&
+                        state is! StudentLoading &&
+                        state is! StudentError &&
+                        state is! DashboardLoaded) {
+                      // Trigger load if not already loading
+                      if (!_hasLoadedData) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted) {
+                            _hasLoadedData = true;
+                            context.read<StudentBloc>().add(const LoadMyClasses());
+                          }
+                        });
+                      }
+                      return _activeClasses.isNotEmpty
+                          ? _buildClassList(
+                              _activeClasses,
+                              padding,
+                              isDark,
+                              'Không có lớp học đang hoạt động',
+                            )
+                          : const SizedBox.shrink();
                     }
 
                     if (state is StudentLoading) {
-                      return _buildLoadingSkeleton(padding);
+                      // If we have local data, show it while loading
+                      if (_activeClasses.isNotEmpty) {
+                        return _buildClassList(
+                          _activeClasses,
+                          padding,
+                          isDark,
+                          'Không có lớp học đang hoạt động',
+                        );
+                      }
+                      return const EmptyStateWidget(
+                        icon: Icons.hourglass_empty,
+                        message: 'Đang tải danh sách lớp...',
+                      );
                     }
 
                     if (state is StudentError) {
+                      // If we have local data, show it with error toast
+                      if (_activeClasses.isNotEmpty) {
+                        return _buildClassList(
+                          _activeClasses,
+                          padding,
+                          isDark,
+                          'Không có lớp học đang hoạt động',
+                        );
+                      }
                       return _buildErrorState(state, isDark, isDesktop);
                     }
 
@@ -237,17 +267,6 @@ class _ClassListScreenState extends State<ClassListScreen> {
         }
       });
     }
-  }
-
-  Widget _buildLoadingSkeleton(double padding) {
-    return ListView.builder(
-      padding: EdgeInsets.fromLTRB(padding, 0, padding, 80.h),
-      itemCount: 5,
-      itemBuilder: (context, index) => Padding(
-        padding: EdgeInsets.only(bottom: AppSizes.paddingSmall),
-        child: SkeletonWidget.rectangular(height: 90.h),
-      ),
-    );
   }
 
   Widget _buildErrorState(StudentError state, bool isDark, bool isDesktop) {

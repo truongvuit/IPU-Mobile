@@ -30,25 +30,19 @@ abstract class StudentApiDataSource {
 
   Future<StudentClassModel> getClassDetail(String classId);
 
-  
   Future<WeeklyScheduleResponse> getScheduleByWeek({required DateTime date});
 
-  
   Future<WeeklyScheduleResponse> getStudentSchedule({required DateTime date});
 
   Future<String> uploadAvatar(String filePath);
 
-  
-  
   @Deprecated(
     'Endpoint /enrollments does not exist. Use createOrder for enrollment.',
   )
   Future<void> enrollCourse(Map<String, dynamic> data);
 
-  
   Future<List<GradeModel>> getGrades();
 
-  
   Future<GradeModel?> getGradesByClass(String classId);
 
   Future<void> submitReview({
@@ -61,15 +55,14 @@ abstract class StudentApiDataSource {
 
   Future<List<ReviewModel>> getReviewHistory();
 
-  
   Future<StudentCartPreview> getCartPreview(List<int> classIds);
 
   Future<Map<String, dynamic>> createOrder({
     required List<int> classIds,
+    required int studentId,
     int? paymentMethodId,
   });
 
-  
   Future<Map<String, dynamic>> createPayment({
     required int invoiceId,
     required double totalAmount,
@@ -376,8 +369,6 @@ class StudentApiDataSourceImpl implements StudentApiDataSource {
     'Endpoint /enrollments does not exist. Use createOrder for enrollment.',
   )
   Future<void> enrollCourse(Map<String, dynamic> data) async {
-    
-    
     throw const ServerException(
       'Direct enrollment is not supported. Please use the checkout flow.',
     );
@@ -515,8 +506,6 @@ class StudentApiDataSourceImpl implements StudentApiDataSource {
     }
   }
 
-  
-
   @override
   Future<StudentCartPreview> getCartPreview(List<int> classIds) async {
     try {
@@ -550,14 +539,16 @@ class StudentApiDataSourceImpl implements StudentApiDataSource {
   @override
   Future<Map<String, dynamic>> createOrder({
     required List<int> classIds,
+    required int studentId,
     int? paymentMethodId,
   }) async {
     try {
       final response = await dioClient.post(
         StudentApiSpec.createOrder,
         data: {
+          'studentId': studentId,
           'classIds': classIds,
-          if (paymentMethodId != null) 'paymentMethodId': paymentMethodId,
+          'paymentMethodId': paymentMethodId ?? 2, // Default VNPay = 2
         },
       );
 
@@ -590,15 +581,14 @@ class StudentApiDataSourceImpl implements StudentApiDataSource {
       final response = await dioClient.post(
         '/orders/payment/create',
         data: {
-          
-          
           'amount': totalAmount.round().toString(),
           'invoiceId': invoiceId,
           'orderInfo': 'Thanh toan khoa hoc',
         },
-        
-        
-        
+
+        // Tell backend to use mobile deep link for VNPay return URL
+        queryParameters: {'platform': 'mobile'},
+
         options: Options(
           headers: {'X-Client-Type': 'mobile', 'X-User-Role': 'STUDENT'},
         ),

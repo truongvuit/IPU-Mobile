@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/skeleton_widget.dart';
 import '../bloc/admin_course_bloc.dart';
 import '../bloc/admin_course_event.dart';
 import '../bloc/admin_course_state.dart';
@@ -56,7 +55,7 @@ class _AdminCourseDetailByIdScreenState
         if (state is AdminCourseLoading) {
           return Scaffold(
             appBar: _buildAppBar(),
-            body: const SkeletonListWidget(itemCount: 5),
+            body: const Center(child: CircularProgressIndicator()),
           );
         }
 
@@ -108,7 +107,7 @@ class _AdminCourseDetailByIdScreenState
 
         return Scaffold(
           appBar: _buildAppBar(),
-          body: const SkeletonListWidget(itemCount: 5),
+          body: const Center(child: CircularProgressIndicator()),
         );
       },
     );

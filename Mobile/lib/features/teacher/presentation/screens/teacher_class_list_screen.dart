@@ -4,7 +4,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../core/widgets/skeleton_widget.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 import '../bloc/teacher_bloc.dart';
 import '../bloc/teacher_event.dart';
@@ -156,7 +155,7 @@ class _TeacherClassListScreenState extends State<TeacherClassListScreen> {
                     padding: EdgeInsets.all(AppSizes.paddingMedium),
                     child: EmptyStateWidget(
                       icon: Icons.class_outlined,
-                      message: 'Không có lớp học đang hoạt động',
+                      message: 'Bạn chưa được phân công lớp học nào',
                     ),
                   );
                 }
@@ -186,21 +185,14 @@ class _TeacherClassListScreenState extends State<TeacherClassListScreen> {
                                 onTap: () {
                                   final classId = state.classes[index].id;
 
-                                  if (widget.mode == 'attendance') {
-                                    
-                                    Navigator.pushNamed(
-                                      context,
-                                      AppRouter.teacherSchedule,
-                                    );
-                                  } else {
-                                    Navigator.of(
-                                      context,
-                                      rootNavigator: true,
-                                    ).pushNamed(
-                                      AppRouter.teacherClassDetail,
-                                      arguments: classId,
-                                    );
-                                  }
+                                  
+                                  Navigator.of(
+                                    context,
+                                    rootNavigator: true,
+                                  ).pushNamed(
+                                    AppRouter.teacherClassDetail,
+                                    arguments: classId,
+                                  );
                                 },
                               )
                             : TeacherClassCard(
@@ -208,21 +200,14 @@ class _TeacherClassListScreenState extends State<TeacherClassListScreen> {
                                 onTap: () {
                                   final classId = state.classes[index].id;
 
-                                  if (widget.mode == 'attendance') {
-                                    
-                                    Navigator.pushNamed(
-                                      context,
-                                      AppRouter.teacherSchedule,
-                                    );
-                                  } else {
-                                    Navigator.of(
-                                      context,
-                                      rootNavigator: true,
-                                    ).pushNamed(
-                                      AppRouter.teacherClassDetail,
-                                      arguments: classId,
-                                    );
-                                  }
+                                  
+                                  Navigator.of(
+                                    context,
+                                    rootNavigator: true,
+                                  ).pushNamed(
+                                    AppRouter.teacherClassDetail,
+                                    arguments: classId,
+                                  );
                                 },
                               ),
                       );
@@ -231,12 +216,11 @@ class _TeacherClassListScreenState extends State<TeacherClassListScreen> {
                 );
               }
 
-              return ListView.builder(
+              return Padding(
                 padding: EdgeInsets.all(AppSizes.paddingMedium),
-                itemCount: 5,
-                itemBuilder: (context, index) => Padding(
-                  padding: EdgeInsets.only(bottom: 12.h),
-                  child: SkeletonWidget.rectangular(height: 130.h),
+                child: EmptyStateWidget(
+                  icon: Icons.class_outlined,
+                  message: 'Đang tải danh sách lớp...',
                 ),
               );
             },

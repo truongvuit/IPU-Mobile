@@ -4,9 +4,11 @@ import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/teacher_bloc.dart';
+import '../bloc/teacher_event.dart';
 import '../bloc/teacher_state.dart';
 import '../../../authentication/presentation/bloc/auth_bloc.dart';
 import '../../../authentication/presentation/bloc/auth_event.dart';
+import '../../../authentication/presentation/bloc/auth_state.dart';
 
 class TeacherDrawerWidget extends StatelessWidget {
   final void Function(int index)? onTabChange;
@@ -39,229 +41,242 @@ class TeacherDrawerWidget extends StatelessWidget {
           displayAvatar = bloc.cachedProfile!.avatarUrl;
         }
 
-        return Drawer(
-          child: Container(
-            color: isDark ? const Color(0xFF1F2937) : Colors.white,
-            child: SafeArea(
-              child: Column(
-                children: [
-                  InkWell(
-                    onTap: () {
-                      Navigator.pop(context);
-                      if (!context.mounted) return;
-                      Navigator.pushNamed(context, AppRouter.teacherProfile);
-                    },
-                    child: Padding(
-                      padding: EdgeInsets.all(16.w),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 64.w,
-                            height: 64.h,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: const Color(
-                                0xFF135BEC,
-                              ).withValues(alpha: 0.2),
+        return BlocListener<AuthBloc, AuthState>(
+          listener: (context, state) {
+            if (state is AuthUnauthenticated) {
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                AppRouter.welcome,
+                (route) => false,
+              );
+            }
+          },
+          child: Drawer(
+            child: Container(
+              color: isDark ? const Color(0xFF1F2937) : Colors.white,
+              child: SafeArea(
+                child: Column(
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        Navigator.pop(context);
+                        if (!context.mounted) return;
+                        Navigator.pushNamed(context, AppRouter.teacherProfile);
+                      },
+                      child: Padding(
+                        padding: EdgeInsets.all(16.w),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 64.w,
+                              height: 64.h,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: const Color(
+                                  0xFF135BEC,
+                                ).withValues(alpha: 0.2),
+                              ),
+                              child:
+                                  displayAvatar != null &&
+                                      displayAvatar.isNotEmpty
+                                  ? ClipOval(
+                                      child: Image.network(
+                                        displayAvatar,
+                                        width: 64.w,
+                                        height: 64.h,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return ClipOval(
+                                            child: Image.asset(
+                                              'assets/images/avatar-default.png',
+                                              width: 64.w,
+                                              height: 64.h,
+                                              fit: BoxFit.cover,
+                                            ),
+                                          );
+                                        },
+                                        loadingBuilder: (context, child, loadingProgress) {
+                                          if (loadingProgress == null) {
+                                            return child;
+                                          }
+                                          return Center(
+                                            child: CircularProgressIndicator(
+                                              value:
+                                                  loadingProgress
+                                                          .expectedTotalBytes !=
+                                                      null
+                                                  ? loadingProgress
+                                                            .cumulativeBytesLoaded /
+                                                        loadingProgress
+                                                            .expectedTotalBytes!
+                                                  : null,
+                                              strokeWidth: 2,
+                                              valueColor:
+                                                  const AlwaysStoppedAnimation<
+                                                    Color
+                                                  >(Color(0xFF135BEC)),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    )
+                                  : ClipOval(
+                                      child: Image.asset(
+                                        'assets/images/avatar-default.png',
+                                        width: 64.w,
+                                        height: 64.h,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
                             ),
-                            child:
-                                displayAvatar != null &&
-                                    displayAvatar.isNotEmpty
-                                ? ClipOval(
-                                    child: Image.network(
-                                      displayAvatar,
-                                      width: 64.w,
-                                      height: 64.h,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) {
-                                        return ClipOval(
-                                          child: Image.asset(
-                                            'assets/images/avatar-default.png',
-                                            width: 64.w,
-                                            height: 64.h,
-                                            fit: BoxFit.cover,
-                                          ),
-                                        );
-                                      },
-                                      loadingBuilder: (context, child, loadingProgress) {
-                                        if (loadingProgress == null) {
-                                          return child;
-                                        }
-                                        return Center(
-                                          child: CircularProgressIndicator(
-                                            value:
-                                                loadingProgress
-                                                        .expectedTotalBytes !=
-                                                    null
-                                                ? loadingProgress
-                                                          .cumulativeBytesLoaded /
-                                                      loadingProgress
-                                                          .expectedTotalBytes!
-                                                : null,
-                                            strokeWidth: 2,
-                                            valueColor:
-                                                const AlwaysStoppedAnimation<
-                                                  Color
-                                                >(Color(0xFF135BEC)),
-                                          ),
-                                        );
-                                      },
+                            SizedBox(width: 12.w),
+                            Expanded(
+                              child: isLoading
+                                  ? Container(
+                                      height: 20.h,
+                                      width: 120.w,
+                                      decoration: BoxDecoration(
+                                        color: isDark
+                                            ? const Color(0xFF374151)
+                                            : const Color(0xFFE5E7EB),
+                                        borderRadius: BorderRadius.circular(
+                                          4.r,
+                                        ),
+                                      ),
+                                    )
+                                  : Text(
+                                      displayName,
+                                      style: TextStyle(
+                                        fontSize: 18.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color: isDark
+                                            ? Colors.white
+                                            : const Color(0xFF0F172A),
+                                        fontFamily: 'Lexend',
+                                      ),
                                     ),
-                                  )
-                                : ClipOval(
-                                    child: Image.asset(
-                                      'assets/images/avatar-default.png',
-                                      width: 64.w,
-                                      height: 64.h,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
+                            ),
+                            Icon(
+                              Icons.chevron_right,
+                              color: isDark
+                                  ? const Color(0xFF9CA3AF)
+                                  : const Color(0xFF64748B),
+                              size: 24.sp,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    Divider(
+                      height: 1,
+                      color: isDark
+                          ? const Color(0xFF374151)
+                          : const Color(0xFFE5E7EB),
+                    ),
+
+                    Expanded(
+                      child: ListView(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 8.h,
+                        ),
+                        children: [
+                          _buildNavItem(
+                            context,
+                            icon: Icons.home_outlined,
+                            title: 'Trang chủ',
+                            onTap: () {
+                              Navigator.pop(context);
+                              _navigateToTab(0);
+                            },
+                            isDark: isDark,
                           ),
-                          SizedBox(width: 12.w),
-                          Expanded(
-                            child: isLoading
-                                ? Container(
-                                    height: 20.h,
-                                    width: 120.w,
-                                    decoration: BoxDecoration(
-                                      color: isDark
-                                          ? const Color(0xFF374151)
-                                          : const Color(0xFFE5E7EB),
-                                      borderRadius: BorderRadius.circular(4.r),
-                                    ),
-                                  )
-                                : Text(
-                                    displayName,
-                                    style: TextStyle(
-                                      fontSize: 18.sp,
-                                      fontWeight: FontWeight.w700,
-                                      color: isDark
-                                          ? Colors.white
-                                          : const Color(0xFF0F172A),
-                                      fontFamily: 'Lexend',
-                                    ),
-                                  ),
+                          _buildNavItem(
+                            context,
+                            icon: Icons.class_outlined,
+                            title: 'Lớp học',
+                            onTap: () {
+                              Navigator.pop(context);
+                              _navigateToTab(2);
+                            },
+                            isDark: isDark,
                           ),
-                          Icon(
-                            Icons.chevron_right,
-                            color: isDark
-                                ? const Color(0xFF9CA3AF)
-                                : const Color(0xFF64748B),
-                            size: 24.sp,
+                          _buildNavItem(
+                            context,
+                            icon: Icons.calendar_month_outlined,
+                            title: 'Lịch dạy',
+                            onTap: () {
+                              Navigator.pop(context);
+                              _navigateToTab(1);
+                            },
+                            isDark: isDark,
+                          ),
+                          Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8.h),
+                            child: Divider(
+                              height: 1,
+                              color: isDark
+                                  ? const Color(0xFF374151)
+                                  : const Color(0xFFE5E7EB),
+                            ),
+                          ),
+                          _buildNavItem(
+                            context,
+                            icon: Icons.settings_outlined,
+                            title: 'Cài đặt',
+                            onTap: () {
+                              Navigator.pop(context);
+                              Navigator.pushNamed(
+                                context,
+                                AppRouter.settings,
+                                arguments: {'userRole': 'teacher'},
+                              );
+                            },
+                            isDark: isDark,
                           ),
                         ],
                       ),
                     ),
-                  ),
 
-                  Divider(
-                    height: 1,
-                    color: isDark
-                        ? const Color(0xFF374151)
-                        : const Color(0xFFE5E7EB),
-                  ),
+                    Divider(
+                      height: 1,
+                      color: isDark
+                          ? const Color(0xFF374151)
+                          : const Color(0xFFE5E7EB),
+                    ),
 
-                  Expanded(
-                    child: ListView(
+                    Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: 8.w,
                         vertical: 8.h,
                       ),
-                      children: [
-                        _buildNavItem(
-                          context,
-                          icon: Icons.home_outlined,
-                          title: 'Trang chủ',
-                          onTap: () {
-                            Navigator.pop(context);
-                            _navigateToTab(0);
-                          },
-                          isDark: isDark,
-                        ),
-                        _buildNavItem(
-                          context,
-                          icon: Icons.class_outlined,
-                          title: 'Lớp học',
-                          onTap: () {
-                            Navigator.pop(context);
-                            _navigateToTab(2);
-                          },
-                          isDark: isDark,
-                        ),
-                        _buildNavItem(
-                          context,
-                          icon: Icons.calendar_month_outlined,
-                          title: 'Lịch dạy',
-                          onTap: () {
-                            Navigator.pop(context);
-                            _navigateToTab(1);
-                          },
-                          isDark: isDark,
-                        ),
-                        Padding(
-                          padding: EdgeInsets.symmetric(vertical: 8.h),
-                          child: Divider(
-                            height: 1,
-                            color: isDark
-                                ? const Color(0xFF374151)
-                                : const Color(0xFFE5E7EB),
-                          ),
-                        ),
-                        _buildNavItem(
-                          context,
-                          icon: Icons.settings_outlined,
-                          title: 'Cài đặt',
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.pushNamed(
-                              context,
-                              AppRouter.settings,
-                              arguments: {'userRole': 'teacher'},
-                            );
-                          },
-                          isDark: isDark,
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  Divider(
-                    height: 1,
-                    color: isDark
-                        ? const Color(0xFF374151)
-                        : const Color(0xFFE5E7EB),
-                  ),
-
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 8.w,
-                      vertical: 8.h,
-                    ),
-                    child: _buildNavItem(
-                      context,
-                      icon: Icons.logout_outlined,
-                      title: 'Đăng xuất',
-                      onTap: () => _showLogoutDialog(context),
-                      isDark: isDark,
-                      isLogout: true,
-                    ),
-                  ),
-
-                  Padding(
-                    padding: EdgeInsets.only(bottom: 16.h),
-                    child: Text(
-                      'Phiên bản 1.0.2',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: isDark
-                            ? AppColors.neutral500
-                            : AppColors.neutral400,
-                        fontFamily: 'Lexend',
+                      child: _buildNavItem(
+                        context,
+                        icon: Icons.logout_outlined,
+                        title: 'Đăng xuất',
+                        onTap: () => _showLogoutDialog(context),
+                        isDark: isDark,
+                        isLogout: true,
                       ),
                     ),
-                  ),
-                ],
+
+                    Padding(
+                      padding: EdgeInsets.only(bottom: 16.h),
+                      child: Text(
+                        'Phiên bản 1.0.2',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: isDark
+                              ? AppColors.neutral500
+                              : AppColors.neutral400,
+                          fontFamily: 'Lexend',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -322,7 +337,7 @@ class TeacherDrawerWidget extends StatelessWidget {
   void _showLogoutDialog(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final authBloc = context.read<AuthBloc>();
-    
+
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -350,7 +365,9 @@ class TeacherDrawerWidget extends StatelessWidget {
                 'Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng?',
                 style: TextStyle(
                   fontSize: 14.sp,
-                  color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF64748B),
+                  color: isDark
+                      ? const Color(0xFF9CA3AF)
+                      : const Color(0xFF64748B),
                 ),
               ),
               SizedBox(height: 24.h),
@@ -384,16 +401,33 @@ class TeacherDrawerWidget extends StatelessWidget {
                   SizedBox(width: 12.w),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         Navigator.pop(dialogContext); // Close dialog
-                        Navigator.pop(context); // Close drawer
-                        authBloc.add(const LogoutRequested());
-                        // Navigate to welcome page
-                        Navigator.pushNamedAndRemoveUntil(
-                          context,
-                          AppRouter.welcome,
-                          (route) => false,
-                        );
+                        Navigator.of(context).pop(); // Close drawer first
+                        
+                        // Reset teacher state
+                        try {
+                          final teacherBloc = context.read<TeacherBloc>();
+                          teacherBloc.add(ResetTeacherState());
+                        } catch (_) {
+                          // Bloc may already be closed, ignore
+                        }
+                        
+                        // Navigate to welcome screen immediately
+                        if (context.mounted) {
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            AppRouter.welcome,
+                            (route) => false,
+                          );
+                        }
+                        
+                        // Then trigger logout (this clears token)
+                        try {
+                          authBloc.add(const LogoutRequested());
+                        } catch (_) {
+                          // Bloc may already be closed, ignore
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.error,

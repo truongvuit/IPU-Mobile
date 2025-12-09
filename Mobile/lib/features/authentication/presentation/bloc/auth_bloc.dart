@@ -56,7 +56,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       final result = await authRepository.logout();
 
-      
       if (!isClosed) {
         result.fold(
           (failure) => emit(AuthFailure(message: failure.message)),
@@ -77,7 +76,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(const AuthLoading());
 
     try {
-      
       final result = await authRepository.forgotPassword(
         email: event.emailOrPhone,
       );
@@ -100,7 +98,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(const AuthLoading());
 
     try {
-      
       final result = await authRepository.verifyResetCode(code: event.code);
 
       result.fold((failure) => emit(AuthFailure(message: failure.message)), (
@@ -161,7 +158,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(const AuthLoading());
 
     try {
-      
       final result = await authRepository.resetPassword(
         code: event.verificationCode,
         newPassword: event.newPassword,

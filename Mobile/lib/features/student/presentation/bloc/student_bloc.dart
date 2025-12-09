@@ -1,9 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import '../../domain/repositories/student_repository.dart';
+import '../../domain/entities/course.dart';
 import '../../domain/entities/student_class.dart';
 import '../../domain/entities/schedule.dart';
+import '../../domain/entities/grade.dart';
 import '../../domain/entities/student_profile.dart';
+import '../../data/services/cart_service.dart';
 import '../constants/student_messages.dart';
 import 'student_event.dart';
 import 'student_state.dart';
@@ -11,11 +14,8 @@ import 'student_state.dart';
 class StudentBloc extends Bloc<StudentEvent, StudentState> {
   final StudentRepository repository;
 
-  StudentProfile? _cachedProfile;
-  StudentProfile? get cachedProfile => _cachedProfile;
-
-  // Cart state - persisted across screen navigation
-  final List<CartItem> _cartItems = [];
+  // Cart state - uses singleton CartService for persistence across bloc instances
+  final CartService _cartService = CartService.instance;
 
   StudentBloc({required this.repository}) : super(const StudentInitial()) {
     on<LoadDashboard>(_onLoadDashboard, transformer: droppable());
@@ -42,6 +42,18 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     on<AddCourseToCart>(_onAddCourseToCart);
     on<RemoveFromCart>(_onRemoveFromCart);
     on<ClearCart>(_onClearCart);
+
+    // Reset event (for logout)
+    on<ResetStudentState>(_onResetStudentState);
+  }
+
+  /// Reset state (e.g., on logout)
+  void _onResetStudentState(
+    ResetStudentState event,
+    Emitter<StudentState> emit,
+  ) {
+    _cartService.clear();
+    emit(const StudentInitial());
   }
 
   Future<void> _onLoadDashboard(
@@ -65,12 +77,9 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
       final todayScheduleResult = await todayScheduleFuture;
 
       final profile = profileResult.fold((_) => null, (profile) => profile);
-      if (profile != null) {
-        _cachedProfile = profile;
-      }
 
       String? profileError;
-      if (profileResult.isLeft() && _cachedProfile == null) {
+      if (profileResult.isLeft()) {
         profileError = profileResult.fold((f) => f.message, (_) => null);
       }
 
@@ -109,7 +118,7 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
             (_) => <StudentClass>[],
             (classes) => classes,
           ),
-          profile: _cachedProfile,
+          profile: profile,
           todaySchedules: todaySchedules,
           errorMessage: profileError,
         ),
@@ -205,6 +214,8 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     Emitter<StudentState> emit,
   ) async {
     final currentState = state;
+
+    // If already showing ClassesLoaded, just refresh
     if (currentState is ClassesLoaded) {
       emit(currentState.copyWith(isRefreshing: true));
     } else {
@@ -214,18 +225,23 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     try {
       final result = await repository.getMyClasses();
 
-      result.fold((failure) {
-        if (currentState is ClassesLoaded) {
-          emit(
-            currentState.copyWith(
-              isRefreshing: false,
-              errorMessage: failure.message,
-            ),
-          );
-        } else {
-          emit(StudentError(failure.message));
-        }
-      }, (classes) => emit(ClassesLoaded(classes)));
+      result.fold(
+        (failure) {
+          if (currentState is ClassesLoaded) {
+            emit(
+              currentState.copyWith(
+                isRefreshing: false,
+                errorMessage: failure.message,
+              ),
+            );
+          } else {
+            emit(StudentError(failure.message));
+          }
+        },
+        (classes) {
+          emit(ClassesLoaded(classes));
+        },
+      );
     } catch (e) {
       final errorMsg = 'Không thể tải danh sách lớp học: $e';
       if (currentState is ClassesLoaded) {
@@ -261,6 +277,8 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     Emitter<StudentState> emit,
   ) async {
     final currentState = state;
+
+    // If already showing ScheduleLoaded, just refresh
     if (currentState is ScheduleLoaded) {
       emit(currentState.copyWith(isRefreshing: true));
     } else {
@@ -283,9 +301,9 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
             emit(StudentError(failure.message));
           }
         },
-        (schedules) => emit(
-          ScheduleLoaded(schedules: schedules, selectedDate: event.date),
-        ),
+        (schedules) {
+          emit(ScheduleLoaded(schedules: schedules, selectedDate: event.date));
+        },
       );
     } catch (e) {
       final errorMsg = 'Không thể tải lịch học: $e';
@@ -385,6 +403,8 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     Emitter<StudentState> emit,
   ) async {
     final currentState = state;
+
+    // If already showing CourseGradesLoaded for same course, just refresh
     if (currentState is CourseGradesLoaded &&
         currentState.courseId == event.courseId) {
       emit(currentState.copyWith(isRefreshing: true));
@@ -409,8 +429,9 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
             emit(StudentError(failure.message));
           }
         },
-        (grades) =>
-            emit(CourseGradesLoaded(grades: grades, courseId: event.courseId)),
+        (grades) {
+          emit(CourseGradesLoaded(grades: grades, courseId: event.courseId));
+        },
       );
     } catch (e) {
       final errorMsg = 'Không thể tải điểm khóa học: $e';
@@ -641,11 +662,11 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
 
   void _onAddCourseToCart(AddCourseToCart event, Emitter<StudentState> emit) {
     // Check if already in cart
-    if (_cartItems.any((item) => item.classId == event.classId)) {
+    if (_cartService.isInCart(event.classId)) {
       return; // Already in cart
     }
 
-    _cartItems.add(
+    _cartService.addItem(
       CartItem(
         courseId: event.courseId,
         courseName: event.courseName,
@@ -656,22 +677,21 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
       ),
     );
 
-    emit(StudentCartUpdated(cartItems: List.from(_cartItems)));
+    emit(StudentCartUpdated(cartItems: _cartService.items));
   }
 
   void _onRemoveFromCart(RemoveFromCart event, Emitter<StudentState> emit) {
-    _cartItems.removeWhere((item) => item.classId == event.classId);
-    emit(StudentCartUpdated(cartItems: List.from(_cartItems)));
+    _cartService.removeItem(event.classId);
+    emit(StudentCartUpdated(cartItems: _cartService.items));
   }
 
   void _onClearCart(ClearCart event, Emitter<StudentState> emit) {
-    _cartItems.clear();
+    _cartService.clear();
     emit(StudentCartUpdated(cartItems: []));
   }
 
-  // Getter for current cart items (useful for UI)
-  List<CartItem> get cartItems => List.unmodifiable(_cartItems);
-  int get cartItemCount => _cartItems.length;
-  bool isInCart(int classId) =>
-      _cartItems.any((item) => item.classId == classId);
+  // Getter for current cart items (useful for UI) - reads from CartService singleton
+  List<CartItem> get cartItems => _cartService.items;
+  int get cartItemCount => _cartService.itemCount;
+  bool isInCart(int classId) => _cartService.isInCart(classId);
 }

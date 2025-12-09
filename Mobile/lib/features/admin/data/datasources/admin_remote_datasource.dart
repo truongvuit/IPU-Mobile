@@ -60,7 +60,6 @@ class AdminRemoteDataSource implements AdminApiDataSource {
     required String phoneNumber,
     String? avatarUrl,
   }) async {
-    
     throw UnsupportedOperationException(
       'Chức năng cập nhật thông tin admin chưa được hỗ trợ. Vui lòng liên hệ quản trị hệ thống.',
     );
@@ -93,7 +92,7 @@ class AdminRemoteDataSource implements AdminApiDataSource {
             data['tongKhoaHoc'] ?? data['totalCourses'],
           ),
           isFallback: false,
-          
+
           classesGrowth: 12.5,
           classesGrowthDirection: TrendDirection.up,
           registrationsGrowth: 8.3,
@@ -102,7 +101,7 @@ class AdminRemoteDataSource implements AdminApiDataSource {
           studentsGrowthDirection: TrendDirection.up,
           revenueGrowth: 15.7,
           revenueGrowthDirection: TrendDirection.up,
-          
+
           pendingAttendance: _parseToInt(data['pendingAttendance']),
           pendingPayments: _parseToInt(data['pendingPayments']),
           classConflicts: _parseToInt(data['classConflicts']),
@@ -183,7 +182,7 @@ class AdminRemoteDataSource implements AdminApiDataSource {
       monthlyRevenue: 0.0,
       totalTeachers: totalTeachers,
       totalCourses: totalCourses,
-      isFallback: true, 
+      isFallback: true,
     );
   }
 
@@ -345,13 +344,13 @@ class AdminRemoteDataSource implements AdminApiDataSource {
           'schedule': schedule,
           'startTime': startTime,
           'minutesPerSession': minutesPerSession,
-          
+
           'startDate':
               startDate ??
               currentData['startDate'] ??
               currentData['ngaybatdau'],
           'note': currentData['note'] ?? currentData['ghichu'],
-          
+
           if (maxStudents != null) 'maxCapacity': maxStudents,
         },
       );
@@ -579,7 +578,6 @@ class AdminRemoteDataSource implements AdminApiDataSource {
   @override
   Future<AdminStudent> updateStudent(AdminStudent student) async {
     try {
-      
       final data = AdminStudentModel.fromEntity(student).toUpdateJson();
 
       final response = await dioClient.put(
@@ -588,7 +586,6 @@ class AdminRemoteDataSource implements AdminApiDataSource {
       );
 
       if (response.statusCode == 200 && response.data['code'] == 1000) {
-        
         return AdminStudentModel.fromJson(response.data['data']).toEntity();
       } else {
         throw Exception(response.data['message'] ?? 'Update student failed');
@@ -722,7 +719,10 @@ class AdminRemoteDataSource implements AdminApiDataSource {
     String? imageUrl,
   }) async {
     try {
-      final body = <String, dynamic>{'name': name, 'phoneNumber': phoneNumber};
+      final body = <String, dynamic>{
+        'fullName': name,
+        'phoneNumber': phoneNumber,
+      };
 
       if (email != null && email.isNotEmpty) {
         body['email'] = email;
@@ -731,7 +731,7 @@ class AdminRemoteDataSource implements AdminApiDataSource {
         body['dateOfBirth'] = dateOfBirth.toIso8601String().split('T')[0];
       }
       if (imageUrl != null && imageUrl.isNotEmpty) {
-        body['imageUrl'] = imageUrl;
+        body['imagePath'] = imageUrl;
       }
 
       final response = await dioClient.put('/lecturers/$teacherId', data: body);
@@ -1223,7 +1223,6 @@ class AdminRemoteDataSource implements AdminApiDataSource {
     try {
       final request = CartPreviewRequest.fromClassIds(classIds);
 
-      
       if (request.courseClassIds.isEmpty) {
         return const CartPreview(
           items: [],
@@ -1240,7 +1239,6 @@ class AdminRemoteDataSource implements AdminApiDataSource {
         );
       }
 
-      
       final requestBody = request.toJson();
       if (studentId != null && studentId.isNotEmpty) {
         final studentIdInt = int.tryParse(studentId);
@@ -1257,7 +1255,6 @@ class AdminRemoteDataSource implements AdminApiDataSource {
         return CartPreviewModel.fromJson(data);
       }
 
-      
       return const CartPreview(
         items: [],
         summary: CartPreviewSummary(
@@ -1303,8 +1300,28 @@ class AdminRemoteDataSource implements AdminApiDataSource {
       return null;
     }
   }
-}
 
+  @override
+  Future<void> confirmCashPayment(int invoiceId) async {
+    try {
+      final response = await dioClient.post(
+        '/orders/payment/confirm-cash',
+        queryParameters: {'invoiceId': invoiceId},
+      );
+
+      if (response.statusCode != 200 ||
+          (response.data['code'] != null && response.data['code'] != 1000)) {
+        throw Exception(
+          response.data['message'] ?? 'Xác nhận thanh toán thất bại',
+        );
+      }
+      log('Cash payment confirmed for invoice $invoiceId');
+    } catch (e) {
+      log('Confirm cash payment error: $e');
+      throw Exception('Xác nhận thanh toán thất bại: $e');
+    }
+  }
+}
 
 class UnsupportedOperationException implements Exception {
   final String message;

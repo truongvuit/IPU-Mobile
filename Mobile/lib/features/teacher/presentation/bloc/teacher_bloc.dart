@@ -12,6 +12,9 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
   TeacherProfile? _cachedProfile;
   TeacherProfile? get cachedProfile => _cachedProfile;
 
+  // Dashboard cache
+  DashboardLoaded? _cachedDashboard;
+
   TeacherBloc({required this.repository}) : super(TeacherInitial()) {
     on<LoadTeacherDashboard>(_onLoadDashboard);
     on<LoadMyClasses>(_onLoadMyClasses);
@@ -28,12 +31,29 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
     on<LoadTodaySchedule>(_onLoadTodaySchedule);
     on<LoadTeacherProfile>(_onLoadProfile);
     on<UpdateTeacherProfile>(_onUpdateProfile);
+    on<ResetTeacherState>(_onResetTeacherState);
+  }
+
+  void _onResetTeacherState(
+    ResetTeacherState event,
+    Emitter<TeacherState> emit,
+  ) {
+    _cachedClasses = null;
+    _cachedProfile = null;
+    _cachedDashboard = null;
+    emit(TeacherInitial());
   }
 
   Future<void> _onLoadDashboard(
     LoadTeacherDashboard event,
     Emitter<TeacherState> emit,
   ) async {
+    // Nếu có cache và không force refresh thì dùng cache
+    if (!event.forceRefresh && _cachedDashboard != null) {
+      emit(_cachedDashboard!);
+      return;
+    }
+
     emit(const TeacherLoading(action: 'Đang tải dashboard...'));
 
     try {
@@ -94,14 +114,14 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
         ).compareTo(getStatusPriority(b.status));
       });
 
-      emit(
-        DashboardLoaded(
-          todaySchedule: schedule,
-          weekSchedule: weekSchedule,
-          recentClasses: sortedClasses.take(3).toList(),
-          profile: profile,
-        ),
+      final dashboardData = DashboardLoaded(
+        todaySchedule: schedule,
+        weekSchedule: weekSchedule,
+        recentClasses: sortedClasses.take(3).toList(),
+        profile: profile,
       );
+      _cachedDashboard = dashboardData;
+      emit(dashboardData);
     } catch (e) {
       emit(TeacherError('Không thể tải dashboard: ${e.toString()}'));
     }

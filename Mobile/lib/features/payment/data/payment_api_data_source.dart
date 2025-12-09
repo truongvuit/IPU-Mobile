@@ -17,8 +17,9 @@ class PaymentApiDataSource {
     required String userRole,
   }) async {
     try {
+      // Add platform=mobile query param so backend redirects to deep link
       final response = await dioClient.post(
-        '/orders/payment/create',
+        '/orders/payment/create?platform=mobile',
         data: request.toJson(),
         
         

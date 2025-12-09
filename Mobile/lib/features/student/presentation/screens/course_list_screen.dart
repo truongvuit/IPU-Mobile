@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/routing/app_router.dart';
+import '../../data/services/cart_service.dart';
 import '../bloc/student_bloc.dart';
 import '../bloc/student_event.dart';
 import '../bloc/student_state.dart';
@@ -9,7 +10,6 @@ import '../widgets/student_app_bar.dart';
 import '../widgets/course_card.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../core/widgets/skeleton_widget.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 import '../widgets/cart_bottom_sheet.dart';
 
@@ -22,6 +22,14 @@ class CourseListScreen extends StatefulWidget {
 
 class _CourseListScreenState extends State<CourseListScreen> {
   final TextEditingController _searchController = TextEditingController();
+  String _selectedFilter = 'Tất cả';
+
+  final List<String> _filterOptions = [
+    'Tất cả',
+    'Mới mở',
+    'Nhập môn',
+    'Nâng cao',
+  ];
 
   @override
   void initState() {
@@ -43,31 +51,36 @@ class _CourseListScreenState extends State<CourseListScreen> {
       backgroundColor: isDark
           ? const Color(0xFF111827)
           : const Color(0xFFF9FAFB),
-      floatingActionButton: Builder(
-        builder: (context) {
-          final bloc = context.read<StudentBloc>();
-          final cartCount = bloc.cartItemCount;
+      floatingActionButton: BlocBuilder<StudentBloc, StudentState>(
+        buildWhen: (previous, current) =>
+            current is StudentCartUpdated || current is CoursesLoaded,
+        builder: (context, state) {
+          // Read cart count from CartService singleton (persists across bloc instances)
+          final cartCount = CartService.instance.itemCount;
 
-          if (cartCount == 0) return const SizedBox.shrink();
-
+          // Always show FAB, but with different appearance based on cart count
           return FloatingActionButton.extended(
             onPressed: () => CartBottomSheet.show(context),
-            backgroundColor: AppColors.primary,
-            icon: Badge(
-              label: Text(
-                '$cartCount',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              backgroundColor: AppColors.error,
-              child: const Icon(Icons.shopping_cart, color: Colors.white),
-            ),
-            label: const Text(
-              'Giỏ hàng',
-              style: TextStyle(color: Colors.white),
+            backgroundColor: cartCount > 0
+                ? AppColors.primary
+                : AppColors.primary.withValues(alpha: 0.7),
+            icon: cartCount > 0
+                ? Badge(
+                    label: Text(
+                      '$cartCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    backgroundColor: AppColors.error,
+                    child: const Icon(Icons.shopping_cart, color: Colors.white),
+                  )
+                : const Icon(Icons.shopping_cart_outlined, color: Colors.white),
+            label: Text(
+              cartCount > 0 ? 'Giỏ hàng ($cartCount)' : 'Giỏ hàng',
+              style: const TextStyle(color: Colors.white),
             ),
           );
         },
@@ -165,19 +178,67 @@ class _CourseListScreenState extends State<CourseListScreen> {
                 ),
               ),
 
+              // Filter Chips
+              Container(
+                height: 44.h,
+                margin: EdgeInsets.only(bottom: 8.h),
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.symmetric(horizontal: padding),
+                  itemCount: _filterOptions.length,
+                  separatorBuilder: (_, __) => SizedBox(width: 8.w),
+                  itemBuilder: (context, index) {
+                    final filter = _filterOptions[index];
+                    final isSelected = filter == _selectedFilter;
+                    return FilterChip(
+                      label: Text(filter),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        setState(() {
+                          _selectedFilter = filter;
+                        });
+                        // Trigger search with filter
+                        context.read<StudentBloc>().add(
+                          SearchCourses(_searchController.text),
+                        );
+                      },
+                      backgroundColor: isDark
+                          ? const Color(0xFF1F2937)
+                          : Colors.white,
+                      selectedColor: AppColors.primary.withValues(alpha: 0.2),
+                      checkmarkColor: AppColors.primary,
+                      labelStyle: TextStyle(
+                        color: isSelected
+                            ? AppColors.primary
+                            : (isDark ? Colors.white : AppColors.textPrimary),
+                        fontWeight: isSelected
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                      ),
+                      side: BorderSide(
+                        color: isSelected
+                            ? AppColors.primary
+                            : (isDark
+                                  ? const Color(0xFF374151)
+                                  : const Color(0xFFDBDFE6)),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppSizes.radiusMedium,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
               Expanded(
                 child: BlocBuilder<StudentBloc, StudentState>(
                   builder: (context, state) {
                     if (state is StudentLoading) {
-                      return ListView.builder(
-                        padding: EdgeInsets.fromLTRB(padding, 0, padding, 16.h),
-                        itemCount: 5,
-                        itemBuilder: (context, index) => Padding(
-                          padding: EdgeInsets.only(
-                            bottom: AppSizes.paddingMedium,
-                          ),
-                          child: SkeletonWidget.rectangular(height: 200.h),
-                        ),
+                      return const EmptyStateWidget(
+                        icon: Icons.hourglass_empty,
+                        message: 'Đang tải khóa học...',
                       );
                     }
 
@@ -241,25 +302,29 @@ class _CourseListScreenState extends State<CourseListScreen> {
                         );
                       }
 
-                      return RefreshIndicator(
-                        color: AppColors.primary,
-                        onRefresh: () async {
-                          context.read<StudentBloc>().add(LoadAllCourses());
-                        },
-                        child: ListView.builder(
-                          padding: EdgeInsets.fromLTRB(
-                            padding,
-                            0,
-                            padding,
-                            16.h,
-                          ),
-                          itemCount: state.courses.length,
-                          itemBuilder: (context, index) {
-                            final course = state.courses[index];
-                            return Padding(
-                              padding: EdgeInsets.only(bottom: 16.h),
-                              child: CourseCard(
+                      // Use ListView for mobile, GridView for tablet/desktop
+                      if (!isDesktop && !isTablet) {
+                        // Mobile: List view with horizontal cards
+                        return RefreshIndicator(
+                          color: AppColors.primary,
+                          onRefresh: () async {
+                            context.read<StudentBloc>().add(LoadAllCourses());
+                          },
+                          child: ListView.separated(
+                            padding: EdgeInsets.fromLTRB(
+                              padding,
+                              0,
+                              padding,
+                              80.h, // Extra padding for FAB
+                            ),
+                            itemCount: state.courses.length,
+                            separatorBuilder: (context, index) =>
+                                SizedBox(height: 12.h),
+                            itemBuilder: (context, index) {
+                              final course = state.courses[index];
+                              return CourseCard(
                                 course: course,
+                                isHorizontal: true,
                                 onTap: () {
                                   Navigator.pushNamed(
                                     context,
@@ -267,7 +332,48 @@ class _CourseListScreenState extends State<CourseListScreen> {
                                     arguments: course.id,
                                   );
                                 },
+                              );
+                            },
+                          ),
+                        );
+                      }
+
+                      // Tablet/Desktop: Grid view with vertical cards
+                      final crossAxisCount = isDesktop ? 3 : 2;
+                      final childAspectRatio = isDesktop ? 0.75 : 0.8;
+
+                      return RefreshIndicator(
+                        color: AppColors.primary,
+                        onRefresh: () async {
+                          context.read<StudentBloc>().add(LoadAllCourses());
+                        },
+                        child: GridView.builder(
+                          padding: EdgeInsets.fromLTRB(
+                            padding,
+                            0,
+                            padding,
+                            80.h, // Extra padding for FAB
+                          ),
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: crossAxisCount,
+                                crossAxisSpacing: 12.w,
+                                mainAxisSpacing: 12.h,
+                                childAspectRatio: childAspectRatio,
                               ),
+                          itemCount: state.courses.length,
+                          itemBuilder: (context, index) {
+                            final course = state.courses[index];
+                            return CourseCard(
+                              course: course,
+                              isHorizontal: false,
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  AppRouter.studentCourseDetail,
+                                  arguments: course.id,
+                                );
+                              },
                             );
                           },
                         ),

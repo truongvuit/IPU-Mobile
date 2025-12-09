@@ -267,7 +267,7 @@ class _TeacherGradesListScreenState extends State<TeacherGradesListScreen> {
 
     if (state is TeacherGradesLoaded && filteredGrades.isEmpty) {
       return const EmptyStateWidget(
-        message: 'Chưa có điểm nào',
+        message: 'Danh sách điểm đang được cập nhật',
         icon: Icons.grade_outlined,
       );
     }

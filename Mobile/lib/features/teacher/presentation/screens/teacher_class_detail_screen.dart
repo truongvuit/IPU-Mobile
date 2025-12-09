@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/utils/date_formatter.dart';
@@ -375,31 +374,7 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
           ),
           SizedBox(height: 24.h),
 
-          Text(
-            'Hành động nhanh',
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : Colors.black87,
-            ),
-          ),
-          SizedBox(height: 12.h),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () {
-                
-                Navigator.pushNamed(context, AppRouter.teacherSchedule);
-              },
-              icon: const Icon(Icons.calendar_month),
-              label: const Text('Mở lịch dạy'),
-              style: OutlinedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 14.h),
-                side: const BorderSide(color: AppColors.primary),
-                foregroundColor: AppColors.primary,
-              ),
-            ),
-          ),
+          // Quick actions removed per request (button mở lịch dạy)
         ],
       ),
     );
@@ -522,7 +497,7 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
                   child: EmptyStateWidget(
                     message: _studentSearchQuery.isNotEmpty
                         ? 'Không tìm thấy học viên phù hợp'
-                        : 'Chưa có học sinh nào trong lớp',
+                        : 'Danh sách học viên đang được tải',
                     icon: _studentSearchQuery.isNotEmpty
                         ? Icons.search_off
                         : Icons.people_outline,

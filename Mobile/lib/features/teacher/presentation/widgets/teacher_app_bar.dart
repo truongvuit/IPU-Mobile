@@ -14,6 +14,8 @@ class TeacherAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showNotificationBadge;
   final bool showBackButton;
   final VoidCallback? onBackPressed;
+  final bool showMenuButton;
+  final VoidCallback? onMenuPressed;
   final List<Widget>? actions;
 
   const TeacherAppBar({
@@ -26,6 +28,8 @@ class TeacherAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.showNotificationBadge = false,
     this.showBackButton = false,
     this.onBackPressed,
+    this.showMenuButton = false,
+    this.onMenuPressed,
     this.actions,
   });
 
@@ -37,112 +41,152 @@ class TeacherAppBar extends StatelessWidget implements PreferredSizeWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium, vertical: AppSizes.paddingSmall),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSizes.paddingMedium,
+        vertical: AppSizes.paddingSmall,
+      ),
       decoration: BoxDecoration(
         color: isDark ? AppColors.neutral800 : Colors.white,
       ),
       child: SafeArea(
-        child: Row(
-          children: [
-            if (showBackButton)
-              IconButton(
-                icon: Icon(
-                  Icons.arrow_back,
-                  color: isDark ? Colors.white : AppColors.textPrimary,
-                ),
-                onPressed: onBackPressed ?? () => Navigator.pop(context),
-              )
-            else if (avatarUrl != null || greeting != null)
-              Row(
-                children: [
-                  
-                  if (avatarUrl != null)
-                    GestureDetector(
-                      onTap: onAvatarTap,
-                      child: Container(
-                        width: 48.w,
-                        height: 48.h,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                        ),
-                        child: ClipOval(
-                          child: CustomImage(
-                            imageUrl: avatarUrl!,
-                            width: 48.w,
-                            height: 48.h,
-                            fit: BoxFit.cover,
-                            isAvatar: true,
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (greeting != null) ...[
-                    SizedBox(width: AppSizes.paddingSmall),
-                    Text(
-                      greeting!,
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : AppColors.textPrimary,
-                        fontFamily: 'Lexend',
-                      ),
-                    ),
-                  ],
-                ],
+        child: SizedBox(
+          height: 56.h,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: _buildLeading(context, isDark),
               ),
-
-            
-            if (title != null)
-              Expanded(
-                child: Text(
-                  title!,
-                  textAlign: showBackButton ? TextAlign.center : TextAlign.left,
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : AppColors.textPrimary,
-                    fontFamily: 'Lexend',
+              if (title != null)
+                Center(
+                  child: Text(
+                    title!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : AppColors.textPrimary,
+                      fontFamily: 'Lexend',
+                    ),
                   ),
                 ),
-              )
-            else
-              const Spacer(),
-
-            
-            if (onNotificationTap != null)
-              Stack(
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.notifications_outlined,
-                      color: isDark
-                          ? AppColors.textSecondary
-                          : AppColors.textSecondary,
-                    ),
-                    onPressed: onNotificationTap,
-                  ),
-                  if (showNotificationBadge)
-                    Positioned(
-                      right: 10.w,
-                      top: 10.h,
-                      child: Container(
-                        width: 8.w,
-                        height: 8.h,
-                        decoration: const BoxDecoration(
-                          color: AppColors.primary,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                ],
+              Align(
+                alignment: Alignment.centerRight,
+                child: _buildTrailing(isDark),
               ),
-
-            
-            if (actions != null) ...actions!,
-          ],
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  Widget _buildLeading(BuildContext context, bool isDark) {
+    if (showBackButton) {
+      return IconButton(
+        icon: Icon(
+          Icons.arrow_back,
+          color: isDark ? Colors.white : AppColors.textPrimary,
+        ),
+        onPressed: onBackPressed ?? () => Navigator.pop(context),
+      );
+    }
+
+    if (showMenuButton) {
+      return IconButton(
+        icon: Icon(
+          Icons.menu,
+          color: isDark ? Colors.white : AppColors.textPrimary,
+        ),
+        onPressed: onMenuPressed,
+      );
+    }
+
+    if (avatarUrl != null || greeting != null) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (avatarUrl != null)
+            GestureDetector(
+              onTap: onAvatarTap,
+              child: Container(
+                width: 48.w,
+                height: 48.h,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                ),
+                child: ClipOval(
+                  child: CustomImage(
+                    imageUrl: avatarUrl!,
+                    width: 48.w,
+                    height: 48.h,
+                    fit: BoxFit.cover,
+                    isAvatar: true,
+                  ),
+                ),
+              ),
+            ),
+          if (greeting != null) ...[
+            SizedBox(width: AppSizes.paddingSmall),
+            Text(
+              greeting!,
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w700,
+                color: isDark ? Colors.white : AppColors.textPrimary,
+                fontFamily: 'Lexend',
+              ),
+            ),
+          ],
+        ],
+      );
+    }
+
+    return SizedBox(width: 48.w); // balance title centering
+  }
+
+  Widget _buildTrailing(bool isDark) {
+    final trailing = <Widget>[];
+
+    if (onNotificationTap != null) {
+      trailing.add(
+        Stack(
+          children: [
+            IconButton(
+              icon: Icon(
+                Icons.notifications_outlined,
+                color: isDark ? AppColors.textSecondary : AppColors.textSecondary,
+              ),
+              onPressed: onNotificationTap,
+            ),
+            if (showNotificationBadge)
+              Positioned(
+                right: 10.w,
+                top: 10.h,
+                child: Container(
+                  width: 8.w,
+                  height: 8.h,
+                  decoration: const BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      );
+    }
+
+    if (actions != null) {
+      trailing.addAll(actions!);
+    }
+
+    if (trailing.isEmpty) {
+      return SizedBox(width: 48.w); // mirror leading width when no actions
+    }
+
+    return Row(mainAxisSize: MainAxisSize.min, children: trailing);
   }
 }
 

@@ -5,11 +5,14 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/di/injector.dart';
+import '../../../authentication/data/datasources/auth_local_datasource.dart';
+import '../bloc/student_bloc.dart';
+import '../bloc/student_event.dart';
+import '../bloc/student_state.dart';
 import '../bloc/student_checkout_bloc.dart';
 import '../bloc/student_checkout_event.dart';
 import '../bloc/student_checkout_state.dart';
-
-
 
 class StudentCheckoutScreen extends StatefulWidget {
   final List<int> classIds;
@@ -29,7 +32,10 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
   @override
   void initState() {
     super.initState();
-    
+
+    // Ensure profile is loaded for studentId retrieval
+    context.read<StudentBloc>().add(const LoadProfile());
+
     context.read<StudentCheckoutBloc>().add(
       LoadCartPreview(classIds: widget.classIds),
     );
@@ -68,7 +74,6 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
           }
 
           if (state is StudentCheckoutOrderCreated) {
-            
             Navigator.of(context).pushReplacementNamed(
               '/payment/vnpay',
               arguments: {
@@ -93,7 +98,6 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  
                   if (widget.courseName != null)
                     _buildSectionCard(
                       title: 'Khóa học',
@@ -107,12 +111,10 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
 
                   SizedBox(height: AppSizes.paddingMedium),
 
-                  
                   _buildCartPreviewSection(state, theme, isDark),
 
                   SizedBox(height: AppSizes.paddingMedium),
 
-                  
                   _buildCheckoutButton(state, isDark),
                 ],
               ),
@@ -179,7 +181,6 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
         title: 'Chi tiết thanh toán',
         child: Column(
           children: [
-            
             ...state.cartPreview.items.map(
               (item) => Padding(
                 padding: EdgeInsets.only(bottom: AppSizes.paddingSmall),
@@ -232,7 +233,6 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
 
             Divider(height: AppSizes.paddingLarge),
 
-            
             _buildSummaryRow(
               'Tổng học phí:',
               _formatCurrency(state.cartPreview.summary.totalTuitionFee),
@@ -258,7 +258,6 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
               valueColor: AppColors.primary,
             ),
 
-            
             if (state.cartPreview.summary.hasAnyDiscount) ...[
               SizedBox(height: AppSizes.paddingMedium),
               _buildDiscountBreakdown(state, theme, isDark),
@@ -297,7 +296,6 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
       );
     }
 
-    
     return const SizedBox.shrink();
   }
 
@@ -371,11 +369,20 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
               '• Khuyến mãi combo: ${summary.comboDiscountPercent}%',
               style: theme.textTheme.bodySmall,
             ),
-          if (summary.returningStudentDiscountPercent > 0)
+          if (summary.returningDiscountAmount > 0)
             Text(
-              '• Học viên cũ: ${summary.returningStudentDiscountPercent}%',
+              '• Ưu đãi học viên cũ: -${_formatCurrency(summary.returningDiscountAmount)} (${summary.returningStudentDiscountPercent}%)',
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          if (summary.appliedCombos.isNotEmpty) ...[
+            SizedBox(height: AppSizes.paddingExtraSmall),
+            Text(
+              '• Combo áp dụng: ${summary.appliedCombos.join(", ")}',
               style: theme.textTheme.bodySmall,
             ),
+          ],
         ],
       ),
     );
@@ -389,9 +396,55 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
 
     return ElevatedButton(
       onPressed: canCheckout && !isLoading
-          ? () {
+          ? () async {
+              // Get studentId from multiple sources
+              int? studentId;
+              
+              // Try StudentBloc state first
+              final studentBloc = context.read<StudentBloc>();
+              final studentState = studentBloc.state;
+
+              if (studentState is ProfileLoaded) {
+                studentId = int.tryParse(studentState.profile.id);
+              } else if (studentState is DashboardLoaded &&
+                  studentState.profile != null) {
+                studentId = int.tryParse(studentState.profile!.id);
+              } else if (studentState is ProfileUpdated) {
+                studentId = int.tryParse(studentState.profile.id);
+              } else if (studentState is StudentLoaded &&
+                  studentState.profile != null) {
+                studentId = int.tryParse(studentState.profile!.id);
+              }
+              
+              // Fallback: Get from local storage (saved user data)
+              if (studentId == null) {
+                try {
+                  final authLocalDataSource = getIt<AuthLocalDataSource>();
+                  final user = await authLocalDataSource.getUser();
+                  if (user != null && user.id.isNotEmpty) {
+                    studentId = int.tryParse(user.id);
+                  }
+                } catch (e) {
+                  debugPrint('Error getting user from local storage: $e');
+                }
+              }
+
+              if (studentId == null) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text(
+                      'Không tìm thấy thông tin học viên. Vui lòng đăng nhập lại.',
+                    ),
+                    backgroundColor: AppColors.error,
+                  ),
+                );
+                return;
+              }
+
+              if (!context.mounted) return;
               context.read<StudentCheckoutBloc>().add(
-                CreateOrder(classIds: widget.classIds),
+                CreateOrder(classIds: widget.classIds, studentId: studentId),
               );
             }
           : null,

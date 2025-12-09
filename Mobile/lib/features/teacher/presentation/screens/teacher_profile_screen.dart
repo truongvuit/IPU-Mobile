@@ -5,7 +5,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/widgets/custom_image.dart';
-import '../../../../core/widgets/skeleton_widget.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../bloc/teacher_bloc.dart';
 import '../bloc/teacher_event.dart';
@@ -125,7 +124,15 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
                 );
               }
 
-              return const SizedBox.shrink();
+              // For initial state only, trigger reload
+              if (state is TeacherInitial) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) {
+                    context.read<TeacherBloc>().add(LoadTeacherProfile());
+                  }
+                });
+              }
+              return _buildLoadingSkeleton(isDesktop);
             },
           ),
         ),
@@ -134,20 +141,17 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
   }
 
   Widget _buildLoadingSkeleton(bool isDesktop) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(AppSizes.paddingMedium),
-      child: Column(
-        children: [
-          SkeletonWidget.circular(size: isDesktop ? 140.w : 120.w),
-          SizedBox(height: AppSizes.p16),
-          SkeletonWidget.rectangular(height: 30.h, width: 200.w),
-          SizedBox(height: AppSizes.p8),
-          SkeletonWidget.rectangular(height: 20.h, width: 150.w),
-          SizedBox(height: AppSizes.p24),
-          SkeletonWidget.rectangular(height: 100.h),
-          SizedBox(height: AppSizes.p16),
-          SkeletonWidget.rectangular(height: 150.h),
-        ],
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(AppSizes.paddingMedium),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.hourglass_empty, size: isDesktop ? 64.w : 48.w, color: AppColors.primary),
+            SizedBox(height: AppSizes.p16),
+            Text('Đang tải hồ sơ...', style: TextStyle(fontSize: isDesktop ? 18.sp : 14.sp)),
+          ],
+        ),
       ),
     );
   }

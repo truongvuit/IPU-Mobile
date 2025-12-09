@@ -17,7 +17,6 @@ import '../../bloc/admin_course_event.dart';
 import '../../bloc/admin_course_state.dart';
 import '../../bloc/admin_bloc.dart';
 
-
 class AdminCourseEditScreen extends StatefulWidget {
   final CourseDetail course;
 
@@ -33,7 +32,6 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
   bool _isLoadingCategories = true;
   bool _isUploadingImage = false;
 
-  
   late TextEditingController _nameController;
   late TextEditingController _totalHoursController;
   late TextEditingController _tuitionFeeController;
@@ -44,8 +42,7 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
 
   String? _selectedCategoryId;
   bool _isActive = true;
-  
-  
+
   String? _imageUrl;
   File? _selectedImage;
 
@@ -61,16 +58,14 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
 
   Future<void> _loadCategories() async {
     try {
-      
       final adminBloc = context.read<AdminBloc>();
       final categories = await adminBloc.adminRepository.getCategories();
-      
+
       if (mounted) {
         setState(() {
           _categories = categories;
-          
-          
-          if (_selectedCategoryId != null && 
+
+          if (_selectedCategoryId != null &&
               !_categories.any((c) => c['id'] == _selectedCategoryId)) {
             _selectedCategoryId = null;
           }
@@ -78,7 +73,6 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
         });
       }
     } catch (e) {
-      
       if (mounted) {
         setState(() {
           _categories = [
@@ -87,7 +81,7 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
             {'id': '3', 'name': 'IELTS'},
             {'id': '4', 'name': 'Tiếng Anh Thiếu Nhi'},
           ];
-          if (_selectedCategoryId != null && 
+          if (_selectedCategoryId != null &&
               !_categories.any((c) => c['id'] == _selectedCategoryId)) {
             _selectedCategoryId = null;
           }
@@ -141,7 +135,7 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
         maxHeight: 1024,
         imageQuality: 85,
       );
-      
+
       if (image != null) {
         setState(() {
           _selectedImage = File(image.path);
@@ -167,7 +161,7 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
         maxHeight: 1024,
         imageQuality: 85,
       );
-      
+
       if (image != null) {
         setState(() {
           _selectedImage = File(image.path);
@@ -210,7 +204,10 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
             if (_selectedImage != null || _imageUrl != null)
               ListTile(
                 leading: const Icon(Icons.delete, color: AppColors.error),
-                title: const Text('Xóa ảnh', style: TextStyle(color: AppColors.error)),
+                title: const Text(
+                  'Xóa ảnh',
+                  style: TextStyle(color: AppColors.error),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   setState(() {
@@ -227,13 +224,14 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
 
   Future<String?> _uploadImage() async {
     if (_selectedImage == null) return _imageUrl;
-    
+
     setState(() => _isUploadingImage = true);
-    
+
     try {
-      
       final adminBloc = context.read<AdminBloc>();
-      final fileUrl = await adminBloc.adminRepository.uploadFile(_selectedImage!);
+      final fileUrl = await adminBloc.adminRepository.uploadFile(
+        _selectedImage!,
+      );
       return fileUrl ?? _imageUrl;
     } catch (e) {
       debugPrint('Upload error: $e');
@@ -253,7 +251,6 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
     setState(() => _isLoading = true);
 
     try {
-      
       String? finalImageUrl = _imageUrl;
       if (_selectedImage != null) {
         finalImageUrl = await _uploadImage();
@@ -262,7 +259,6 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
         }
       }
 
-      
       final request = UpdateCourseRequest(
         name: _nameController.text.trim(),
         totalHours: int.parse(_totalHoursController.text.trim()),
@@ -284,7 +280,6 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
         isActive: _isActive,
       );
 
-      
       if (!mounted) return;
       context.read<AdminCourseBloc>().add(
         UpdateCourseEvent(id: widget.course.id, request: request),
@@ -365,9 +360,9 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
             child: SingleChildScrollView(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               padding: EdgeInsets.fromLTRB(
-                AppSizes.p20, 
-                AppSizes.p20, 
-                AppSizes.p20, 
+                AppSizes.p20,
+                AppSizes.p20,
+                AppSizes.p20,
                 AppSizes.p20 + bottomPadding + 40,
               ),
               child: Column(
@@ -376,7 +371,6 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
                   _buildSectionTitle('Thông tin cơ bản', isDark),
                   SizedBox(height: AppSizes.p16),
 
-                  
                   TextFormField(
                     controller: _nameController,
                     decoration: InputDecoration(
@@ -384,7 +378,9 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
                       hintText: 'Nhập tên khóa học',
                       prefixIcon: const Icon(Icons.book),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+                        borderRadius: BorderRadius.circular(
+                          AppSizes.radiusMedium,
+                        ),
                       ),
                     ),
                     validator: (value) {
@@ -400,256 +396,268 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
                   ),
                   SizedBox(height: AppSizes.p16),
 
-              
-              _isLoadingCategories
-                  ? const LinearProgressIndicator()
-                  : DropdownButtonFormField<String>(
-                      initialValue: _categories.any((c) => c['id'] == _selectedCategoryId) 
-                          ? _selectedCategoryId 
-                          : null,
-                      isExpanded: true,
-                      decoration: InputDecoration(
-                        labelText: 'Danh mục',
-                        prefixIcon: const Icon(Icons.category),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+                  _isLoadingCategories
+                      ? const LinearProgressIndicator()
+                      : DropdownButtonFormField<String>(
+                          value:
+                              _categories.any(
+                                (c) => c['id'] == _selectedCategoryId,
+                              )
+                              ? _selectedCategoryId
+                              : null,
+                          isExpanded: true,
+                          decoration: InputDecoration(
+                            labelText: 'Danh mục',
+                            prefixIcon: const Icon(Icons.category),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppSizes.radiusMedium,
+                              ),
+                            ),
+                          ),
+                          hint: const Text('Chọn danh mục'),
+                          items: _categories.map((category) {
+                            return DropdownMenuItem<String>(
+                              value: category['id'] as String,
+                              child: Text(
+                                category['name'] as String,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            setState(() => _selectedCategoryId = value);
+                          },
+                        ),
+                  SizedBox(height: AppSizes.p16),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _totalHoursController,
+                          decoration: InputDecoration(
+                            labelText: 'Số giờ học *',
+                            hintText: '60',
+                            prefixIcon: const Icon(Icons.access_time),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppSizes.radiusMedium,
+                              ),
+                            ),
+                          ),
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Bắt buộc';
+                            }
+                            final hours = int.tryParse(value.trim());
+                            if (hours == null || hours <= 0) {
+                              return 'Số giờ không hợp lệ';
+                            }
+                            return null;
+                          },
                         ),
                       ),
-                      hint: const Text('Chọn danh mục'),
-                      items: _categories.map((category) {
-                        return DropdownMenuItem<String>(
-                          value: category['id'] as String,
-                          child: Text(
-                            category['name'] as String,
-                            overflow: TextOverflow.ellipsis,
+                      SizedBox(width: AppSizes.p12),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _tuitionFeeController,
+                          decoration: InputDecoration(
+                            labelText: 'Học phí (đ) *',
+                            hintText: '3500000',
+                            prefixIcon: const Icon(Icons.monetization_on),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppSizes.radiusMedium,
+                              ),
+                            ),
                           ),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() => _selectedCategoryId = value);
-                      },
-                    ),
-              SizedBox(height: AppSizes.p16),
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Bắt buộc';
+                            }
+                            final fee = double.tryParse(value.trim());
+                            if (fee == null || fee <= 0) {
+                              return 'Học phí không hợp lệ';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: AppSizes.p16),
 
-              
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _totalHoursController,
-                      decoration: InputDecoration(
-                        labelText: 'Số giờ học *',
-                        hintText: '60',
-                        prefixIcon: const Icon(Icons.access_time),
-                        border: OutlineInputBorder(
+                  SwitchListTile(
+                    title: const Text('Trạng thái khóa học'),
+                    subtitle: Text(_isActive ? 'Đang mở' : 'Đã đóng'),
+                    value: _isActive,
+                    onChanged: (value) {
+                      setState(() => _isActive = value);
+                    },
+                    activeThumbColor: AppColors.success,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  SizedBox(height: AppSizes.p24),
+
+                  _buildSectionTitle('Hình ảnh & Video', isDark),
+                  SizedBox(height: AppSizes.p16),
+
+                  _buildImagePicker(isDark),
+                  SizedBox(height: AppSizes.p16),
+
+                  TextFormField(
+                    controller: _videoUrlController,
+                    decoration: InputDecoration(
+                      labelText: 'URL video giới thiệu',
+                      hintText: 'https://youtube.com/watch?v=...',
+                      prefixIcon: const Icon(Icons.video_library),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppSizes.radiusMedium,
+                        ),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value != null && value.trim().isNotEmpty) {
+                        final uri = Uri.tryParse(value.trim());
+                        if (uri == null || !uri.isAbsolute) {
+                          return 'URL không hợp lệ';
+                        }
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: AppSizes.p24),
+
+                  _buildSectionTitle('Mô tả & Yêu cầu', isDark),
+                  SizedBox(height: AppSizes.p16),
+
+                  TextFormField(
+                    controller: _descriptionController,
+                    decoration: InputDecoration(
+                      labelText: 'Mô tả khóa học',
+                      hintText: 'Nhập mô tả chi tiết về khóa học...',
+                      alignLabelWithHint: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppSizes.radiusMedium,
+                        ),
+                      ),
+                    ),
+                    maxLines: 5,
+                    maxLength: 1000,
+                  ),
+                  SizedBox(height: AppSizes.p16),
+
+                  TextFormField(
+                    controller: _entryRequirementController,
+                    decoration: InputDecoration(
+                      labelText: 'Yêu cầu đầu vào',
+                      hintText: 'Ví dụ: Không yêu cầu kiến thức đầu vào',
+                      prefixIcon: const Icon(Icons.check_circle_outline),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppSizes.radiusMedium,
+                        ),
+                      ),
+                    ),
+                    maxLines: 3,
+                    maxLength: 500,
+                  ),
+                  SizedBox(height: AppSizes.p16),
+
+                  TextFormField(
+                    controller: _exitRequirementController,
+                    decoration: InputDecoration(
+                      labelText: 'Mục tiêu đầu ra',
+                      hintText: 'Ví dụ: Có thể giao tiếp cơ bản...',
+                      prefixIcon: const Icon(Icons.flag_outlined),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppSizes.radiusMedium,
+                        ),
+                      ),
+                    ),
+                    maxLines: 3,
+                    maxLength: 500,
+                  ),
+                  SizedBox(height: AppSizes.p32),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: (_isLoading || _isUploadingImage)
+                          ? null
+                          : _saveCourse,
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 16.h),
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(
                             AppSizes.radiusMedium,
                           ),
                         ),
                       ),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Bắt buộc';
-                        }
-                        final hours = int.tryParse(value.trim());
-                        if (hours == null || hours <= 0) {
-                          return 'Số giờ không hợp lệ';
-                        }
-                        return null;
-                      },
+                      child: (_isLoading || _isUploadingImage)
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'Lưu thay đổi',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                     ),
                   ),
-                  SizedBox(width: AppSizes.p12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _tuitionFeeController,
-                      decoration: InputDecoration(
-                        labelText: 'Học phí (đ) *',
-                        hintText: '3500000',
-                        prefixIcon: const Icon(Icons.monetization_on),
-                        border: OutlineInputBorder(
+                  SizedBox(height: AppSizes.p16),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: (_isLoading || _isUploadingImage)
+                          ? null
+                          : () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 16.h),
+                        side: const BorderSide(color: AppColors.neutral400),
+                        shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(
                             AppSizes.radiusMedium,
                           ),
                         ),
                       ),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Bắt buộc';
-                        }
-                        final fee = double.tryParse(value.trim());
-                        if (fee == null || fee <= 0) {
-                          return 'Học phí không hợp lệ';
-                        }
-                        return null;
-                      },
+                      child: const Text(
+                        'Hủy',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: AppSizes.p16),
-
-              
-              SwitchListTile(
-                title: const Text('Trạng thái khóa học'),
-                subtitle: Text(_isActive ? 'Đang mở' : 'Đã đóng'),
-                value: _isActive,
-                onChanged: (value) {
-                  setState(() => _isActive = value);
-                },
-                activeThumbColor: AppColors.success,
-                contentPadding: EdgeInsets.zero,
-              ),
-              SizedBox(height: AppSizes.p24),
-
-              
-              _buildSectionTitle('Hình ảnh & Video', isDark),
-              SizedBox(height: AppSizes.p16),
-
-              
-              _buildImagePicker(isDark),
-              SizedBox(height: AppSizes.p16),
-
-              
-              TextFormField(
-                controller: _videoUrlController,
-                decoration: InputDecoration(
-                  labelText: 'URL video giới thiệu',
-                  hintText: 'https://youtube.com/watch?v=...',
-                  prefixIcon: const Icon(Icons.video_library),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-                  ),
-                ),
-                validator: (value) {
-                  if (value != null && value.trim().isNotEmpty) {
-                    final uri = Uri.tryParse(value.trim());
-                    if (uri == null || !uri.isAbsolute) {
-                      return 'URL không hợp lệ';
-                    }
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: AppSizes.p24),
-
-              
-              _buildSectionTitle('Mô tả & Yêu cầu', isDark),
-              SizedBox(height: AppSizes.p16),
-
-              
-              TextFormField(
-                controller: _descriptionController,
-                decoration: InputDecoration(
-                  labelText: 'Mô tả khóa học',
-                  hintText: 'Nhập mô tả chi tiết về khóa học...',
-                  alignLabelWithHint: true,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-                  ),
-                ),
-                maxLines: 5,
-                maxLength: 1000,
-              ),
-              SizedBox(height: AppSizes.p16),
-
-              
-              TextFormField(
-                controller: _entryRequirementController,
-                decoration: InputDecoration(
-                  labelText: 'Yêu cầu đầu vào',
-                  hintText: 'Ví dụ: Không yêu cầu kiến thức đầu vào',
-                  prefixIcon: const Icon(Icons.check_circle_outline),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-                  ),
-                ),
-                maxLines: 3,
-                maxLength: 500,
-              ),
-              SizedBox(height: AppSizes.p16),
-
-              
-              TextFormField(
-                controller: _exitRequirementController,
-                decoration: InputDecoration(
-                  labelText: 'Mục tiêu đầu ra',
-                  hintText: 'Ví dụ: Có thể giao tiếp cơ bản...',
-                  prefixIcon: const Icon(Icons.flag_outlined),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-                  ),
-                ),
-                maxLines: 3,
-                maxLength: 500,
-              ),
-              SizedBox(height: AppSizes.p32),
-
-              
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: (_isLoading || _isUploadingImage) ? null : _saveCourse,
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 16.h),
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppSizes.radiusMedium,
-                      ),
-                    ),
-                  ),
-                  child: (_isLoading || _isUploadingImage)
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text(
-                          'Lưu thay đổi',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                ),
-              ),
-              SizedBox(height: AppSizes.p16),
-
-              
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: (_isLoading || _isUploadingImage) ? null : () => Navigator.pop(context),
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 16.h),
-                    side: const BorderSide(color: AppColors.neutral400),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppSizes.radiusMedium,
-                      ),
-                    ),
-                  ),
-                  child: const Text(
-                    'Hủy',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
-      ),
-    ),
     );
   }
 
@@ -715,11 +723,10 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
     }
 
     if (_imageUrl != null && _imageUrl!.isNotEmpty) {
-      
-      final fullUrl = _imageUrl!.startsWith('http') 
-          ? _imageUrl! 
+      final fullUrl = _imageUrl!.startsWith('http')
+          ? _imageUrl!
           : '${Environment.baseUrl}/files/$_imageUrl';
-      
+
       return Stack(
         children: [
           ClipRRect(
@@ -729,7 +736,8 @@ class _AdminCourseEditScreenState extends State<AdminCourseEditScreen> {
               width: double.infinity,
               height: double.infinity,
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => _buildPlaceholder(isDark),
+              errorBuilder: (context, error, stackTrace) =>
+                  _buildPlaceholder(isDark),
             ),
           ),
           Positioned(

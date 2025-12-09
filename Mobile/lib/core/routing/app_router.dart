@@ -174,8 +174,8 @@ class AppRouter {
 
       case welcome:
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<AuthBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<AuthBloc>(),
             child: const WelcomeScreen(),
           ),
           settings: routeSettings,
@@ -183,8 +183,8 @@ class AppRouter {
 
       case login:
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<AuthBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<AuthBloc>(),
             child: const LoginScreen(),
           ),
           settings: routeSettings,
@@ -192,8 +192,8 @@ class AppRouter {
 
       case forgotPassword:
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<AuthBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<AuthBloc>(),
             child: const ForgotPasswordScreen(),
           ),
           settings: routeSettings,
@@ -203,8 +203,8 @@ class AppRouter {
         final args = routeSettings.arguments as Map<String, dynamic>?;
         final emailOrPhone = args?['emailOrPhone'] as String? ?? '';
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<AuthBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<AuthBloc>(),
             child: VerifyCodeScreen(emailOrPhone: emailOrPhone),
           ),
           settings: routeSettings,
@@ -215,8 +215,8 @@ class AppRouter {
         final emailOrPhone = args?['emailOrPhone'] as String? ?? '';
         final verificationCode = args?['verificationCode'] as String? ?? '';
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<AuthBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<AuthBloc>(),
             child: ResetPasswordScreen(
               emailOrPhone: emailOrPhone,
               verificationCode: verificationCode,
@@ -226,9 +226,10 @@ class AppRouter {
         );
 
       case studentDashboard:
+        getIt<StudentBloc>().add(const LoadDashboard());
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<StudentBloc>()..add(const LoadDashboard()),
+          builder: (_) => BlocProvider.value(
+            value: getIt<StudentBloc>(),
             child: const StudentDashboardScreen(),
           ),
           settings: routeSettings,
@@ -236,8 +237,8 @@ class AppRouter {
 
       case studentClasses:
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<StudentBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<StudentBloc>(),
             child: const ClassListScreen(),
           ),
           settings: routeSettings,
@@ -246,8 +247,8 @@ class AppRouter {
       case studentClassDetail:
         final classId = routeSettings.arguments as String;
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<StudentBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<StudentBloc>(),
             child: ClassDetailScreen(classId: classId),
           ),
           settings: routeSettings,
@@ -255,8 +256,8 @@ class AppRouter {
 
       case studentCourses:
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<StudentBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<StudentBloc>(),
             child: const CourseListScreen(),
           ),
           settings: routeSettings,
@@ -265,8 +266,8 @@ class AppRouter {
       case studentCourseDetail:
         final courseId = routeSettings.arguments as String;
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<StudentBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<StudentBloc>(),
             child: CourseDetailScreen(courseId: courseId),
           ),
           settings: routeSettings,
@@ -274,8 +275,8 @@ class AppRouter {
 
       case studentSchedule:
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<StudentBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<StudentBloc>(),
             child: const ScheduleScreen(),
           ),
           settings: routeSettings,
@@ -284,8 +285,8 @@ class AppRouter {
       case studentGrades:
         final className = routeSettings.arguments as String?;
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<StudentBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<StudentBloc>(),
             child: GradesScreen(initialFilter: className),
           ),
           settings: routeSettings,
@@ -294,8 +295,8 @@ class AppRouter {
       case studentGradesByClass:
         final args = routeSettings.arguments as Map<String, String>;
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<StudentBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<StudentBloc>(),
             child: ClassGradesScreen(
               classId: args['classId']!,
               className: args['className'],
@@ -306,8 +307,8 @@ class AppRouter {
 
       case studentProfile:
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<StudentBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<StudentBloc>(),
             child: const ProfileScreen(),
           ),
           settings: routeSettings,
@@ -315,8 +316,8 @@ class AppRouter {
 
       case studentEditProfile:
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<StudentBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<StudentBloc>(),
             child: const EditProfileScreen(),
           ),
           settings: routeSettings,
@@ -325,8 +326,8 @@ class AppRouter {
       case studentRating:
         final classId = routeSettings.arguments as String;
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<StudentBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<StudentBloc>(),
             child: RatingScreen(classId: classId),
           ),
           settings: routeSettings,
@@ -334,8 +335,8 @@ class AppRouter {
 
       case studentReviewHistory:
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<StudentBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<StudentBloc>(),
             child: const ReviewHistoryScreen(),
           ),
           settings: routeSettings,
@@ -358,8 +359,8 @@ class AppRouter {
 
       case teacherDashboard:
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<TeacherBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<TeacherBloc>(),
             child: const HomeTeacherScreen(),
           ),
           settings: routeSettings,
@@ -368,8 +369,8 @@ class AppRouter {
       case teacherClasses:
         final mode = routeSettings.arguments as String?;
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<TeacherBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<TeacherBloc>(),
             child: TeacherClassListScreen(mode: mode, showScaffold: true),
           ),
           settings: routeSettings,
@@ -387,8 +388,8 @@ class AppRouter {
         }
 
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<TeacherBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<TeacherBloc>(),
             child: TeacherClassDetailScreen(classId: classId),
           ),
           settings: routeSettings,
@@ -398,8 +399,8 @@ class AppRouter {
         try {
           final args = routeSettings.arguments as AttendanceArguments;
           return MaterialPageRoute(
-            builder: (_) => BlocProvider(
-              create: (_) => getIt<TeacherBloc>(),
+            builder: (_) => BlocProvider.value(
+              value: getIt<TeacherBloc>(),
               child: TeacherAttendanceScreen(args: args),
             ),
             settings: routeSettings,
@@ -416,8 +417,8 @@ class AppRouter {
         }
       case teacherSchedule:
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<TeacherBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<TeacherBloc>(),
             child: const TeacherScheduleScreen(),
           ),
           settings: routeSettings,
@@ -425,8 +426,8 @@ class AppRouter {
 
       case teacherProfile:
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<TeacherBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<TeacherBloc>(),
             child: const TeacherProfileScreen(),
           ),
           settings: routeSettings,
@@ -434,8 +435,8 @@ class AppRouter {
 
       case teacherEditProfile:
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<TeacherBloc>(),
+          builder: (_) => BlocProvider.value(
+            value: getIt<TeacherBloc>(),
             child: const EditTeacherProfileScreen(),
           ),
           settings: routeSettings,

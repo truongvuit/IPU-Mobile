@@ -252,7 +252,16 @@ class _AdminStudentListScreenState extends State<AdminStudentListScreen> {
             child: BlocBuilder<AdminBloc, AdminState>(
               builder: (context, state) {
                 if (state is AdminLoading) {
-                  return const Center(child: CircularProgressIndicator());
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.hourglass_empty, size: 48.sp, color: AppColors.primary),
+                        SizedBox(height: 16.h),
+                        Text('Đang tải danh sách...', style: TextStyle(fontSize: 14.sp)),
+                      ],
+                    ),
+                  );
                 }
 
                 if (state is AdminError) {

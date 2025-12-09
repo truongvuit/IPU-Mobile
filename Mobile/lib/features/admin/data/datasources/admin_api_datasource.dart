@@ -78,7 +78,6 @@ abstract class AdminApiDataSource {
     String? imageUrl,
   });
 
-  
   Future<AdminTeacher> updateTeacher({
     required String teacherId,
     required String name,
@@ -123,12 +122,10 @@ abstract class AdminApiDataSource {
 
   Future<SessionAttendanceInfo> getSessionAttendance(int sessionId);
 
-  
-  
-  
   Future<CartPreview> previewCart(List<String> classIds, {String? studentId});
 
-  
-  
   Future<String?> uploadFile(File file);
+
+  /// Xác nhận thanh toán tiền mặt - đánh dấu hóa đơn đã thanh toán và gửi email
+  Future<void> confirmCashPayment(int invoiceId);
 }

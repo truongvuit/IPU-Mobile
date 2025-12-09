@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:trungtamngoaingu/core/widgets/empty_state_widget.dart';
 import '../../../../core/routing/app_router.dart';
 import '../bloc/student_bloc.dart';
 import '../bloc/student_event.dart';
@@ -8,7 +9,6 @@ import '../bloc/student_state.dart';
 import '../widgets/student_app_bar.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../core/widgets/skeleton_widget.dart';
 import '../../../../core/widgets/custom_image.dart';
 
 import '../../domain/entities/student_profile.dart';
@@ -28,13 +28,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = false;
   String? _errorMessage;
 
-  
   StudentProfile? _cachedProfile;
 
   @override
   void initState() {
     super.initState();
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadDataIfNeeded();
     });
@@ -45,7 +44,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     final state = context.read<StudentBloc>().state;
 
-    
     if (state is DashboardLoaded && state.profile != null) {
       _cachedProfile = state.profile;
       _hasLoadedData = true;
@@ -67,7 +65,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return;
     }
 
-    
     _hasLoadedData = true;
     _isLoading = true;
     context.read<StudentBloc>().add(LoadProfile());
@@ -154,7 +151,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildContent(bool isDark, bool isDesktop, bool isTablet) {
-    
     if (_errorMessage != null && _cachedProfile == null) {
       return Center(
         child: Column(
@@ -192,34 +188,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
-    
     if (_isLoading && _cachedProfile == null) {
-      return _buildLoadingSkeleton();
+      return const EmptyStateWidget(
+        icon: Icons.hourglass_empty,
+        message: 'Đang tải hồ sơ...',
+      );
     }
 
-    
     if (_cachedProfile != null) {
       return _buildProfileContent(_cachedProfile!, isDark, isDesktop, isTablet);
     }
 
-    
-    return _buildLoadingSkeleton();
-  }
-
-  Widget _buildLoadingSkeleton() {
-    return Padding(
-      padding: EdgeInsets.all(AppSizes.paddingMedium),
-      child: Column(
-        children: [
-          SkeletonWidget.circular(size: 120.w),
-          SizedBox(height: AppSizes.paddingMedium),
-          SkeletonWidget.rectangular(height: 24.h, width: 200.w),
-          SizedBox(height: AppSizes.paddingSmall),
-          SkeletonWidget.rectangular(height: 16.h, width: 150.w),
-          SizedBox(height: AppSizes.paddingLarge),
-          SkeletonWidget.rectangular(height: 200.h),
-        ],
-      ),
+    return const EmptyStateWidget(
+      icon: Icons.person_outline,
+      message: 'Không tìm thấy hồ sơ',
     );
   }
 
@@ -283,8 +265,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, AppRouter.studentEditProfile);
+                onPressed: () async {
+                  // Navigate to edit screen and wait for it to close
+                  await Navigator.pushNamed(
+                    context,
+                    AppRouter.studentEditProfile,
+                  );
+                  // Reload profile when returning (always reload to catch any updates)
+                  if (mounted) {
+                    context.read<StudentBloc>().add(LoadProfile());
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,

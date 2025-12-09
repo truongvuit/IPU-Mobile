@@ -70,9 +70,27 @@ class _PromotionListScreenContentState
           } else if (state is PromotionOperationSuccess) {
             return const Center(child: CircularProgressIndicator());
           } else if (state is PromotionLoaded) {
+            // Sắp xếp: Active đầu tiên, rồi scheduled, rồi draft, cuối cùng là expired
+            final sortedPromotions = List<Promotion>.from(state.promotions)
+              ..sort((a, b) {
+                int getPriority(PromotionStatus status) {
+                  switch (status) {
+                    case PromotionStatus.active:
+                      return 0;
+                    case PromotionStatus.scheduled:
+                      return 1;
+                    case PromotionStatus.draft:
+                      return 2;
+                    case PromotionStatus.expired:
+                      return 3;
+                  }
+                }
+                return getPriority(a.status).compareTo(getPriority(b.status));
+              });
+
             final filteredPromotions = _filterStatus == null
-                ? state.promotions
-                : state.promotions
+                ? sortedPromotions
+                : sortedPromotions
                       .where((p) => p.status == _filterStatus)
                       .toList();
 
@@ -199,26 +217,6 @@ class _PromotionListScreenContentState
                           color: statusColor,
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-
-                    SizedBox(
-                      height: 24,
-                      width: 32,
-                      child: Transform.scale(
-                        scale: 0.65,
-                        child: Switch(
-                          value: promotion.status == PromotionStatus.active,
-                          activeTrackColor: Colors.green,
-                          onChanged: (value) {
-                            context.read<PromotionBloc>().add(
-                              promotion_events.TogglePromotionStatus(
-                                promotion.id,
-                              ),
-                            );
-                          },
                         ),
                       ),
                     ),

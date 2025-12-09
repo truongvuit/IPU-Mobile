@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../theme/app_colors.dart';
+import '../constants/app_constants.dart';
 import 'skeleton_widget.dart';
 
 class CustomImage extends StatelessWidget {
@@ -23,16 +24,43 @@ class CustomImage extends StatelessWidget {
     this.defaultAsset,
   });
 
+  /// Normalize image URL - handle relative paths and missing protocol
+  String _normalizeImageUrl(String url) {
+    if (url.isEmpty) return '';
+
+    // Already a full URL
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+
+    // Handle relative path - prepend base URL
+    final baseUrl = AppConstants.baseUrl;
+
+    // If it's a path starting with /
+    if (url.startsWith('/')) {
+      return '$baseUrl$url';
+    }
+
+    // Assume it's an image in uploads folder
+    if (!url.contains('/')) {
+      return '$baseUrl/uploads/images/$url';
+    }
+
+    return '$baseUrl/$url';
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (imageUrl.isEmpty) {
+    final normalizedUrl = _normalizeImageUrl(imageUrl);
+
+    if (normalizedUrl.isEmpty) {
       return _buildDefaultImage();
     }
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
       child: CachedNetworkImage(
-        imageUrl: imageUrl,
+        imageUrl: normalizedUrl,
         width: width,
         height: height,
         fit: fit,
@@ -64,11 +92,25 @@ class CustomImage extends StatelessWidget {
       );
     }
 
-    
     return _buildErrorWidget();
   }
 
   Widget _buildErrorWidget() {
+    // Calculate icon size, ensuring it's finite
+    double? iconSize;
+    if (width != null &&
+        height != null &&
+        width!.isFinite &&
+        height!.isFinite) {
+      iconSize = (width! < height! ? width! * 0.5 : height! * 0.5);
+    } else if (width != null && width!.isFinite) {
+      iconSize = width! * 0.5;
+    } else if (height != null && height!.isFinite) {
+      iconSize = height! * 0.5;
+    }
+    // Default to 48 if no valid size, and clamp to reasonable bounds
+    iconSize = (iconSize ?? 48).clamp(24, 96);
+
     return Container(
       width: width,
       height: height,
@@ -76,9 +118,7 @@ class CustomImage extends StatelessWidget {
       child: Icon(
         isAvatar ? Icons.person : Icons.error_outline,
         color: AppColors.neutral500,
-        size: (width != null && height != null)
-            ? (width! < height! ? width! * 0.5 : height! * 0.5)
-            : null,
+        size: iconSize,
       ),
     );
   }

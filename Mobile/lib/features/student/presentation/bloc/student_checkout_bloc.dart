@@ -4,7 +4,6 @@ import '../../domain/entities/student_cart_preview.dart';
 import 'student_checkout_event.dart';
 import 'student_checkout_state.dart';
 
-
 class StudentCheckoutBloc
     extends Bloc<StudentCheckoutEvent, StudentCheckoutState> {
   final StudentApiDataSource apiDataSource;
@@ -26,7 +25,6 @@ class StudentCheckoutBloc
       final cartPreview = await apiDataSource.getCartPreview(event.classIds);
       emit(StudentCheckoutPreviewLoaded(cartPreview: cartPreview));
     } catch (e) {
-      
       final userMessage = _getUserFriendlyErrorMessage(
         e,
         'Không thể tải thông tin giỏ hàng',
@@ -64,9 +62,10 @@ class StudentCheckoutBloc
     try {
       final orderResult = await apiDataSource.createOrder(
         classIds: event.classIds,
+        studentId: event.studentId,
+        paymentMethodId: event.paymentMethodId,
       );
 
-      
       final totalAmount = (orderResult['totalAmount'] as num).toDouble();
       final paymentResult = await apiDataSource.createPayment(
         invoiceId: orderResult['invoiceId'] as int,
@@ -77,12 +76,11 @@ class StudentCheckoutBloc
         StudentCheckoutOrderCreated(
           invoiceId: orderResult['invoiceId'] as int,
           totalAmount: (orderResult['totalAmount'] as num).toDouble(),
-          
+
           paymentUrl: paymentResult['payUrl'] as String,
         ),
       );
     } catch (e) {
-      
       final userMessage = _getUserFriendlyErrorMessage(
         e,
         'Không thể tạo đơn hàng',
@@ -100,13 +98,10 @@ class StudentCheckoutBloc
     emit(const StudentCheckoutInitial());
   }
 
-  
-  
   String _getUserFriendlyErrorMessage(dynamic error, String defaultMessage) {
-    
     if (error is Exception) {
       final errorStr = error.toString();
-      
+
       if (errorStr.contains('SocketException') ||
           errorStr.contains('Connection refused')) {
         return '$defaultMessage. Vui lòng kiểm tra kết nối mạng.';
@@ -115,13 +110,12 @@ class StudentCheckoutBloc
         return '$defaultMessage. Yêu cầu đã hết thời gian, vui lòng thử lại.';
       }
       if (errorStr.contains('ServerException')) {
-        
         final msgMatch = RegExp(
           r'ServerException:\s*(.+)',
         ).firstMatch(errorStr);
         if (msgMatch != null && msgMatch.group(1) != null) {
           final serverMsg = msgMatch.group(1)!;
-          
+
           if (serverMsg.contains('lỗi') ||
               serverMsg.contains('không') ||
               serverMsg.contains('thất bại')) {
@@ -130,7 +124,7 @@ class StudentCheckoutBloc
         }
       }
     }
-    
+
     return '$defaultMessage. Vui lòng thử lại sau.';
   }
 }

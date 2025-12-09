@@ -9,6 +9,7 @@ import '../../../authentication/presentation/bloc/auth_bloc.dart';
 import '../../../authentication/presentation/bloc/auth_state.dart';
 import '../bloc/admin_bloc.dart';
 import '../bloc/admin_event.dart';
+import '../bloc/admin_state.dart';
 import 'admin_dashboard_screen.dart';
 import 'admin_class_list_screen.dart';
 import 'admin_teacher_list_screen.dart';
@@ -40,11 +41,15 @@ class _HomeAdminScreenState extends State<HomeAdminScreen> {
       const AdminProfileScreen(isTab: true),
     ];
 
-    
-    
+    // Only load dashboard if not already loaded
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        _loadDataForTab(0);
+        final bloc = context.read<AdminBloc>();
+        final state = bloc.state;
+        // Only load if not already loaded (AdminDashboardLoaded)
+        if (state is! AdminDashboardLoaded) {
+          _loadDataForTab(0);
+        }
       }
     });
   }

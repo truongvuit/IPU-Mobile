@@ -8,7 +8,12 @@ abstract class TeacherEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class LoadTeacherDashboard extends TeacherEvent {}
+class LoadTeacherDashboard extends TeacherEvent {
+  final bool forceRefresh;
+  const LoadTeacherDashboard({this.forceRefresh = false});
+  @override
+  List<Object> get props => [forceRefresh];
+}
 
 class LoadMyClasses extends TeacherEvent {}
 
@@ -127,3 +132,6 @@ class UpdateTeacherProfile extends TeacherEvent {
   @override
   List<Object> get props => [profile];
 }
+
+/// Event để reset state khi đăng xuất
+class ResetTeacherState extends TeacherEvent {}

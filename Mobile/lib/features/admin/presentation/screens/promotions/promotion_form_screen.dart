@@ -439,7 +439,7 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<DiscountType>(
-                        initialValue: _discountType,
+                        value: _discountType,
                         decoration: InputDecoration(
                           labelText: 'Loại giảm giá',
                           border: OutlineInputBorder(
@@ -596,7 +596,7 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
                 SizedBox(height: 16.h),
 
                 DropdownButtonFormField<PromotionType>(
-                  initialValue: _promotionType,
+                  value: _promotionType,
                   isExpanded: true,
                   decoration: InputDecoration(
                     labelText: 'Loại khuyến mãi',
@@ -770,7 +770,7 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
                 SizedBox(height: 16.h),
 
                 DropdownButtonFormField<PromotionStatus>(
-                  initialValue: _status,
+                  value: _status,
                   decoration: InputDecoration(
                     labelText: 'Trạng thái',
                     border: OutlineInputBorder(

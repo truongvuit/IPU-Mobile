@@ -9,7 +9,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../widgets/admin_icon_action.dart';
-import '../../../../core/widgets/skeleton_widget.dart';
 
 import '../bloc/admin_bloc.dart';
 import '../bloc/admin_event.dart';
@@ -97,7 +96,16 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
       body: BlocBuilder<AdminBloc, AdminState>(
         builder: (context, state) {
           if (state is AdminLoading) {
-            return _buildLoadingSkeleton();
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.hourglass_empty, size: 48.sp, color: AppColors.primary),
+                  SizedBox(height: 16.h),
+                  Text('Đang tải thông tin...', style: TextStyle(fontSize: 14.sp)),
+                ],
+              ),
+            );
           }
 
           if (state is AdminError) {
@@ -280,11 +288,6 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         
-                        _buildQuickContactButtons(context, student),
-
-                        SizedBox(height: 24.h),
-
-                        
                         _buildSection(
                           context,
                           theme,
@@ -355,21 +358,6 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
 
           return const SizedBox.shrink();
         },
-      ),
-    );
-  }
-
-  Widget _buildLoadingSkeleton() {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(AppSizes.paddingMedium),
-      child: Column(
-        children: [
-          SkeletonWidget.circular(size: 100.w),
-          SizedBox(height: AppSizes.paddingMedium),
-          SkeletonWidget.rectangular(height: 30.h),
-          SizedBox(height: AppSizes.paddingMedium),
-          SkeletonWidget.rectangular(height: 200.h),
-        ],
       ),
     );
   }
@@ -733,6 +721,11 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
 
   Widget _buildClassCard(BuildContext context, dynamic classItem, bool isDark) {
     final theme = Theme.of(context);
+    
+    // Safely extract class properties
+    final String classId = classItem.id?.toString() ?? '';
+    final String className = classItem.name?.toString() ?? 'N/A';
+    final String schedule = classItem.schedule?.toString() ?? '';
 
     return Container(
       margin: EdgeInsets.only(bottom: AppSizes.p12),
@@ -750,13 +743,13 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
+          onTap: classId.isNotEmpty ? () {
             Navigator.pushNamed(
               context,
               AppRouter.adminClassDetail,
-              arguments: classItem.id,
+              arguments: classId,
             ).then((_) => _loadStudentDetail());
-          },
+          } : null,
           borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
           child: Padding(
             padding: EdgeInsets.all(AppSizes.p12),
@@ -781,39 +774,41 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        classItem.name,
+                        className,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      SizedBox(height: 4.h),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.schedule,
-                            size: 14.sp,
-                            color: isDark
-                                ? AppColors.neutral400
-                                : AppColors.neutral600,
-                          ),
-                          SizedBox(width: 4.w),
-                          Expanded(
-                            child: Text(
-                              classItem.schedule,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: isDark
-                                    ? AppColors.neutral400
-                                    : AppColors.neutral600,
-                                fontSize: AppSizes.textXs,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                      if (schedule.isNotEmpty) ...[
+                        SizedBox(height: 4.h),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.schedule,
+                              size: 14.sp,
+                              color: isDark
+                                  ? AppColors.neutral400
+                                  : AppColors.neutral600,
                             ),
-                          ),
-                        ],
-                      ),
+                            SizedBox(width: 4.w),
+                            Expanded(
+                              child: Text(
+                                schedule,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: isDark
+                                      ? AppColors.neutral400
+                                      : AppColors.neutral600,
+                                  fontSize: AppSizes.textXs,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),

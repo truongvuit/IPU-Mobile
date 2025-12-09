@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/auth/session_expiry_notifier.dart';
 import 'core/di/injector.dart';
 import 'core/routing/app_router.dart';
@@ -43,65 +44,57 @@ class _MyAppState extends State<MyApp> {
     super.dispose();
   }
 
-  
-  
-  
-  
-  
   void _setupDeepLinkListener() {
     final deepLinkService = getIt<DeepLinkService>();
-    
-    
-    _deepLinkSubscription = deepLinkService.paymentResultStream.listen(
-      (VNPayPaymentResult result) {
-        
-        _navigatorKey.currentState?.pushNamed(
-          AppRouter.vnpayResult,
-          arguments: result,
-        );
-      },
-    );
-    
-    
-    
-    
+
+    _deepLinkSubscription = deepLinkService.paymentResultStream.listen((
+      VNPayPaymentResult result,
+    ) {
+      _navigatorKey.currentState?.pushNamed(
+        AppRouter.vnpayResult,
+        arguments: result,
+      );
+    });
   }
 
   void _setupSessionExpiryListener() {
     final sessionExpiryNotifier = getIt<SessionExpiryNotifier>();
-    _sessionExpirySubscription = sessionExpiryNotifier.sessionExpiredStream.listen((_) {
-      
-      final authBloc = getIt<AuthBloc>();
-      authBloc.add(const LogoutRequested());
-      
-      
-      _navigatorKey.currentState?.pushNamedAndRemoveUntil(
-        AppRouter.welcome,
-        (route) => false,
-      );
-    });
+    _sessionExpirySubscription = sessionExpiryNotifier.sessionExpiredStream
+        .listen((_) {
+          // Check if AuthBloc is still available and not closed
+          if (!getIt.isRegistered<AuthBloc>()) return;
+
+          final authBloc = getIt<AuthBloc>();
+
+          // Check if Bloc is closed before adding event
+          if (!authBloc.isClosed) {
+            authBloc.add(const LogoutRequested());
+          }
+
+          // Navigate to welcome screen
+          _navigatorKey.currentState?.pushNamedAndRemoveUntil(
+            AppRouter.welcome,
+            (route) => false,
+          );
+        });
   }
 
   Size _getAdaptiveDesignSize(BoxConstraints constraints) {
     final width = constraints.maxWidth;
     final height = constraints.maxHeight;
 
-    
     if (width < 600) {
       return const Size(375, 812);
     }
 
-    
     if (width >= 600 && width < 900) {
       return Size(width, height);
     }
 
-    
     if (width >= 900 && width < 1200) {
       return Size(width, height);
     }
 
-    
     return Size(width, height);
   }
 
@@ -109,18 +102,13 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        
-        
-        
-        
-        BlocProvider<AuthBloc>.value(
-          value: getIt<AuthBloc>(),
-        ),
+        BlocProvider<AuthBloc>.value(value: getIt<AuthBloc>()),
         BlocProvider<SettingsBloc>(
           create: (_) => getIt<SettingsBloc>()..add(const LoadSettings()),
         ),
-        BlocProvider<StudentBloc>(create: (_) => getIt<StudentBloc>()),
-        BlocProvider<TeacherBloc>(create: (_) => getIt<TeacherBloc>()),
+        // Use .value for singleton blocs to prevent auto-close on dispose
+        BlocProvider<StudentBloc>.value(value: getIt<StudentBloc>()),
+        BlocProvider<TeacherBloc>.value(value: getIt<TeacherBloc>()),
       ],
       child: BlocBuilder<SettingsBloc, SettingsState>(
         buildWhen: (previous, current) {
@@ -172,6 +160,16 @@ class _MyAppState extends State<MyApp> {
                   theme: AppTheme.lightTheme,
                   darkTheme: AppTheme.darkTheme,
                   themeMode: themeMode,
+                  localizationsDelegates: const [
+                    GlobalMaterialLocalizations.delegate,
+                    GlobalWidgetsLocalizations.delegate,
+                    GlobalCupertinoLocalizations.delegate,
+                  ],
+                  supportedLocales: const [
+                    Locale('vi', 'VN'),
+                    Locale('en', 'US'),
+                  ],
+                  locale: const Locale('vi', 'VN'),
                   onGenerateRoute: AppRouter.onGenerateRoute,
                   initialRoute: AppRouter.splash,
                 ),

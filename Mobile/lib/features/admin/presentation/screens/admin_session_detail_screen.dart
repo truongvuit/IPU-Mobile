@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../core/widgets/skeleton_widget.dart';
 
 import '../bloc/admin_bloc.dart';
 import '../../domain/entities/class_session.dart';
@@ -109,13 +108,13 @@ class _AdminSessionDetailScreenState extends State<AdminSessionDetailScreen> {
   }
 
   Widget _buildLoading() {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(AppSizes.paddingMedium),
+    return Center(
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SkeletonWidget.rectangular(height: 120.h),
-          SizedBox(height: AppSizes.paddingMedium),
-          SkeletonWidget.rectangular(height: 200.h),
+          Icon(Icons.hourglass_empty, size: 48.sp, color: AppColors.primary),
+          SizedBox(height: 16.h),
+          Text('Đang tải chi tiết...', style: TextStyle(fontSize: 14.sp)),
         ],
       ),
     );

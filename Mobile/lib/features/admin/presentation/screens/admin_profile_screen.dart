@@ -6,7 +6,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/widgets/custom_image.dart';
-import '../../../../core/widgets/skeleton_widget.dart';
 import '../../../authentication/presentation/bloc/auth_bloc.dart';
 import '../../../authentication/presentation/bloc/auth_event.dart';
 import '../../../authentication/presentation/bloc/auth_state.dart';
@@ -133,7 +132,16 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
 
   Widget _buildContent(bool isDark) {
     if (_isLoading) {
-      return _buildLoadingSkeleton();
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.hourglass_empty, size: 48, color: AppColors.primary),
+            const SizedBox(height: 16),
+            Text('Đang tải hồ sơ...', style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : AppColors.textSecondary)),
+          ],
+        ),
+      );
     }
 
     if (_cachedUser != null) {
@@ -158,28 +166,6 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
             },
             child: const Text('Thử lại'),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLoadingSkeleton() {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(AppSizes.paddingMedium),
-      child: Column(
-        children: [
-          SizedBox(height: 20.h),
-          SkeletonWidget.circular(size: 100.w),
-          SizedBox(height: AppSizes.paddingMedium),
-          SkeletonWidget.rectangular(height: 24.h, width: 180.w),
-          SizedBox(height: AppSizes.paddingSmall),
-          SkeletonWidget.rectangular(height: 16.h, width: 120.w),
-          SizedBox(height: AppSizes.paddingLarge),
-          SkeletonWidget.rectangular(height: 60.h),
-          SizedBox(height: AppSizes.paddingSmall),
-          SkeletonWidget.rectangular(height: 60.h),
-          SizedBox(height: AppSizes.paddingSmall),
-          SkeletonWidget.rectangular(height: 60.h),
         ],
       ),
     );

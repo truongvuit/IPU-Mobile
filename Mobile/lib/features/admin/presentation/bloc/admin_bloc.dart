@@ -13,14 +13,6 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
   final AdminRepository _repository;
 
   bool _isLoadingDashboard = false;
-  bool _hasLoadedDashboard = false;
-  DateTime? _lastDashboardLoadTime;
-
-  // Cache dashboard data to preserve across tab switches
-  AdminProfile? _cachedProfile;
-  AdminDashboardStats? _cachedStats;
-  List<AdminActivity>? _cachedActivities;
-  bool _cachedIsFallback = false;
 
   AdminRepository get adminRepository => _repository;
 
@@ -44,6 +36,16 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     on<LoadTeacherList>(_onLoadTeacherList);
     on<LoadTeacherDetail>(_onLoadTeacherDetail);
     on<LoadClassFeedbacks>(_onLoadClassFeedbacks);
+    on<ResetAdminState>(_onResetAdminState);
+  }
+
+  /// Reset admin state (e.g., on logout)
+  void _onResetAdminState(
+    ResetAdminState event,
+    Emitter<AdminState> emit,
+  ) {
+    _isLoadingDashboard = false;
+    emit(const AdminInitial());
   }
 
   Future<void> _onLoadAdminDashboard(
@@ -55,38 +57,6 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
 
     // Guard 2: Already loaded in current state
     if (state is AdminDashboardLoaded) return;
-
-    // Guard 3: Loaded within last 2 seconds (debounce rapid calls)
-    if (_hasLoadedDashboard && _lastDashboardLoadTime != null) {
-      final elapsed = DateTime.now().difference(_lastDashboardLoadTime!);
-      if (elapsed.inSeconds < 2) {
-        // Use cached data if available
-        if (_cachedProfile != null && _cachedStats != null) {
-          emit(
-            AdminDashboardLoaded(
-              profile: _cachedProfile!,
-              stats: _cachedStats!,
-              recentActivities: _cachedActivities ?? [],
-              isFallbackData: _cachedIsFallback,
-            ),
-          );
-        }
-        return;
-      }
-    }
-
-    // If we have cached data, use it immediately (for tab re-entry)
-    if (_cachedProfile != null && _cachedStats != null) {
-      emit(
-        AdminDashboardLoaded(
-          profile: _cachedProfile!,
-          stats: _cachedStats!,
-          recentActivities: _cachedActivities ?? [],
-          isFallbackData: _cachedIsFallback,
-        ),
-      );
-      return;
-    }
 
     _isLoadingDashboard = true;
     emit(const AdminLoading());
@@ -125,14 +95,6 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
         activities = [];
       }
 
-      // Cache the data for tab re-entry
-      _cachedProfile = profile;
-      _cachedStats = stats;
-      _cachedActivities = activities;
-      _cachedIsFallback = stats.isFallback;
-      _hasLoadedDashboard = true;
-      _lastDashboardLoadTime = DateTime.now();
-
       emit(
         AdminDashboardLoaded(
           profile: profile,
@@ -142,8 +104,6 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
         ),
       );
     } catch (e) {
-      _hasLoadedDashboard = true;
-      _lastDashboardLoadTime = DateTime.now();
       emit(
         AdminDashboardLoaded(
           profile: const AdminProfile(

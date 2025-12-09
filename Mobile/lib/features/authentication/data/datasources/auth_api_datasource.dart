@@ -19,8 +19,6 @@ abstract class AuthApiDataSource {
   });
   Future<UserModel> getCurrentUser();
 
-  
-  
   @Deprecated('Backend endpoint not implemented')
   Future<void> changePassword(String currentPassword, String newPassword);
 }
@@ -118,7 +116,6 @@ class AuthApiDataSourceImpl implements AuthApiDataSource {
   @override
   Future<bool> verifyResetCode(String code) async {
     try {
-      
       final response = await dioClient.get(
         '/auth/verify-reset-code',
         queryParameters: {'code': code},
@@ -207,8 +204,6 @@ class AuthApiDataSourceImpl implements AuthApiDataSource {
     String currentPassword,
     String newPassword,
   ) async {
-    
-    
     throw const ServerException(
       'Chức năng đổi mật khẩu chưa được hỗ trợ. '
       'Vui lòng sử dụng chức năng "Quên mật khẩu" để đặt lại mật khẩu.',

@@ -5,7 +5,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/widgets/skeleton_widget.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 import '../../../../core/widgets/custom_image.dart';
 
@@ -33,7 +32,8 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     final now = DateTime.now();
     _startOfWeek = _getStartOfWeek(now);
     _selectedDayIndex = now.weekday - 1;
-    context.read<TeacherBloc>().add(LoadTeacherDashboard());
+    // Load dashboard - sẽ dùng cache nếu có
+    context.read<TeacherBloc>().add(const LoadTeacherDashboard());
   }
 
   DateTime _getStartOfWeek(DateTime date) {
@@ -68,22 +68,31 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           return _buildDashboard(state, isDark);
         }
 
-        return const SizedBox.shrink();
+        // For initial state, load dashboard (will use cache if available)
+        if (state is TeacherInitial) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              context.read<TeacherBloc>().add(const LoadTeacherDashboard());
+            }
+          });
+        }
+        return _buildLoadingState();
       },
     );
   }
 
   Widget _buildLoadingState() {
-    return Padding(
-      padding: EdgeInsets.all(16.w),
-      child: Column(
-        children: [
-          SkeletonWidget.rectangular(height: 56.h),
-          SizedBox(height: 16.h),
-          SkeletonWidget.rectangular(height: 70.h),
-          SizedBox(height: 16.h),
-          SkeletonWidget.rectangular(height: 120.h),
-        ],
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(24.w),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.hourglass_empty, size: 48.sp, color: AppColors.primary),
+            SizedBox(height: 16.h),
+            Text('Đang tải dữ liệu...', style: TextStyle(fontSize: 14.sp)),
+          ],
+        ),
       ),
     );
   }
@@ -101,7 +110,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             SizedBox(height: 16.h),
             ElevatedButton(
               onPressed: () =>
-                  context.read<TeacherBloc>().add(LoadTeacherDashboard()),
+                  context.read<TeacherBloc>().add(const LoadTeacherDashboard(forceRefresh: true)),
               child: const Text('Thử lại'),
             ),
           ],
@@ -112,7 +121,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
 
   Widget _buildDashboard(DashboardLoaded state, bool isDark) {
     if (_startOfWeek == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const SizedBox.shrink();
     }
 
     final selectedDate = _startOfWeek!.add(Duration(days: _selectedDayIndex));
@@ -121,7 +130,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     return RefreshIndicator(
       color: AppColors.primary,
       onRefresh: () async {
-        context.read<TeacherBloc>().add(LoadTeacherDashboard());
+        context.read<TeacherBloc>().add(const LoadTeacherDashboard(forceRefresh: true));
       },
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -326,7 +335,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           Icon(Icons.event_available, size: 36.sp, color: AppColors.neutral400),
           SizedBox(height: 6.h),
           Text(
-            "Không có lịch dạy",
+            "Bạn không có lịch dạy trong ngày này",
             style: TextStyle(fontSize: 13.sp, color: AppColors.neutral500),
           ),
         ],

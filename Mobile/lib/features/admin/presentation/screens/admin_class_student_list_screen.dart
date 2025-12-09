@@ -4,7 +4,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/skeleton_widget.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 
 import '../bloc/admin_bloc.dart';
@@ -360,6 +359,17 @@ class _AdminClassStudentListScreenState
             className = state.className;
             students = state.students;
             studentCount = students.length;
+          } else if (state is AdminLoading) {
+            // Show loading state
+          } else if (state is AdminError) {
+            // Show error state - handled in tab
+          } else if (state is AdminInitial) {
+            // For initial state only, trigger reload
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                context.read<AdminBloc>().add(LoadClassStudentList(widget.classId));
+              }
+            });
           }
 
           return NestedScrollView(
@@ -732,16 +742,14 @@ class _AdminClassStudentListScreenState
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (state is AdminLoading) {
-      return Padding(
-        padding: EdgeInsets.all(16.w),
-        child: ListView.builder(
-          itemCount: 6,
-          itemBuilder: (context, index) {
-            return Padding(
-              padding: EdgeInsets.only(bottom: 12.h),
-              child: SkeletonWidget.rectangular(height: 70.h),
-            );
-          },
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.hourglass_empty, size: 48.sp, color: AppColors.primary),
+            SizedBox(height: 16.h),
+            Text('Đang tải danh sách...', style: TextStyle(fontSize: 14.sp)),
+          ],
         ),
       );
     }

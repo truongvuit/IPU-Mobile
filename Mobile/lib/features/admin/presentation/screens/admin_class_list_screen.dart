@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/skeleton_widget.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 import '../../../../core/constants/app_sizes.dart';
 
@@ -39,10 +38,7 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(
-      length: 2,
-      vsync: this,
-    ); 
+    _tabController = TabController(length: 2, vsync: this);
     _scrollController = ScrollController();
 
     _tabController.addListener(() {
@@ -147,7 +143,16 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
         },
         builder: (context, state) {
           if (state is AdminLoading) {
-            return _buildLoadingSkeleton();
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.hourglass_empty, size: 48.sp, color: AppColors.primary),
+                  SizedBox(height: 16.h),
+                  Text('Đang tải danh sách lớp...', style: TextStyle(fontSize: 14.sp)),
+                ],
+              ),
+            );
           }
 
           if (state is AdminError) {
@@ -158,24 +163,20 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
             return _buildClassList(state, isDark, theme);
           }
 
-          final bloc = context.read<AdminBloc>();
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              bloc.add(const LoadClassList());
-            }
-          });
-          return _buildLoadingSkeleton();
+          // Don't dispatch here - HomeAdminScreen will dispatch when tab is selected
+          // This prevents race condition during initial load with IndexedStack
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.class_outlined, size: 48.sp, color: AppColors.primary),
+                SizedBox(height: 16.h),
+                Text('Đang tải...', style: TextStyle(fontSize: 14.sp)),
+              ],
+            ),
+          );
         },
       ),
-    );
-  }
-
-  Widget _buildLoadingSkeleton() {
-    return ListView.separated(
-      padding: EdgeInsets.all(12.w),
-      itemCount: 10,
-      separatorBuilder: (_, __) => SizedBox(height: 8.h),
-      itemBuilder: (_, __) => SkeletonWidget.rectangular(height: 72.h),
     );
   }
 
@@ -306,7 +307,7 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
             SizedBox(height: 16.h),
             Text('Lịch hiện tại: ${classItem.schedule}'),
             SizedBox(height: 12.h),
-            
+
             ListTile(
               leading: const Icon(Icons.calendar_today),
               title: const Text('Chọn ngày mới'),
@@ -328,7 +329,6 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
                       action: SnackBarAction(
                         label: 'Xác nhận',
                         onPressed: () {
-                          
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Đổi lịch thành công!'),
@@ -349,7 +349,6 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
   }
 
   void _showChangeRoomDialog(AdminClass classItem) {
-    
     final rooms = [
       'Phòng A101',
       'Phòng A102',
@@ -388,11 +387,10 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
                 onTap: () {
                   Navigator.pop(ctx);
                   if (room != classItem.room) {
-                    
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Đã đổi sang $room thành công!')),
                     );
-                    
+
                     context.read<AdminBloc>().add(const LoadClassList());
                   }
                 },
@@ -414,7 +412,6 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
       margin: EdgeInsets.all(AppSizes.p12),
       child: Row(
         children: [
-          
           Expanded(
             flex: 2,
             child: AdminSearchBar(

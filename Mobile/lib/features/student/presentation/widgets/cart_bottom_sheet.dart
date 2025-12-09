@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/routing/app_router.dart';
+import '../../data/services/cart_service.dart';
 import '../bloc/student_bloc.dart';
 import '../bloc/student_event.dart';
 
@@ -32,8 +33,8 @@ class CartBottomSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bloc = context.read<StudentBloc>();
-    final cartItems = bloc.cartItems;
+    // Read cart items from CartService singleton (persists across bloc instances)
+    final cartItems = CartService.instance.items;
 
     return Container(
       constraints: BoxConstraints(

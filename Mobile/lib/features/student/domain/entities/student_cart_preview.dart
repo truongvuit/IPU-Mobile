@@ -1,21 +1,19 @@
 import 'package:equatable/equatable.dart';
 
-
-
 class StudentCartPreview extends Equatable {
   final List<StudentCartItem> items;
   final StudentCartSummary summary;
 
-  const StudentCartPreview({
-    required this.items,
-    required this.summary,
-  });
+  const StudentCartPreview({required this.items, required this.summary});
 
   factory StudentCartPreview.fromJson(Map<String, dynamic> json) {
     return StudentCartPreview(
-      items: (json['items'] as List<dynamic>?)
-              ?.map((item) =>
-                  StudentCartItem.fromJson(item as Map<String, dynamic>))
+      items:
+          (json['items'] as List<dynamic>?)
+              ?.map(
+                (item) =>
+                    StudentCartItem.fromJson(item as Map<String, dynamic>),
+              )
               .toList() ??
           [],
       summary: StudentCartSummary.fromJson(
@@ -46,9 +44,10 @@ class StudentCartItem extends Equatable {
   });
 
   factory StudentCartItem.fromJson(Map<String, dynamic> json) {
-    final tuition = _parseDouble(json['tuitionFee']);
+    // API returns: originalPrice, finalPrice
+    final tuition = _parseDouble(json['originalPrice'] ?? json['tuitionFee']);
     final finalAmt = _parseDouble(json['finalPrice'] ?? json['finalAmount']);
-    
+
     return StudentCartItem(
       classId: json['courseClassId'] as int? ?? json['classId'] as int? ?? 0,
       className: json['className'] as String? ?? '',
@@ -68,7 +67,14 @@ class StudentCartItem extends Equatable {
   }
 
   @override
-  List<Object?> get props => [classId, className, courseName, tuitionFee, discountAmount, finalAmount];
+  List<Object?> get props => [
+    classId,
+    className,
+    courseName,
+    tuitionFee,
+    discountAmount,
+    finalAmount,
+  ];
 }
 
 class StudentCartSummary extends Equatable {
@@ -78,6 +84,8 @@ class StudentCartSummary extends Equatable {
   final int courseDiscountPercent;
   final int comboDiscountPercent;
   final int returningStudentDiscountPercent;
+  final double returningDiscountAmount;
+  final List<String> appliedCombos;
 
   const StudentCartSummary({
     required this.totalTuitionFee,
@@ -86,20 +94,43 @@ class StudentCartSummary extends Equatable {
     this.courseDiscountPercent = 0,
     this.comboDiscountPercent = 0,
     this.returningStudentDiscountPercent = 0,
+    this.returningDiscountAmount = 0.0,
+    this.appliedCombos = const [],
   });
 
   factory StudentCartSummary.fromJson(Map<String, dynamic> json) {
-    final tuition = _parseDouble(json['totalTuitionFee']);
+    // API returns: totalOriginalPrice, totalDiscountAmount, finalAmount, returningDiscountAmount, appliedCombos
+    final tuition = _parseDouble(
+      json['totalOriginalPrice'] ?? json['totalTuitionFee'],
+    );
     final finalAmt = _parseDouble(json['finalAmount'] ?? json['totalAmount']);
-    final discount = _parseDouble(json['totalDiscountAmount'] ?? json['totalDiscount']);
-    
+    final discount = _parseDouble(
+      json['totalDiscountAmount'] ?? json['totalDiscount'],
+    );
+    final returningDiscount = _parseDouble(json['returningDiscountAmount']);
+
+    // Parse applied combos
+    final combos =
+        (json['appliedCombos'] as List<dynamic>?)
+            ?.map((e) => e.toString())
+            .toList() ??
+        [];
+
+    // Calculate returning student discount percent if amount is available
+    int returningPercent = _parseInt(json['returningStudentDiscountPercent']);
+    if (returningPercent == 0 && returningDiscount > 0 && tuition > 0) {
+      returningPercent = ((returningDiscount / tuition) * 100).round();
+    }
+
     return StudentCartSummary(
       totalTuitionFee: tuition,
       totalDiscount: discount,
       totalAmount: finalAmt,
       courseDiscountPercent: _parseInt(json['courseDiscountPercent']),
       comboDiscountPercent: _parseInt(json['comboDiscountPercent']),
-      returningStudentDiscountPercent: _parseInt(json['returningStudentDiscountPercent']),
+      returningStudentDiscountPercent: returningPercent,
+      returningDiscountAmount: returningDiscount,
+      appliedCombos: combos,
     );
   }
 
@@ -123,11 +154,13 @@ class StudentCartSummary extends Equatable {
 
   @override
   List<Object?> get props => [
-        totalTuitionFee,
-        totalDiscount,
-        totalAmount,
-        courseDiscountPercent,
-        comboDiscountPercent,
-        returningStudentDiscountPercent,
-      ];
+    totalTuitionFee,
+    totalDiscount,
+    totalAmount,
+    courseDiscountPercent,
+    comboDiscountPercent,
+    returningStudentDiscountPercent,
+    returningDiscountAmount,
+    appliedCombos,
+  ];
 }

@@ -4,13 +4,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:trungtamngoaingu/features/teacher/domain/entities/attendance.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/skeleton_widget.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 import '../../../../core/widgets/custom_image.dart';
 import '../../domain/entities/attendance_arguments.dart';
 import '../bloc/teacher_bloc.dart';
 import '../bloc/teacher_event.dart';
 import '../bloc/teacher_state.dart';
+import '../widgets/teacher_app_bar.dart';
 
 class TeacherAttendanceScreen extends StatefulWidget {
   final AttendanceArguments args;
@@ -24,7 +24,9 @@ class TeacherAttendanceScreen extends StatefulWidget {
 
 class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _sessionNoteController = TextEditingController();
   String _searchQuery = '';
+  bool _showSearch = false;
 
   Map<String, String> _localAttendance = {};
   bool _hasChanges = false;
@@ -118,7 +120,9 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
           (e) => {
             'studentId': int.tryParse(e.key) ?? 0,
             'absent': e.value == 'absent',
-            'note': null,
+            'note': _sessionNoteController.text.trim().isEmpty
+                ? null
+                : _sessionNoteController.text.trim(),
           },
         )
         .toList();
@@ -131,6 +135,7 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _sessionNoteController.dispose();
     super.dispose();
   }
 
@@ -166,7 +171,11 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(theme, isDark),
+            TeacherAppBar(
+              title: 'Điểm danh',
+              showBackButton: true,
+              onBackPressed: () => Navigator.pop(context, false),
+            ),
 
             _buildSessionInfo(theme, isDark),
 
@@ -181,7 +190,7 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
                         backgroundColor: AppColors.success,
                       ),
                     );
-                    Navigator.pop(context);
+                    Navigator.pop(context, true);
                   }
                 },
                 builder: (context, state) {
@@ -267,86 +276,12 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
     );
   }
 
-  Widget _buildHeader(ThemeData theme, bool isDark) {
-    final className = widget.args.className ?? 'Lớp học';
-
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.neutral800 : Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.pop(context),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      'Điểm danh',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18.sp,
-                      ),
-                    ),
-                    if (isSessionCompleted) ...[
-                      SizedBox(width: 8.w),
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
-                        decoration: BoxDecoration(
-                          color: AppColors.warning.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                        child: Text(
-                          'Chỉ xem',
-                          style: TextStyle(
-                            fontSize: 11.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.warning,
-                            fontFamily: 'Lexend',
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  className,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: isDark ? AppColors.neutral400 : AppColors.neutral600,
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // header replaced by TeacherAppBar for consistency
 
   Widget _buildSessionInfo(ThemeData theme, bool isDark) {
     final sessionDate = widget.args.sessionDate;
     final room = widget.args.room;
+    final className = widget.args.className ?? 'Lớp học';
 
     String dateStr = 'Hôm nay';
     String timeStr = '';
@@ -366,8 +301,46 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
       color: isDark ? AppColors.neutral800 : Colors.white,
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  className,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : AppColors.textPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (isSessionCompleted)
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.warning.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Text(
+                    'Chỉ xem',
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.warning,
+                      fontFamily: 'Lexend',
+                    ),
+                  ),
+                ),
+            ],
+          ),
+
+          SizedBox(height: 10.h),
+
+          Row(
+            children: [
           Container(
             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
             decoration: BoxDecoration(
@@ -447,6 +420,8 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
                 ),
               ),
             ),
+            ],
+          ),
         ],
       ),
     );
@@ -471,9 +446,37 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
       children: [
         _buildQuickStats(session, theme, isDark),
 
-        if (session.records.length > 8)
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _showSearch = !_showSearch;
+                  if (!_showSearch) {
+                    _searchController.clear();
+                    _searchQuery = '';
+                  }
+                });
+              },
+              icon: Icon(_showSearch ? Icons.close : Icons.search, size: 18.sp),
+              label: Text(
+                _showSearch ? 'Ẩn tìm kiếm' : 'Tìm kiếm',
+                style: TextStyle(fontSize: 13.sp),
+              ),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+              ),
+            ),
+          ),
+        ),
+
+        AnimatedCrossFade(
+          firstChild: const SizedBox.shrink(),
+          secondChild: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
@@ -487,7 +490,7 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
                 fillColor: isDark ? AppColors.neutral700 : AppColors.neutral100,
                 contentPadding: EdgeInsets.symmetric(
                   vertical: 0,
-                  horizontal: 16.w,
+                  horizontal: 12.w,
                 ),
               ),
               onChanged: (value) {
@@ -497,6 +500,10 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
               },
             ),
           ),
+          crossFadeState:
+              _showSearch ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+          duration: const Duration(milliseconds: 200),
+        ),
 
         Expanded(
           child: filteredRecords.isEmpty
@@ -504,25 +511,38 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
                   icon: Icons.people_outline,
                   message: 'Không có học viên nào',
                 )
-              : ListView.builder(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 8.h,
-                  ),
-                  itemCount: filteredRecords.length,
-                  itemBuilder: (context, index) {
-                    final record = filteredRecords[index];
-                    return _buildStudentCheckboxItem(
-                      context,
-                      record,
-                      isDark,
-                      theme,
+              : LayoutBuilder(
+                  builder: (context, constraints) {
+                    final crossAxisCount = constraints.maxWidth >= 380 ? 2 : 1;
+                    return GridView.builder(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 8.h,
+                      ),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        mainAxisSpacing: 8.h,
+                        crossAxisSpacing: 8.w,
+                        childAspectRatio: crossAxisCount == 1 ? 3.8 : 3.2,
+                      ),
+                      itemCount: filteredRecords.length,
+                      itemBuilder: (context, index) {
+                        final record = filteredRecords[index];
+                        return _buildStudentCheckboxItem(
+                          context,
+                          record,
+                          isDark,
+                          theme,
+                        );
+                      },
                     );
                   },
                 ),
         ),
 
-        _buildSubmitButton(session, isDark),
+        _buildSessionNote(isDark, theme),
+
+        _buildSubmitButton(session, isDark)
       ],
     );
   }
@@ -536,19 +556,19 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
     final absentCount = totalStudents - presentCount;
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
       child: Row(
         children: [
           Expanded(
             child: _buildStatItem(
               icon: Icons.people,
-              label: 'Tổng số',
+              label: 'Tổng',
               value: totalStudents.toString(),
               color: AppColors.primary,
               isDark: isDark,
             ),
           ),
-          SizedBox(width: 8.w),
+          SizedBox(width: 6.w),
 
           Expanded(
             child: _buildStatItem(
@@ -559,7 +579,7 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
               isDark: isDark,
             ),
           ),
-          SizedBox(width: 8.w),
+          SizedBox(width: 6.w),
 
           Expanded(
             child: _buildStatItem(
@@ -583,7 +603,7 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
     required bool isDark,
   }) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
       decoration: BoxDecoration(
         color: isDark ? AppColors.neutral800 : Colors.white,
         borderRadius: BorderRadius.circular(10.r),
@@ -593,20 +613,20 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
       ),
       child: Column(
         children: [
-          Icon(icon, color: color, size: 20.sp),
-          SizedBox(height: 4.h),
+          Icon(icon, color: color, size: 18.sp),
+          SizedBox(height: 2.h),
           Text(
             value,
             style: TextStyle(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.bold,
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w700,
               color: color,
             ),
           ),
           Text(
             label,
             style: TextStyle(
-              fontSize: 10.sp,
+              fontSize: 11.sp,
               color: isDark ? AppColors.neutral400 : AppColors.neutral600,
             ),
           ),
@@ -629,7 +649,7 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
 
     return Container(
       margin: EdgeInsets.only(bottom: 8.h),
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
       decoration: BoxDecoration(
         color: isDark ? AppColors.neutral800 : Colors.white,
         borderRadius: BorderRadius.circular(10.r),
@@ -642,36 +662,35 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
           ClipOval(
             child: CustomImage(
               imageUrl: record.studentAvatar ?? '',
-              width: 32.r,
-              height: 32.r,
+              width: 28.r,
+              height: 28.r,
               fit: BoxFit.cover,
             ),
           ),
-          SizedBox(width: 10.w),
+          SizedBox(width: 8.w),
 
           Expanded(
             child: Text(
               studentName,
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w500,
-                fontSize: 13.sp,
+                fontSize: 12.5.sp,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ),
 
-          
           InkWell(
             onTap: () => _toggleAttendance(record.studentId),
             borderRadius: BorderRadius.circular(10.r),
             child: Container(
-              width: 44.w,
-              height: 44.h,
+              width: 36.w,
+              height: 36.h,
               alignment: Alignment.center,
               child: Container(
-                width: 24.w,
-                height: 24.w,
+                width: 22.w,
+                height: 22.w,
                 decoration: BoxDecoration(
                   color: isPresent ? AppColors.success : Colors.transparent,
                   borderRadius: BorderRadius.circular(6.r),
@@ -683,7 +702,7 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
                   ),
                 ),
                 child: isPresent
-                    ? Icon(Icons.check, color: Colors.white, size: 16.sp)
+                    ? Icon(Icons.check, color: Colors.white, size: 14.sp)
                     : null,
               ),
             ),
@@ -693,43 +712,63 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
     );
   }
 
-  Widget _buildSubmitButton(dynamic session, bool isDark) {
-    final isCompleted = isSessionCompleted;
-    
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.neutral800 : Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
+  Widget _buildSessionNote(bool isDark, ThemeData theme) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      child: TextField(
+        controller: _sessionNoteController,
+        maxLines: 3,
+        minLines: 2,
+        decoration: InputDecoration(
+          hintText: 'Ghi chú buổi học (tuỳ chọn)',
+          prefixIcon: const Icon(Icons.note_alt_outlined),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.r),
           ),
-        ],
+          filled: true,
+          fillColor: isDark ? AppColors.neutral800 : Colors.white,
+        ),
+        style: theme.textTheme.bodyMedium,
+        onChanged: (_) {
+          setState(() {
+            _hasChanges = true;
+          });
+        },
       ),
-      child: SafeArea(
-        top: false,
+    );
+  }
+
+  Widget _buildSubmitButton(dynamic session, bool isDark) {
+    final isDisabled = isSessionCompleted || !_hasChanges;
+
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 12.h),
         child: SizedBox(
           width: double.infinity,
-          child: ElevatedButton(
-            onPressed: (isCompleted || !_hasChanges)
-                ? null
-                : _submitAttendance,
+          height: 48.h,
+          child: ElevatedButton.icon(
+            onPressed: isDisabled ? null : _submitAttendance,
+            icon: Icon(
+              isSessionCompleted ? Icons.lock_clock : Icons.save,
+              size: 18.sp,
+            ),
+            label: Text(
+              isSessionCompleted ? 'Buổi học đã khóa' : 'Lưu điểm danh',
+              style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
+            ),
             style: ElevatedButton.styleFrom(
-              padding: EdgeInsets.symmetric(vertical: 16.h),
-              backgroundColor: AppColors.primary,
+              backgroundColor:
+                  isSessionCompleted ? AppColors.neutral400 : AppColors.primary,
               foregroundColor: Colors.white,
-              disabledBackgroundColor: AppColors.neutral400,
+              disabledBackgroundColor:
+                  isDark ? AppColors.neutral700 : AppColors.neutral300,
+              disabledForegroundColor:
+                  isDark ? AppColors.neutral400 : AppColors.neutral600,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12.r),
               ),
-            ),
-            child: Text(
-              isCompleted
-                  ? 'Buổi học đã kết thúc'
-                  : (_hasChanges ? 'Lưu điểm danh' : 'Chưa có thay đổi'),
-              style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
             ),
           ),
         ),
@@ -738,20 +777,13 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
   }
 
   Widget _buildLoadingState() {
-    return Padding(
-      padding: EdgeInsets.all(16.w),
+    return Center(
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SkeletonWidget.rectangular(height: 100.h),
+          Icon(Icons.hourglass_empty, size: 48.sp, color: AppColors.primary),
           SizedBox(height: 16.h),
-          Expanded(
-            child: ListView.separated(
-              itemCount: 5,
-              separatorBuilder: (context, index) => SizedBox(height: 12.h),
-              itemBuilder: (context, index) =>
-                  SkeletonWidget.rectangular(height: 60.h),
-            ),
-          ),
+          Text('Đang tải điểm danh...', style: TextStyle(fontSize: 14.sp)),
         ],
       ),
     );

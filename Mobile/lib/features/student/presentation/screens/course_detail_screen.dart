@@ -9,6 +9,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/custom_image.dart';
 import '../../../../core/routing/app_router.dart';
+import '../../domain/entities/course.dart';
+import '../widgets/class_selection_bottom_sheet.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final String courseId;
@@ -26,31 +28,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   void initState() {
     super.initState();
     context.read<StudentBloc>().add(LoadCourseDetail(widget.courseId));
-  }
-
-  Future<void> _navigateToCheckout(
-    String courseId,
-    String? courseName,
-    List<int>? availableClassIds,
-  ) async {
-    if (availableClassIds == null || availableClassIds.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Không tìm thấy lớp học cho khóa này. Vui lòng liên hệ trung tâm.',
-            ),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-      return;
-    }
-
-    Navigator.of(context).pushNamed(
-      AppRouter.studentCheckout,
-      arguments: {'classIds': availableClassIds, 'courseName': courseName},
-    );
   }
 
   @override
@@ -81,6 +58,10 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 constraints.maxWidth >= 600 && constraints.maxWidth < 1024;
 
             return BlocBuilder<StudentBloc, StudentState>(
+              // Ignore cart update states to prevent white screen
+              buildWhen: (previous, current) {
+                return current is! StudentCartUpdated;
+              },
               builder: (context, state) {
                 if (state is StudentLoading) {
                   return const Center(
@@ -223,7 +204,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                           const NeverScrollableScrollPhysics(),
                                       mainAxisSpacing: 12.w,
                                       crossAxisSpacing: 12.w,
-                                      childAspectRatio: isDesktop ? 1.2 : 1.5,
+                                      childAspectRatio: isDesktop ? 1.2 : 1.2,
                                       children: [
                                         _buildInfoCard(
                                           icon: Icons.laptop_chromebook,
@@ -347,6 +328,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
                                   SizedBox(height: 16.h),
 
+                                  // Available Classes Section
                                   Padding(
                                     padding: EdgeInsets.symmetric(
                                       horizontal: isDesktop ? 24.w : 16.w,
@@ -355,48 +337,142 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          'Giảng viên',
-                                          style: TextStyle(
-                                            fontSize: isDesktop ? 24.sp : 20.sp,
-                                            fontWeight: FontWeight.w700,
-                                            color: isDark
-                                                ? Colors.white
-                                                : AppColors.textPrimary,
-                                            fontFamily: 'Lexend',
-                                          ),
-                                        ),
-                                        SizedBox(height: 12.h),
                                         Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Container(
-                                              width: 48,
-                                              height: 48,
-                                              decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                color: AppColors.primary
-                                                    .withValues(alpha: 0.2),
-                                              ),
-                                              child: const Icon(
-                                                Icons.person,
-                                                color: AppColors.primary,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 12),
                                             Text(
-                                              course.teacherName ??
-                                                  'Chưa có thông tin',
+                                              'Các lớp học',
                                               style: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w600,
+                                                fontSize: isDesktop
+                                                    ? 24.sp
+                                                    : 20.sp,
+                                                fontWeight: FontWeight.w700,
                                                 color: isDark
                                                     ? Colors.white
                                                     : AppColors.textPrimary,
                                                 fontFamily: 'Lexend',
                                               ),
                                             ),
+                                            Container(
+                                              padding: EdgeInsets.symmetric(
+                                                horizontal: 12.w,
+                                                vertical: 4.h,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: AppColors.primary
+                                                    .withValues(alpha: 0.1),
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                              ),
+                                              child: Text(
+                                                '${course.availableClasses.length} lớp',
+                                                style: TextStyle(
+                                                  fontSize: 14.sp,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: AppColors.primary,
+                                                  fontFamily: 'Lexend',
+                                                ),
+                                              ),
+                                            ),
                                           ],
                                         ),
+                                        SizedBox(height: 16.h),
+                                        if (course.availableClasses.isEmpty)
+                                          Container(
+                                            padding: EdgeInsets.all(20.w),
+                                            decoration: BoxDecoration(
+                                              color: isDark
+                                                  ? const Color(0xFF1F2937)
+                                                  : const Color(0xFFF3F4F6),
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                    AppSizes.radiusMedium,
+                                                  ),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.info_outline,
+                                                  color: AppColors.warning,
+                                                  size: 24.sp,
+                                                ),
+                                                SizedBox(width: 12.w),
+                                                Expanded(
+                                                  child: Text(
+                                                    'Hiện tại không có lớp nào đang mở đăng ký. Vui lòng liên hệ trung tâm.',
+                                                    style: TextStyle(
+                                                      fontSize: 14.sp,
+                                                      color: isDark
+                                                          ? Colors.white70
+                                                          : AppColors
+                                                                .textSecondary,
+                                                      fontFamily: 'Lexend',
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          )
+                                        else ...[
+                                          // Show only first 3 classes to prevent layout overflow
+                                          ...course.availableClasses
+                                              .take(3)
+                                              .map(
+                                                (classInfo) => _buildClassCard(
+                                                  classInfo,
+                                                  course,
+                                                  isDark,
+                                                  isDesktop,
+                                                ),
+                                              ),
+                                          // Show "View All" button if more than 3 classes
+                                          if (course.availableClasses.length >
+                                              3)
+                                            Padding(
+                                              padding: EdgeInsets.only(
+                                                top: 8.h,
+                                              ),
+                                              child: OutlinedButton.icon(
+                                                onPressed: () =>
+                                                    _showClassSelection(
+                                                      context,
+                                                      course,
+                                                    ),
+                                                icon: const Icon(
+                                                  Icons.list_alt,
+                                                ),
+                                                label: Text(
+                                                  'Xem tất cả ${course.availableClasses.length} lớp',
+                                                  style: TextStyle(
+                                                    fontFamily: 'Lexend',
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                style: OutlinedButton.styleFrom(
+                                                  foregroundColor:
+                                                      AppColors.primary,
+                                                  side: BorderSide(
+                                                    color: AppColors.primary,
+                                                  ),
+                                                  padding: EdgeInsets.symmetric(
+                                                    vertical: 12.h,
+                                                    horizontal: 16.w,
+                                                  ),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          AppSizes.radiusMedium,
+                                                        ),
+                                                  ),
+                                                  minimumSize: Size(
+                                                    double.infinity,
+                                                    48.h,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                        ],
                                       ],
                                     ),
                                   ),
@@ -407,6 +483,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                         ],
                       ),
 
+                      // Bottom action bar with cart button
                       Positioned(
                         left: 0,
                         right: 0,
@@ -415,10 +492,10 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: isDark
-                                ? const Color(0xFF101622).withValues(alpha: 0.8)
-                                : const Color(
-                                    0xFFF6F6F8,
-                                  ).withValues(alpha: 0.8),
+                                ? const Color(
+                                    0xFF101622,
+                                  ).withValues(alpha: 0.95)
+                                : Colors.white.withValues(alpha: 0.95),
                             border: Border(
                               top: BorderSide(
                                 color: isDark
@@ -426,140 +503,74 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                     : const Color(0xFFE5E7EB),
                               ),
                             ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, -2),
+                              ),
+                            ],
                           ),
                           child: Row(
                             children: [
-                              // Add to Cart button
+                              // Price display
                               Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: () {
-                                    // Check if course has available classes
-                                    if (course.availableClassIds.isEmpty) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Không có lớp học khả dụng',
-                                          ),
-                                          backgroundColor: AppColors.warning,
-                                        ),
-                                      );
-                                      return;
-                                    }
-
-                                    // Check if already in cart
-                                    final bloc = context.read<StudentBloc>();
-                                    if (bloc.isInCart(
-                                      course.availableClassIds.first,
-                                    )) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Khóa học đã có trong giỏ hàng',
-                                          ),
-                                          backgroundColor: AppColors.info,
-                                        ),
-                                      );
-                                      return;
-                                    }
-
-                                    // Add to cart
-                                    bloc.add(
-                                      AddCourseToCart(
-                                        courseId: widget.courseId,
-                                        courseName: course.name,
-                                        classId: course.availableClassIds.first,
-                                        className:
-                                            'Lớp ${course.availableClassIds.first}',
-                                        price: course.price,
-                                        imageUrl: course.imageUrl,
-                                      ),
-                                    );
-
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Row(
-                                          children: [
-                                            const Icon(
-                                              Icons.check_circle,
-                                              color: Colors.white,
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: Text(
-                                                'Đã thêm "${course.name}" vào giỏ',
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        backgroundColor: AppColors.success,
-                                        action: SnackBarAction(
-                                          label: 'Xem giỏ',
-                                          textColor: Colors.white,
-                                          onPressed: () {
-                                            // Import and show cart bottom sheet
-                                            Navigator.of(context).pop();
-                                          },
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  icon: const Icon(
-                                    Icons.add_shopping_cart,
-                                    size: 18,
-                                  ),
-                                  label: const Text(
-                                    'Thêm vào giỏ',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      fontFamily: 'Lexend',
-                                    ),
-                                  ),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: AppColors.primary,
-                                    side: BorderSide(
-                                      color: AppColors.primary,
-                                      width: 1.5,
-                                    ),
-                                    minimumSize: const Size(0, 48),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        AppSizes.radiusMedium,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Học phí',
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        color: AppColors.textSecondary,
+                                        fontFamily: 'Lexend',
                                       ),
                                     ),
-                                  ),
+                                    Text(
+                                      currencyFormat.format(course.price),
+                                      style: TextStyle(
+                                        fontSize: 18.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color: isDark
+                                            ? Colors.white
+                                            : AppColors.textPrimary,
+                                        fontFamily: 'Lexend',
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              // Immediate checkout button
-                              Expanded(
-                                child: ElevatedButton.icon(
-                                  onPressed: () => _navigateToCheckout(
-                                    widget.courseId,
-                                    course.name,
-                                    course.availableClassIds,
+                              SizedBox(width: 12.w),
+                              // Choose class button
+                              ElevatedButton.icon(
+                                onPressed: course.availableClasses.isNotEmpty
+                                    ? () => _showClassSelection(context, course)
+                                    : null,
+                                icon: const Icon(
+                                  Icons.class_outlined,
+                                  size: 20,
+                                ),
+                                label: Text(
+                                  course.availableClasses.isNotEmpty
+                                      ? 'Chọn lớp để đăng ký'
+                                      : 'Không có lớp',
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    fontFamily: 'Lexend',
                                   ),
-                                  icon: const Icon(Icons.flash_on, size: 18),
-                                  label: const Text(
-                                    'Đăng ký ngay',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      fontFamily: 'Lexend',
-                                    ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  foregroundColor: Colors.white,
+                                  minimumSize: const Size(0, 50),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 24.w,
                                   ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primary,
-                                    foregroundColor: Colors.white,
-                                    minimumSize: const Size(0, 48),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        AppSizes.radiusMedium,
-                                      ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppSizes.radiusMedium,
                                     ),
                                   ),
                                 ),
@@ -581,6 +592,234 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     );
   }
 
+  void _showClassSelection(BuildContext context, Course course) {
+    ClassSelectionBottomSheet.show(context, course);
+  }
+
+  Widget _buildClassCard(
+    CourseClassInfo classInfo,
+    Course course,
+    bool isDark,
+    bool isDesktop,
+  ) {
+    final dateFormat = DateFormat('dd/MM/yyyy');
+    final hasSlots = classInfo.hasAvailableSlots;
+    final slotsText = classInfo.maxCapacity != null
+        ? '${classInfo.currentEnrollment ?? 0}/${classInfo.maxCapacity}'
+        : 'Không giới hạn';
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 12.h),
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1F2937) : Colors.white,
+        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+        border: Border.all(
+          color: isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  classInfo.className,
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : AppColors.textPrimary,
+                    fontFamily: 'Lexend',
+                  ),
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: hasSlots
+                      ? AppColors.success.withValues(alpha: 0.1)
+                      : AppColors.error.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  hasSlots ? 'Còn chỗ' : 'Đã đầy',
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w500,
+                    color: hasSlots ? AppColors.success : AppColors.error,
+                    fontFamily: 'Lexend',
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          SizedBox(height: 12.h),
+
+          // Info grid
+          Wrap(
+            spacing: 16.w,
+            runSpacing: 8.h,
+            children: [
+              if (classInfo.instructorName != null)
+                _buildMiniInfo(
+                  Icons.person_outline,
+                  classInfo.instructorName!,
+                  isDark,
+                ),
+              if (classInfo.schedulePattern != null)
+                _buildMiniInfo(
+                  Icons.calendar_today_outlined,
+                  classInfo.schedulePattern!,
+                  isDark,
+                ),
+              if (classInfo.startDate != null)
+                _buildMiniInfo(
+                  Icons.event_outlined,
+                  dateFormat.format(classInfo.startDate!),
+                  isDark,
+                ),
+              _buildMiniInfo(Icons.people_outline, slotsText, isDark),
+            ],
+          ),
+
+          SizedBox(height: 16.h),
+
+          // Action buttons
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: hasSlots
+                      ? () => _addClassToCart(classInfo, course)
+                      : null,
+                  icon: Icon(Icons.add_shopping_cart, size: 16.sp),
+                  label: Text(
+                    'Thêm vào giỏ',
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Lexend',
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: BorderSide(color: AppColors.primary),
+                    padding: EdgeInsets.symmetric(vertical: 10.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: hasSlots
+                      ? () => _enrollClass(classInfo, course)
+                      : null,
+                  icon: Icon(Icons.flash_on, size: 16.sp),
+                  label: Text(
+                    'Đăng ký ngay',
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Lexend',
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 10.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMiniInfo(IconData icon, String text, bool isDark) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14.sp, color: AppColors.textSecondary),
+        SizedBox(width: 4.w),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: isDark ? Colors.grey[300] : AppColors.textSecondary,
+            fontFamily: 'Lexend',
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _addClassToCart(CourseClassInfo classInfo, Course course) {
+    final bloc = context.read<StudentBloc>();
+
+    if (bloc.isInCart(classInfo.classId)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Lớp học này đã có trong giỏ hàng'),
+          backgroundColor: AppColors.info,
+        ),
+      );
+      return;
+    }
+
+    bloc.add(
+      AddCourseToCart(
+        courseId: course.id,
+        courseName: course.name,
+        classId: classInfo.classId,
+        className: classInfo.className,
+        price: course.price,
+        imageUrl: course.imageUrl,
+      ),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white),
+            const SizedBox(width: 8),
+            Expanded(child: Text('Đã thêm "${classInfo.className}" vào giỏ')),
+          ],
+        ),
+        backgroundColor: AppColors.success,
+      ),
+    );
+  }
+
+  void _enrollClass(CourseClassInfo classInfo, Course course) {
+    Navigator.of(context).pushNamed(
+      AppRouter.studentCheckout,
+      arguments: {
+        'classIds': [classInfo.classId],
+        'courseName': course.name,
+      },
+    );
+  }
+
   Widget _buildInfoCard({
     required IconData icon,
     required String title,
@@ -598,16 +837,21 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, color: AppColors.primary, size: 24),
-          const Spacer(),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white : AppColors.textPrimary,
-              fontFamily: 'Lexend',
+          const SizedBox(height: 12),
+          Flexible(
+            child: Text(
+              title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : AppColors.textPrimary,
+                fontFamily: 'Lexend',
+              ),
             ),
           ),
           const SizedBox(height: 4),

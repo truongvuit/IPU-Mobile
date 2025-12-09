@@ -8,7 +8,6 @@ import '../../../../core/constants/app_sizes.dart';
 import '../widgets/admin_icon_action.dart';
 import '../widgets/simple_admin_app_bar.dart';
 
-import '../../domain/entities/quick_registration.dart';
 import '../bloc/registration_bloc.dart';
 import '../bloc/registration_event.dart';
 import '../bloc/registration_state.dart';
@@ -148,7 +147,6 @@ class _QuickRegistrationFormScreenState
             );
           }
 
-          
           RegistrationInProgress? regState;
           if (state is RegistrationInProgress) {
             regState = state;
@@ -170,7 +168,7 @@ class _QuickRegistrationFormScreenState
                 duration: const Duration(seconds: 4),
               ),
             );
-            
+
             context.read<RegistrationBloc>().add(const ClearCartPreviewError());
           }
         },
@@ -345,7 +343,6 @@ class _QuickRegistrationFormScreenState
                     ),
                     SizedBox(height: AppSizes.p20),
 
-                    
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -384,11 +381,9 @@ class _QuickRegistrationFormScreenState
                     _buildEnhancedPaymentSection(regState, isDark),
                     SizedBox(height: AppSizes.paddingMedium),
 
-                    
                     if (regState.hasAutoPromotions)
                       _buildAppliedPromotionsChips(regState, isDark),
 
-                    
                     if (!regState.hasAutoPromotions)
                       InkWell(
                         onTap: _navigateToPromotion,
@@ -457,21 +452,12 @@ class _QuickRegistrationFormScreenState
                       ),
                     SizedBox(height: AppSizes.p20),
 
-                    
-                    _buildSectionTitle('Phương thức thanh toán'),
-                    SizedBox(height: AppSizes.p12),
-
-                    _buildPaymentMethodSelector(regState, isDark),
-
-                    SizedBox(height: 32.h),
-
-                    
+                    // Payment method selection removed - it's in PaymentScreen
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: _canProceedToPayment(regState)
                             ? () {
-                                
                                 if (regState!.isNewStudent &&
                                     !(_formKey.currentState?.validate() ??
                                         false)) {
@@ -488,7 +474,6 @@ class _QuickRegistrationFormScreenState
 
                                 final bloc = context.read<RegistrationBloc>();
 
-                                
                                 if (regState.isNewStudent) {
                                   bloc.add(
                                     UpdateStudentInfo(
@@ -504,7 +489,6 @@ class _QuickRegistrationFormScreenState
                                   );
                                 }
 
-                                
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -549,16 +533,12 @@ class _QuickRegistrationFormScreenState
   }
 
   bool _canProceedToPayment(RegistrationInProgress state) {
-    
     if (state.selectedClasses.isEmpty) return false;
 
     if (state.isNewStudent) {
-      
-      
       return _nameController.text.isNotEmpty &&
           _phoneController.text.isNotEmpty;
     } else {
-      
       return state.studentId != null;
     }
   }
@@ -686,7 +666,7 @@ class _QuickRegistrationFormScreenState
             if (value == null || value.isEmpty) {
               return 'Vui lòng nhập số điện thoại';
             }
-            
+
             final phoneRegex = RegExp(r'^(0|\+84)(3|5|7|8|9)[0-9]{8}$');
             final cleanPhone = value.replaceAll(RegExp(r'[\s\-\.]'), '');
             if (!phoneRegex.hasMatch(cleanPhone)) {
@@ -699,11 +679,10 @@ class _QuickRegistrationFormScreenState
 
         _buildTextField(
           controller: _emailController,
-          label: 'Email (không bắt buộc)',
+          label: 'Email',
           hintText: 'Nhập email',
           keyboardType: TextInputType.emailAddress,
           validator: (value) {
-            
             if (value != null && value.isNotEmpty) {
               final emailRegex = RegExp(
                 r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
@@ -828,7 +807,6 @@ class _QuickRegistrationFormScreenState
     );
   }
 
-  
   void _showPromotionBreakdownModal(RegistrationInProgress state) {
     if (state.cartPreview == null) return;
 
@@ -853,7 +831,6 @@ class _QuickRegistrationFormScreenState
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            
             Container(
               margin: EdgeInsets.only(top: AppSizes.p12),
               width: 40.w,
@@ -864,7 +841,6 @@ class _QuickRegistrationFormScreenState
               ),
             ),
 
-            
             Padding(
               padding: EdgeInsets.all(AppSizes.paddingMedium),
               child: Row(
@@ -887,14 +863,12 @@ class _QuickRegistrationFormScreenState
 
             Divider(height: 1),
 
-            
             Flexible(
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(AppSizes.paddingMedium),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    
                     ...cartPreview.items.map(
                       (item) => _buildItemBreakdown(item, isDark),
                     ),
@@ -905,14 +879,12 @@ class _QuickRegistrationFormScreenState
                         child: Divider(),
                       ),
 
-                    
                     _buildSummarySection(cartPreview.summary, isDark),
                   ],
                 ),
               ),
             ),
 
-            
             Padding(
               padding: EdgeInsets.all(AppSizes.paddingMedium),
               child: SizedBox(
@@ -944,7 +916,6 @@ class _QuickRegistrationFormScreenState
     );
   }
 
-  
   Widget _buildItemBreakdown(dynamic item, bool isDark) {
     final theme = Theme.of(context);
 
@@ -961,7 +932,6 @@ class _QuickRegistrationFormScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          
           Text(
             item.courseName ?? 'Khóa học',
             style: theme.textTheme.bodyMedium?.copyWith(
@@ -977,7 +947,6 @@ class _QuickRegistrationFormScreenState
             ),
           SizedBox(height: AppSizes.p8),
 
-          
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -989,7 +958,6 @@ class _QuickRegistrationFormScreenState
             ],
           ),
 
-          
           if ((item.singleCourseDiscountPercent ?? 0) > 0) ...[
             SizedBox(height: AppSizes.p4),
             Row(
@@ -1012,7 +980,6 @@ class _QuickRegistrationFormScreenState
             ),
           ],
 
-          
           SizedBox(height: AppSizes.p4),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1041,7 +1008,6 @@ class _QuickRegistrationFormScreenState
     );
   }
 
-  
   Widget _buildSummarySection(dynamic summary, bool isDark) {
     final theme = Theme.of(context);
 
@@ -1056,13 +1022,11 @@ class _QuickRegistrationFormScreenState
         ),
         SizedBox(height: AppSizes.p12),
 
-        
         _buildSummaryRow(
           'Tổng học phí gốc',
           summary.totalTuitionFee?.toDouble() ?? 0,
         ),
 
-        
         if ((summary.totalSingleCourseDiscount ?? 0) > 0)
           _buildSummaryRow(
             '🏷️ Giảm giá khóa lẻ',
@@ -1070,7 +1034,6 @@ class _QuickRegistrationFormScreenState
             color: AppColors.success,
           ),
 
-        
         if ((summary.totalComboDiscount ?? 0) > 0) ...[
           ...((summary.appliedCombos as List?)?.map(
                 (combo) => _buildSummaryRow(
@@ -1082,7 +1045,6 @@ class _QuickRegistrationFormScreenState
               []),
         ],
 
-        
         if ((summary.returningDiscountAmount ?? 0) > 0)
           _buildSummaryRow(
             '🎉 Ưu đãi học viên cũ',
@@ -1095,7 +1057,6 @@ class _QuickRegistrationFormScreenState
           child: Divider(),
         ),
 
-        
         if ((summary.totalDiscountAmount ?? 0) > 0)
           _buildSummaryRow(
             'Tổng giảm giá',
@@ -1106,7 +1067,6 @@ class _QuickRegistrationFormScreenState
 
         SizedBox(height: AppSizes.p8),
 
-        
         Container(
           padding: EdgeInsets.all(AppSizes.p12),
           decoration: BoxDecoration(
@@ -1137,7 +1097,6 @@ class _QuickRegistrationFormScreenState
     );
   }
 
-  
   Widget _buildSummaryRow(
     String label,
     double amount, {
@@ -1227,84 +1186,6 @@ class _QuickRegistrationFormScreenState
     );
   }
 
-  Widget _buildPaymentMethodSelector(
-    RegistrationInProgress state,
-    bool isDark,
-  ) {
-    final methods = [
-      (PaymentMethod.cash, Icons.money, 'Tiền mặt'),
-      (PaymentMethod.transfer, Icons.account_balance, 'Chuyển khoản'),
-      
-    ];
-
-    return Row(
-      children: methods.map((item) {
-        final (method, icon, label) = item;
-        final isSelected = state.paymentMethod == method;
-
-        return Expanded(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 4.w),
-            child: InkWell(
-              onTap: () {
-                context.read<RegistrationBloc>().add(
-                  UpdatePaymentMethod(method),
-                );
-              },
-              borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-              child: Container(
-                padding: EdgeInsets.symmetric(vertical: 12.h),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppColors.primary
-                      : (isDark ? AppColors.surfaceDark : AppColors.surface),
-                  borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-                  border: Border.all(
-                    color: isSelected
-                        ? AppColors.primary
-                        : (isDark
-                              ? AppColors.neutral700
-                              : AppColors.neutral200),
-                  ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      icon,
-                      size: 24.sp,
-                      color: isSelected
-                          ? Colors.white
-                          : (isDark
-                                ? AppColors.neutral400
-                                : AppColors.neutral600),
-                    ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                        color: isSelected
-                            ? Colors.white
-                            : (isDark
-                                  ? AppColors.neutral400
-                                  : AppColors.neutral600),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  
   Widget _buildEnhancedPaymentSection(
     RegistrationInProgress state,
     bool isDark,
@@ -1319,7 +1200,6 @@ class _QuickRegistrationFormScreenState
       ),
       child: Column(
         children: [
-          
           _buildPaymentRow(
             'Học phí gốc',
             state.hasSingleCourseDiscount
@@ -1327,7 +1207,6 @@ class _QuickRegistrationFormScreenState
                 : state.tuitionFee,
           ),
 
-          
           if (state.hasSingleCourseDiscount) ...[
             SizedBox(height: AppSizes.p8),
             _buildPaymentRow(
@@ -1337,7 +1216,6 @@ class _QuickRegistrationFormScreenState
             ),
           ],
 
-          
           if (state.appliedCombos.isNotEmpty) ...[
             SizedBox(height: AppSizes.p8),
             ...state.appliedCombos.map(
@@ -1352,7 +1230,6 @@ class _QuickRegistrationFormScreenState
             ),
           ],
 
-          
           if (state.returningDiscountAmount > 0) ...[
             SizedBox(height: AppSizes.p4),
             _buildPaymentRow(
@@ -1362,7 +1239,6 @@ class _QuickRegistrationFormScreenState
             ),
           ],
 
-          
           if (state.totalDiscount > 0 &&
               !state.hasSingleCourseDiscount &&
               state.appliedCombos.isEmpty &&
@@ -1375,7 +1251,6 @@ class _QuickRegistrationFormScreenState
             ),
           ],
 
-          
           if (state.isCalculatingPreview)
             Padding(
               padding: EdgeInsets.symmetric(vertical: AppSizes.p8),
@@ -1403,10 +1278,8 @@ class _QuickRegistrationFormScreenState
 
           Divider(height: AppSizes.p20),
 
-          
           _buildPaymentRow('Tổng thanh toán', state.totalAmount, isTotal: true),
 
-          
           if (state.totalDiscount > 0)
             Padding(
               padding: EdgeInsets.only(top: AppSizes.p8),
@@ -1444,7 +1317,6 @@ class _QuickRegistrationFormScreenState
     );
   }
 
-  
   Widget _buildAppliedPromotionsChips(
     RegistrationInProgress state,
     bool isDark,
@@ -1474,7 +1346,6 @@ class _QuickRegistrationFormScreenState
             spacing: AppSizes.p8,
             runSpacing: AppSizes.p8,
             children: [
-              
               if (state.hasSingleCourseDiscount)
                 Container(
                   padding: EdgeInsets.symmetric(
@@ -1504,7 +1375,6 @@ class _QuickRegistrationFormScreenState
                   ),
                 ),
 
-              
               ...state.appliedCombos.map(
                 (combo) => Container(
                   padding: EdgeInsets.symmetric(
@@ -1541,7 +1411,6 @@ class _QuickRegistrationFormScreenState
                 ),
               ),
 
-              
               if (state.returningDiscountAmount > 0)
                 Container(
                   padding: EdgeInsets.symmetric(

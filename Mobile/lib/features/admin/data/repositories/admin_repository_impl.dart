@@ -40,7 +40,7 @@ class AdminRepositoryImpl implements AdminRepository {
         avatarUrl: avatarUrl,
       );
     } on UnsupportedOperationException {
-      rethrow; 
+      rethrow;
     } catch (e) {
       throw Exception('Không thể cập nhật thông tin: $e');
     }
@@ -58,7 +58,6 @@ class AdminRepositoryImpl implements AdminRepository {
 
   @override
   Future<List<AdminClass>> getClasses({ClassStatus? statusFilter}) async {
-    
     final allClasses = await dataSource.getClasses(statusFilter: null);
     return allClasses.where((cls) {
       return cls.status == ClassStatus.ongoing ||
@@ -257,5 +256,10 @@ class AdminRepositoryImpl implements AdminRepository {
   @override
   Future<String?> uploadFile(File file) {
     return dataSource.uploadFile(file);
+  }
+
+  @override
+  Future<void> confirmCashPayment(int invoiceId) {
+    return dataSource.confirmCashPayment(invoiceId);
   }
 }

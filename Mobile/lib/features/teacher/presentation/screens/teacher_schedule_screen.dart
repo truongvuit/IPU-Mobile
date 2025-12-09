@@ -5,7 +5,6 @@ import 'package:table_calendar/table_calendar.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../core/widgets/skeleton_widget.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 import '../bloc/teacher_bloc.dart';
 import '../bloc/teacher_event.dart';
@@ -274,12 +273,14 @@ class _TeacherScheduleScreenState extends State<TeacherScheduleScreen> {
             child: BlocBuilder<TeacherBloc, TeacherState>(
               builder: (context, state) {
                 if (state is TeacherLoading) {
-                  return ListView.builder(
-                    padding: EdgeInsets.all(AppSizes.paddingMedium),
-                    itemCount: 4,
-                    itemBuilder: (context, index) => Padding(
-                      padding: EdgeInsets.only(bottom: AppSizes.paddingMedium),
-                      child: SkeletonWidget.rectangular(height: 80.h),
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.hourglass_empty, size: 48.sp, color: AppColors.primary),
+                        SizedBox(height: 16.h),
+                        Text('Đang tải lịch...', style: TextStyle(fontSize: 14.sp)),
+                      ],
                     ),
                   );
                 }
@@ -364,7 +365,7 @@ class _TeacherScheduleScreenState extends State<TeacherScheduleScreen> {
                                     : Icons.calendar_today_outlined,
                                 message: _searchQuery.isNotEmpty
                                     ? 'Không tìm thấy lịch dạy phù hợp'
-                                    : 'Không có lịch dạy cho ngày này',
+                                    : 'Bạn không có lịch dạy trong ngày này',
                               ),
                             ),
                           )

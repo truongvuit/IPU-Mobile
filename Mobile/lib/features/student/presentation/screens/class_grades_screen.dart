@@ -8,7 +8,6 @@ import '../bloc/student_state.dart';
 import '../../domain/entities/grade.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../core/widgets/skeleton_widget.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 
 class ClassGradesScreen extends StatefulWidget {
@@ -38,7 +37,10 @@ class _ClassGradesScreenState extends State<ClassGradesScreen> {
       body: BlocBuilder<StudentBloc, StudentState>(
         builder: (context, state) {
           if (state is StudentLoading) {
-            return const SkeletonListWidget(itemCount: 5);
+            return const EmptyStateWidget(
+              icon: Icons.hourglass_empty,
+              message: 'Đang tải điểm số...',
+            );
           }
 
           if (state is StudentError) {
@@ -70,7 +72,10 @@ class _ClassGradesScreenState extends State<ClassGradesScreen> {
             );
           }
 
-          return const SkeletonListWidget(itemCount: 5);
+          return const EmptyStateWidget(
+            icon: Icons.assignment_outlined,
+            message: 'Chưa có điểm số',
+          );
         },
       ),
     );

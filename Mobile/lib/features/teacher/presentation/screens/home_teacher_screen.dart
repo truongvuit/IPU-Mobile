@@ -35,7 +35,7 @@ class _HomeTeacherScreenState extends State<HomeTeacherScreen> {
   void initState() {
     super.initState();
 
-    context.read<TeacherBloc>().add(LoadTeacherDashboard());
+    context.read<TeacherBloc>().add(const LoadTeacherDashboard());
     context.read<TeacherBloc>().add(LoadTeacherProfile());
   }
 
@@ -49,7 +49,7 @@ class _HomeTeacherScreenState extends State<HomeTeacherScreen> {
 
       switch (index) {
         case 0:
-          context.read<TeacherBloc>().add(LoadTeacherDashboard());
+          context.read<TeacherBloc>().add(const LoadTeacherDashboard());
           break;
         case 1:
           context.read<TeacherBloc>().add(LoadWeekSchedule(DateTime.now()));
@@ -124,6 +124,12 @@ class _HomeTeacherScreenState extends State<HomeTeacherScreen> {
             ),
           );
         }
+
+        if (state is AttendanceSubmitted || state is AttendanceRecorded) {
+          if (!context.mounted) return;
+          onTabTapped(0); // jump to dashboard
+          context.read<TeacherBloc>().add(const LoadTeacherDashboard(forceRefresh: true));
+        }
       },
       child: Scaffold(
         key: _scaffoldKey,
@@ -133,10 +139,8 @@ class _HomeTeacherScreenState extends State<HomeTeacherScreen> {
             : const Color(0xFFF9FAFB),
         drawer: TeacherDrawerWidget(
           onTabChange: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
             Navigator.pop(context);
+            onTabTapped(index);
           },
         ),
         body: Stack(

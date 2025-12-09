@@ -147,27 +147,31 @@ class ClassesLoaded extends StudentState {
   final List<StudentClass> classes;
   final bool isRefreshing;
   final String? errorMessage;
+  final bool isFromCache;
 
   const ClassesLoaded(
     this.classes, {
     this.isRefreshing = false,
     this.errorMessage,
+    this.isFromCache = false,
   });
 
   ClassesLoaded copyWith({
     List<StudentClass>? classes,
     bool? isRefreshing,
     String? errorMessage,
+    bool? isFromCache,
   }) {
     return ClassesLoaded(
       classes ?? this.classes,
       isRefreshing: isRefreshing ?? this.isRefreshing,
       errorMessage: errorMessage,
+      isFromCache: isFromCache ?? this.isFromCache,
     );
   }
 
   @override
-  List<Object?> get props => [classes, isRefreshing, errorMessage];
+  List<Object?> get props => [classes, isRefreshing, errorMessage, isFromCache];
 }
 
 class ClassDetailLoaded extends StudentState {
@@ -293,12 +297,14 @@ class CourseGradesLoaded extends StudentState {
   final String courseId;
   final bool isRefreshing;
   final String? errorMessage;
+  final bool isFromCache;
 
   const CourseGradesLoaded({
     required this.grades,
     required this.courseId,
     this.isRefreshing = false,
     this.errorMessage,
+    this.isFromCache = false,
   });
 
   CourseGradesLoaded copyWith({
@@ -306,17 +312,19 @@ class CourseGradesLoaded extends StudentState {
     String? courseId,
     bool? isRefreshing,
     String? errorMessage,
+    bool? isFromCache,
   }) {
     return CourseGradesLoaded(
       grades: grades ?? this.grades,
       courseId: courseId ?? this.courseId,
       isRefreshing: isRefreshing ?? this.isRefreshing,
       errorMessage: errorMessage,
+      isFromCache: isFromCache ?? this.isFromCache,
     );
   }
 
   @override
-  List<Object?> get props => [grades, courseId, isRefreshing, errorMessage];
+  List<Object?> get props => [grades, courseId, isRefreshing, errorMessage, isFromCache];
 }
 
 class ClassGradesLoaded extends StudentState {

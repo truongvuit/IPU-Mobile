@@ -130,6 +130,13 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, User?>> getCurrentUser() async {
     try {
+      final remember = await localDataSource.getRememberMe();
+      if (!remember) {
+        await localDataSource.clearTokens();
+        await localDataSource.clearUser();
+        return const Right(null);
+      }
+
       final localUser = await localDataSource.getUser();
       if (localUser != null) {
         try {

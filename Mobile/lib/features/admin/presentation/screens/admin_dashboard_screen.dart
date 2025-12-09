@@ -5,7 +5,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/widgets/skeleton_widget.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 
 import '../bloc/admin_bloc.dart';
@@ -42,17 +41,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     return BlocBuilder<AdminBloc, AdminState>(
       builder: (context, state) {
         if (state is AdminInitial || state is AdminLoading) {
-          return SingleChildScrollView(
-            padding: EdgeInsets.all(AppSizes.paddingMedium),
+          return Center(
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                SkeletonWidget.rectangular(height: 64.h),
-                SizedBox(height: AppSizes.paddingMedium),
-                SkeletonWidget.rectangular(height: 100.h),
-                SizedBox(height: AppSizes.paddingMedium),
-                SkeletonWidget.rectangular(height: 200.h),
-                SizedBox(height: AppSizes.paddingMedium),
-                SkeletonWidget.rectangular(height: 150.h),
+                Icon(Icons.hourglass_empty, size: 48.sp, color: AppColors.primary),
+                SizedBox(height: 16.h),
+                Text('Đang tải dữ liệu...', style: TextStyle(fontSize: 14.sp)),
               ],
             ),
           );
@@ -294,20 +289,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         SizedBox(width: 10.w),
                         Expanded(
                           child: _QuickActionCard(
-                            icon: Icons.menu_book,
-                            label: 'Khóa học',
-                            color: AppColors.info,
-                            onTap: () {
-                              Navigator.pushNamed(
-                                context,
-                                AppRouter.adminCourseList,
-                              );
-                            },
-                          ),
-                        ),
-                        SizedBox(width: 10.w),
-                        Expanded(
-                          child: _QuickActionCard(
                             icon: Icons.local_offer,
                             label: 'Khuyến mãi',
                             color: Colors.pink,
@@ -419,17 +400,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           );
         }
 
-        return SingleChildScrollView(
-          padding: EdgeInsets.all(AppSizes.paddingMedium),
+        // For initial state only, trigger a reload
+        if (state is AdminInitial) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              context.read<AdminBloc>().add(const LoadAdminDashboard());
+            }
+          });
+        }
+        return Center(
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SkeletonWidget.rectangular(height: 64.h),
-              SizedBox(height: AppSizes.paddingMedium),
-              SkeletonWidget.rectangular(height: 100.h),
-              SizedBox(height: AppSizes.paddingMedium),
-              SkeletonWidget.rectangular(height: 200.h),
-              SizedBox(height: AppSizes.paddingMedium),
-              SkeletonWidget.rectangular(height: 150.h),
+              Icon(Icons.hourglass_empty, size: 48.sp, color: AppColors.primary),
+              SizedBox(height: 16.h),
+              Text('Đang tải dữ liệu...', style: TextStyle(fontSize: 14.sp)),
             ],
           ),
         );

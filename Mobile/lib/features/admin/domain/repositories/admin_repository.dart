@@ -112,4 +112,7 @@ abstract class AdminRepository {
   Future<CartPreview> previewCart(List<String> classIds, {String? studentId});
 
   Future<String?> uploadFile(File file);
+
+  /// Xác nhận thanh toán tiền mặt - đánh dấu hóa đơn đã thanh toán và gửi email hóa đơn
+  Future<void> confirmCashPayment(int invoiceId);
 }

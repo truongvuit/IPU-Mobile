@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../core/widgets/skeleton_widget.dart';
 import '../../domain/entities/admin_feedback.dart';
 import '../bloc/admin_bloc.dart';
 import '../bloc/admin_event.dart';
@@ -106,7 +105,16 @@ class _AdminClassFeedbackScreenState extends State<AdminClassFeedbackScreen> {
       body: BlocBuilder<AdminBloc, AdminState>(
         builder: (context, state) {
           if (state is AdminLoading) {
-            return _buildLoadingSkeleton();
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.hourglass_empty, size: 48.sp, color: AppColors.primary),
+                  SizedBox(height: 16.h),
+                  Text('Đang tải phản hồi...', style: TextStyle(fontSize: 14.sp)),
+                ],
+              ),
+            );
           }
 
           if (state is AdminError) {
@@ -506,17 +514,6 @@ class _AdminClassFeedbackScreenState extends State<AdminClassFeedbackScreen> {
             child: const Text('Xem tất cả'),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildLoadingSkeleton() {
-    return ListView.builder(
-      padding: EdgeInsets.all(AppSizes.paddingMedium),
-      itemCount: 5,
-      itemBuilder: (context, index) => Padding(
-        padding: EdgeInsets.only(bottom: AppSizes.p12),
-        child: SkeletonWidget.rectangular(height: 120.h),
       ),
     );
   }

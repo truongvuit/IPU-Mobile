@@ -8,7 +8,6 @@ import '../widgets/student_app_bar.dart';
 import '../../domain/entities/grade.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../core/widgets/skeleton_widget.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 
 class GradesScreen extends StatefulWidget {
@@ -58,36 +57,44 @@ class _GradesScreenState extends State<GradesScreen> {
   }
 
   void _loadGradesIfNeeded() {
-    if (!mounted || _hasLoadedGrades) return;
+    if (!mounted) return;
 
-    final state = context.read<StudentBloc>().state;
+    final bloc = context.read<StudentBloc>();
+    final state = bloc.state;
 
+    // If already loaded, use cached data from state
     if (state is GradesLoaded) {
       _cachedGrades = state.grades;
       _hasLoadedGrades = true;
+      _isLoading = false;
       return;
     }
     if (state is CourseGradesLoaded) {
       _cachedGrades = state.grades;
       _hasLoadedGrades = true;
+      _isLoading = false;
       return;
     }
-
-    _hasLoadedGrades = true;
-    _isLoading = true;
-    context.read<StudentBloc>().add(const LoadGradesByCourse(''));
+    
+    // If not loaded yet, trigger load
+    if (!_hasLoadedGrades) {
+      _isLoading = true;
+      bloc.add(const LoadGradesByCourse(''));
+    }
   }
 
   void _updateCachedGrades(StudentState state) {
     if (state is GradesLoaded) {
       setState(() {
         _cachedGrades = state.grades;
+        _hasLoadedGrades = true;
         _isLoading = false;
         _errorMessage = null;
       });
     } else if (state is CourseGradesLoaded) {
       setState(() {
         _cachedGrades = state.grades;
+        _hasLoadedGrades = true;
         _isLoading = false;
         _errorMessage = null;
       });
@@ -285,7 +292,10 @@ class _GradesScreenState extends State<GradesScreen> {
     }
 
     if (_isLoading && _cachedGrades == null) {
-      return _buildLoadingSkeleton();
+      return const EmptyStateWidget(
+        icon: Icons.hourglass_empty,
+        message: 'Đang tải điểm số...',
+      );
     }
 
     if (_cachedGrades != null) {
@@ -336,17 +346,9 @@ class _GradesScreenState extends State<GradesScreen> {
       );
     }
 
-    return _buildLoadingSkeleton();
-  }
-
-  Widget _buildLoadingSkeleton() {
-    return ListView.builder(
-      padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
-      itemCount: 3,
-      itemBuilder: (context, index) => Padding(
-        padding: EdgeInsets.only(bottom: AppSizes.paddingMedium),
-        child: SkeletonWidget.rectangular(height: 180.h),
-      ),
+    return const EmptyStateWidget(
+      icon: Icons.school_outlined,
+      message: 'Chưa có điểm số nào',
     );
   }
 

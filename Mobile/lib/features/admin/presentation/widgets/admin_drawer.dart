@@ -9,6 +9,8 @@ import '../../../../core/widgets/custom_image.dart';
 import '../../../authentication/presentation/bloc/auth_bloc.dart';
 import '../../../authentication/presentation/bloc/auth_state.dart';
 import '../../../authentication/presentation/bloc/auth_event.dart';
+import '../bloc/admin_bloc.dart';
+import '../bloc/admin_event.dart';
 
 class AdminDrawer extends StatelessWidget {
   final int currentIndex;
@@ -25,132 +27,143 @@ class AdminDrawer extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Drawer(
-      backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surface,
-      child: Column(
-        children: [
-          _buildDrawerHeader(context, isDark),
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthUnauthenticated) {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRouter.welcome,
+            (route) => false,
+          );
+        }
+      },
+      child: Drawer(
+        backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surface,
+        child: Column(
+          children: [
+            _buildDrawerHeader(context, isDark),
 
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                _buildSectionHeader(context, 'MENU CHÍNH'),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  _buildSectionHeader(context, 'MENU CHÍNH'),
 
-                _DrawerMenuItem(
-                  icon: Icons.dashboard,
-                  title: 'Tổng quan',
-                  isSelected: currentIndex == 0,
-                  onTap: () {
-                    Navigator.pop(context);
-                    onTabSelected(0);
-                  },
-                ),
+                  _DrawerMenuItem(
+                    icon: Icons.dashboard,
+                    title: 'Tổng quan',
+                    isSelected: currentIndex == 0,
+                    onTap: () {
+                      Navigator.pop(context);
+                      onTabSelected(0);
+                    },
+                  ),
 
-                _DrawerMenuItem(
-                  icon: Icons.class_,
-                  title: 'Quản lý lớp học',
-                  isSelected: currentIndex == 1,
-                  onTap: () {
-                    Navigator.pop(context);
-                    onTabSelected(1);
-                  },
-                ),
+                  _DrawerMenuItem(
+                    icon: Icons.class_,
+                    title: 'Quản lý lớp học',
+                    isSelected: currentIndex == 1,
+                    onTap: () {
+                      Navigator.pop(context);
+                      onTabSelected(1);
+                    },
+                  ),
 
-                _DrawerMenuItem(
-                  icon: Icons.school,
-                  title: 'Quản lý giảng viên',
-                  isSelected: currentIndex == 2,
-                  onTap: () {
-                    Navigator.pop(context);
-                    onTabSelected(2);
-                  },
-                ),
+                  _DrawerMenuItem(
+                    icon: Icons.school,
+                    title: 'Quản lý giảng viên',
+                    isSelected: currentIndex == 2,
+                    onTap: () {
+                      Navigator.pop(context);
+                      onTabSelected(2);
+                    },
+                  ),
 
-                _DrawerMenuItem(
-                  icon: Icons.people,
-                  title: 'Quản lý học viên',
-                  isSelected: currentIndex == 3,
-                  onTap: () {
-                    Navigator.pop(context);
-                    onTabSelected(3);
-                  },
-                ),
+                  _DrawerMenuItem(
+                    icon: Icons.people,
+                    title: 'Quản lý học viên',
+                    isSelected: currentIndex == 3,
+                    onTap: () {
+                      Navigator.pop(context);
+                      onTabSelected(3);
+                    },
+                  ),
 
-                Divider(
-                  height: 1,
-                  color: isDark ? AppColors.neutral700 : AppColors.neutral200,
-                ),
+                  Divider(
+                    height: 1,
+                    color: isDark ? AppColors.neutral700 : AppColors.neutral200,
+                  ),
 
-                _buildSectionHeader(context, 'TÍNH NĂNG'),
+                  _buildSectionHeader(context, 'TÍNH NĂNG'),
 
-                _DrawerMenuItem(
-                  icon: Icons.app_registration,
-                  title: 'Đăng ký nhanh',
-                  subtitle: 'Đăng ký & Thu tiền',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(
-                      context,
-                      AppRouter.adminQuickRegistration,
-                    );
-                  },
-                ),
+                  _DrawerMenuItem(
+                    icon: Icons.app_registration,
+                    title: 'Đăng ký nhanh',
+                    subtitle: 'Đăng ký & Thu tiền',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(
+                        context,
+                        AppRouter.adminQuickRegistration,
+                      );
+                    },
+                  ),
 
-                _DrawerMenuItem(
-                  icon: Icons.menu_book,
-                  title: 'Quản lý khóa học',
-                  subtitle: 'Xem & chỉnh sửa',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(context, AppRouter.adminCourseList);
-                  },
-                ),
+                  _DrawerMenuItem(
+                    icon: Icons.menu_book,
+                    title: 'Quản lý khóa học',
+                    subtitle: 'Xem & chỉnh sửa',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, AppRouter.adminCourseList);
+                    },
+                  ),
 
-                _DrawerMenuItem(
-                  icon: Icons.local_offer,
-                  title: 'Khuyến mãi',
-                  subtitle: 'Mã giảm giá',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(context, AppRouter.adminPromotions);
-                  },
-                ),
+                  _DrawerMenuItem(
+                    icon: Icons.local_offer,
+                    title: 'Khuyến mãi',
+                    subtitle: 'Mã giảm giá',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, AppRouter.adminPromotions);
+                    },
+                  ),
 
-                Divider(
-                  height: 1,
-                  color: isDark ? AppColors.neutral700 : AppColors.neutral200,
-                ),
+                  Divider(
+                    height: 1,
+                    color: isDark ? AppColors.neutral700 : AppColors.neutral200,
+                  ),
 
-                _buildSectionHeader(context, 'CÀI ĐẶT'),
+                  _buildSectionHeader(context, 'CÀI ĐẶT'),
 
-                _DrawerMenuItem(
-                  icon: Icons.settings,
-                  title: 'Cài đặt ứng dụng',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(
-                      context,
-                      AppRouter.settings,
-                      arguments: {'userRole': 'admin'},
-                    );
-                  },
-                ),
+                  _DrawerMenuItem(
+                    icon: Icons.settings,
+                    title: 'Cài đặt ứng dụng',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(
+                        context,
+                        AppRouter.settings,
+                        arguments: {'userRole': 'admin'},
+                      );
+                    },
+                  ),
 
-                _DrawerMenuItem(
-                  icon: Icons.lock_outline,
-                  title: 'Đổi mật khẩu',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(context, AppRouter.changePassword);
-                  },
-                ),
-              ],
+                  _DrawerMenuItem(
+                    icon: Icons.lock_outline,
+                    title: 'Đổi mật khẩu',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, AppRouter.changePassword);
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          _buildLogoutButton(context, isDark),
-        ],
+            _buildLogoutButton(context, isDark),
+          ],
+        ),
       ),
     );
   }
@@ -337,6 +350,7 @@ class AdminDrawer extends StatelessWidget {
 
   void _showLogoutConfirmation(BuildContext context) {
     final authBloc = context.read<AuthBloc>();
+    final adminBloc = context.read<AdminBloc>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     showDialog(
@@ -400,16 +414,33 @@ class AdminDrawer extends StatelessWidget {
                   SizedBox(width: 12.w),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         Navigator.pop(dialogContext); // Close dialog
-                        Navigator.pop(context); // Close drawer
-                        authBloc.add(LogoutRequested());
-                        // Navigate to welcome page
-                        Navigator.pushNamedAndRemoveUntil(
-                          context,
-                          AppRouter.welcome,
-                          (route) => false,
-                        );
+                        Navigator.of(context).pop(); // Close drawer first
+                        
+                        // Reset admin state
+                        try {
+                          adminBloc.add(const ResetAdminState());
+                        } catch (_) {
+                          // Bloc may already be closed, ignore
+                        }
+                        
+                        // Navigate to welcome screen immediately
+                        // The auth state will be cleared by logout
+                        if (context.mounted) {
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            AppRouter.welcome,
+                            (route) => false,
+                          );
+                        }
+                        
+                        // Then trigger logout (this clears token)
+                        try {
+                          authBloc.add(LogoutRequested());
+                        } catch (_) {
+                          // Bloc may already be closed, ignore
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.error,

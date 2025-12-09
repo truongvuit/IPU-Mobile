@@ -7,9 +7,21 @@ class Environment {
   // For Android Emulator: use 10.0.2.2 (maps to host's localhost)
   // For Physical Device: use your PC's IP (e.g., 192.168.1.9)
   // static const String baseUrl = 'http://192.168.1.9:8080';
-  static const String baseUrl = 'http://10.0.2.2:8080';
+  // static const String baseUrl = 'http://10.0.2.2:8080';
+  // Dùng dev tunnel URL trực tiếp (không cần 10.0.2.2)
 
-  static const String fullApiUrl = '$baseUrl/';
+  static String get baseUrl {
+    // Dev tunnel - hoạt động mọi nơi
+    const devTunnel = 'https://gj6c9g4g-8080.asse.devtunnels.ms';
+
+    // Localhost cho emulator (fallback)
+    const emulatorLocal = 'http://10.0.2.2:8080';
+
+    // Dùng dev tunnel mặc định
+    return devTunnel;
+  }
+
+  static final String fullApiUrl = '$baseUrl/';
 
   // Logging chỉ bật trong debug mode để tránh lộ token và dữ liệu nhạy cảm
   static bool get enableDebugLogging => kDebugMode;

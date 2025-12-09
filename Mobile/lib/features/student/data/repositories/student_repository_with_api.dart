@@ -157,7 +157,120 @@ class StudentRepositoryWithApi implements StudentRepository {
   Future<Either<Failure, List<Schedule>>> getScheduleByDate(
     DateTime date,
   ) async {
-    return getWeekSchedule(date);
+    // Lấy tất cả các tuần trong tháng
+    try {
+      final List<Schedule> allSchedules = [];
+
+      // Xác định ngày đầu và cuối tháng
+      final firstDayOfMonth = DateTime(date.year, date.month, 1);
+      final lastDayOfMonth = DateTime(date.year, date.month + 1, 0);
+
+      // Lấy từng tuần trong tháng
+      DateTime currentWeekStart = firstDayOfMonth;
+      final Set<String> addedScheduleIds = {}; // Tránh duplicate
+
+      while (currentWeekStart.isBefore(lastDayOfMonth) ||
+          currentWeekStart.isAtSameMomentAs(lastDayOfMonth)) {
+        final weekResult = await _getWeekScheduleInternal(currentWeekStart);
+
+        weekResult.fold(
+          (failure) {}, // Bỏ qua lỗi từng tuần
+          (schedules) {
+            for (final schedule in schedules) {
+              // Chỉ thêm schedule trong tháng này và chưa có
+              if (schedule.startTime.month == date.month &&
+                  schedule.startTime.year == date.year) {
+                final uniqueId =
+                    '${schedule.classId}_${schedule.startTime.toIso8601String()}';
+                if (!addedScheduleIds.contains(uniqueId)) {
+                  addedScheduleIds.add(uniqueId);
+                  allSchedules.add(schedule);
+                }
+              }
+            }
+          },
+        );
+
+        // Chuyển sang tuần tiếp theo (7 ngày)
+        currentWeekStart = currentWeekStart.add(const Duration(days: 7));
+      }
+
+      // Sắp xếp theo ngày
+      allSchedules.sort((a, b) => a.startTime.compareTo(b.startTime));
+
+      return Right(allSchedules);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  Future<Either<Failure, List<Schedule>>> _getWeekScheduleInternal(
+    DateTime startDate,
+  ) async {
+    try {
+      final response = await apiDataSource.getStudentSchedule(date: startDate);
+
+      final List<Schedule> schedules = [];
+
+      // WeeklyScheduleResponse has .days property (List<WeeklyScheduleDay>)
+      for (final day in response.days) {
+        final dateStr = day.date;
+        if (dateStr.isEmpty) continue;
+
+        // Each day has .periods (List<WeeklySchedulePeriod>)
+        for (final period in day.periods) {
+          final periodName = period.periodName;
+
+          // Each period has .sessions (List<WeeklyScheduleSession>)
+          for (final session in period.sessions) {
+            schedules.add(
+              Schedule(
+                id: session.sessionId.toString(),
+                classId: session.classId.toString(),
+                className: session.className,
+                teacherName: session.lecturerName,
+                room: session.room,
+                startTime: _parseDateTime(dateStr, session.timeSlot),
+                endTime: _parseDateTime(
+                  dateStr,
+                  session.timeSlot,
+                ).add(Duration(minutes: session.durationMinutes ?? 120)),
+                courseName: session.courseName,
+                status: session.status ?? 'NotCompleted',
+                period: periodName,
+              ),
+            );
+          }
+        }
+      }
+
+      return Right(schedules);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  DateTime _parseDateTime(String dateStr, String timeStr) {
+    try {
+      final date = DateTime.parse(dateStr);
+      final timeParts = timeStr.split(':');
+      if (timeParts.length >= 2) {
+        return DateTime(
+          date.year,
+          date.month,
+          date.day,
+          int.parse(timeParts[0]),
+          int.parse(timeParts[1]),
+        );
+      }
+      return date;
+    } catch (e) {
+      return DateTime.now();
+    }
   }
 
   @override
@@ -165,18 +278,17 @@ class StudentRepositoryWithApi implements StudentRepository {
     DateTime startDate,
   ) async {
     try {
-      final data = await apiDataSource.getStudentSchedule(date: startDate);
+      final response = await apiDataSource.getStudentSchedule(date: startDate);
 
       final List<Schedule> schedules = [];
-      final days = data['days'] as List<dynamic>? ?? [];
 
       final today = DateTime.now();
       final todayStart = DateTime(today.year, today.month, today.day);
 
-      for (final day in days) {
-        final dayMap = day as Map<String, dynamic>;
-        final dateStr = dayMap['date'] as String?;
-        if (dateStr == null) continue;
+      // WeeklyScheduleResponse has .days property (List<WeeklyScheduleDay>)
+      for (final day in response.days) {
+        final dateStr = day.date;
+        if (dateStr.isEmpty) continue;
 
         final sessionDate = DateTime.parse(dateStr);
 
@@ -187,17 +299,28 @@ class StudentRepositoryWithApi implements StudentRepository {
         );
         if (sessionDay.isBefore(todayStart)) continue;
 
-        final periods = dayMap['periods'] as List<dynamic>? ?? [];
+        // Each day has .periods (List<WeeklySchedulePeriod>)
+        for (final period in day.periods) {
+          final periodName = period.periodName;
 
-        for (final periodData in periods) {
-          final periodMap = periodData as Map<String, dynamic>;
-          final period = periodMap['period'] as String? ?? '';
-          final sessions = periodMap['sessions'] as List<dynamic>? ?? [];
-
-          for (final session in sessions) {
-            final sessionMap = session as Map<String, dynamic>;
+          // Each period has .sessions (List<WeeklyScheduleSession>)
+          for (final session in period.sessions) {
             schedules.add(
-              Schedule.fromSessionInfo(sessionMap, sessionDate, period),
+              Schedule(
+                id: session.sessionId.toString(),
+                classId: session.classId.toString(),
+                className: session.className,
+                teacherName: session.lecturerName,
+                room: session.room,
+                startTime: _parseDateTime(dateStr, session.timeSlot),
+                endTime: _parseDateTime(
+                  dateStr,
+                  session.timeSlot,
+                ).add(Duration(minutes: session.durationMinutes ?? 120)),
+                courseName: session.courseName,
+                status: session.status ?? 'NotCompleted',
+                period: periodName,
+              ),
             );
           }
         }
@@ -222,9 +345,7 @@ class StudentRepositoryWithApi implements StudentRepository {
   ) async {
     try {
       final result = await apiDataSource.getGrades();
-      List<Grade> grades = result
-          .map((json) => Grade.fromJson(json as Map<String, dynamic>))
-          .toList();
+      List<Grade> grades = result.cast<Grade>();
 
       if (courseId.isNotEmpty) {
         grades = grades
@@ -256,11 +377,9 @@ class StudentRepositoryWithApi implements StudentRepository {
   @override
   Future<Either<Failure, List<Grade>>> getMyGrades() async {
     try {
+      // apiDataSource.getGrades() already returns List<GradeModel> which extends Grade
       final result = await apiDataSource.getGrades();
-      final grades = result
-          .map((json) => Grade.fromJson(json as Map<String, dynamic>))
-          .toList();
-      return Right(grades);
+      return Right(result.cast<Grade>());
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
     } catch (e) {

@@ -310,7 +310,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
                               SizedBox(height: AppSizes.p16),
 
                               DropdownButtonFormField<String>(
-                                initialValue: _selectedGender,
+                                value: _selectedGender,
                                 style: TextStyle(
                                   fontSize: isDesktop
                                       ? AppSizes.textBase

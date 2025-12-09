@@ -33,11 +33,10 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
   late TextEditingController _emailController;
   late TextEditingController _addressController;
   late TextEditingController _occupationController;
-  
-  
+
   late TextEditingController _usernameController;
   late TextEditingController _passwordController;
-  
+
   DateTime? _dateOfBirth;
   String? _selectedEducationLevel;
   bool _showPassword = false;
@@ -60,25 +59,25 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
   void initState() {
     super.initState();
     final student = widget.student;
-    
+
     _fullNameController = TextEditingController(text: student.fullName);
     _phoneController = TextEditingController(text: student.phoneNumber);
     _emailController = TextEditingController(text: student.email);
     _addressController = TextEditingController(text: student.address ?? '');
-    _occupationController = TextEditingController(text: student.occupation ?? '');
-    _usernameController = TextEditingController(text: student.email); 
+    _occupationController = TextEditingController(
+      text: student.occupation ?? '',
+    );
+    _usernameController = TextEditingController(text: student.email);
     _passwordController = TextEditingController();
-    
+
     _dateOfBirth = student.dateOfBirth;
     _selectedEducationLevel = student.educationLevel;
-    
-    
-    if (_selectedEducationLevel != null && 
+
+    if (_selectedEducationLevel != null &&
         !_educationLevels.contains(_selectedEducationLevel)) {
       _educationLevels.add(_selectedEducationLevel!);
     }
 
-    
     final authState = context.read<AuthBloc>().state;
     if (authState is AuthSuccess) {
       _currentUserRole = UserRole.fromString(authState.user.role);
@@ -102,7 +101,7 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
       context: context,
       initialDate: _dateOfBirth ?? DateTime(2000, 1, 1),
       firstDate: DateTime(1950),
-      lastDate: DateTime.now().subtract(const Duration(days: 365 * 5)), 
+      lastDate: DateTime.now().subtract(const Duration(days: 365 * 5)),
       helpText: 'Chọn ngày sinh',
       cancelText: 'Hủy',
       confirmText: 'Chọn',
@@ -121,8 +120,8 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
         'fullName': _fullNameController.text.trim(),
         'phoneNumber': _phoneController.text.trim(),
         'email': _emailController.text.trim(),
-        'address': _addressController.text.trim().isNotEmpty 
-            ? _addressController.text.trim() 
+        'address': _addressController.text.trim().isNotEmpty
+            ? _addressController.text.trim()
             : null,
         'occupation': _occupationController.text.trim().isNotEmpty
             ? _occupationController.text.trim()
@@ -131,7 +130,6 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
         'dateOfBirth': _dateOfBirth?.toIso8601String(),
       };
 
-      
       if (_currentUserRole?.isAdmin == true && _changePassword) {
         if (_passwordController.text.isNotEmpty) {
           updates['password'] = _passwordController.text;
@@ -164,7 +162,7 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
                 backgroundColor: AppColors.success,
               ),
             );
-            Navigator.pop(context, true); 
+            Navigator.pop(context, true);
           } else if (state is AdminError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -181,10 +179,9 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                
                 _buildSectionTitle('Thông tin cá nhân', Icons.person),
                 SizedBox(height: AppSizes.p12),
-                
+
                 _buildTextField(
                   controller: _fullNameController,
                   label: 'Họ và tên *',
@@ -227,7 +224,9 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Vui lòng nhập email';
                     }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                    if (!RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    ).hasMatch(value)) {
                       return 'Email không hợp lệ';
                     }
                     return null;
@@ -235,7 +234,6 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
                 ),
                 SizedBox(height: AppSizes.p16),
 
-                
                 _buildLabel('Ngày sinh'),
                 SizedBox(height: AppSizes.p8),
                 InkWell(
@@ -247,9 +245,13 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
                     ),
                     decoration: BoxDecoration(
                       color: isDark ? AppColors.surfaceDark : AppColors.surface,
-                      borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+                      borderRadius: BorderRadius.circular(
+                        AppSizes.radiusMedium,
+                      ),
                       border: Border.all(
-                        color: isDark ? AppColors.neutral700 : AppColors.neutral200,
+                        color: isDark
+                            ? AppColors.neutral700
+                            : AppColors.neutral200,
                       ),
                     ),
                     child: Row(
@@ -257,7 +259,9 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
                         Icon(
                           Icons.calendar_today,
                           size: 20.sp,
-                          color: isDark ? AppColors.neutral400 : AppColors.neutral600,
+                          color: isDark
+                              ? AppColors.neutral400
+                              : AppColors.neutral600,
                         ),
                         SizedBox(width: AppSizes.p12),
                         Expanded(
@@ -268,13 +272,17 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: _dateOfBirth != null
                                   ? null
-                                  : (isDark ? AppColors.neutral400 : AppColors.neutral600),
+                                  : (isDark
+                                        ? AppColors.neutral400
+                                        : AppColors.neutral600),
                             ),
                           ),
                         ),
                         Icon(
                           Icons.arrow_drop_down,
-                          color: isDark ? AppColors.neutral400 : AppColors.neutral600,
+                          color: isDark
+                              ? AppColors.neutral400
+                              : AppColors.neutral600,
                         ),
                       ],
                     ),
@@ -298,35 +306,48 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
                 ),
                 SizedBox(height: AppSizes.p16),
 
-                
                 _buildLabel('Trình độ học vấn'),
                 SizedBox(height: AppSizes.p8),
                 DropdownButtonFormField<String>(
-                  initialValue: _selectedEducationLevel,
+                  value: _selectedEducationLevel,
                   decoration: InputDecoration(
                     prefixIcon: Icon(
                       Icons.school_outlined,
-                      color: isDark ? AppColors.neutral400 : AppColors.neutral600,
+                      color: isDark
+                          ? AppColors.neutral400
+                          : AppColors.neutral600,
                     ),
                     filled: true,
-                    fillColor: isDark ? AppColors.surfaceDark : AppColors.surface,
+                    fillColor: isDark
+                        ? AppColors.surfaceDark
+                        : AppColors.surface,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+                      borderRadius: BorderRadius.circular(
+                        AppSizes.radiusMedium,
+                      ),
                       borderSide: BorderSide(
-                        color: isDark ? AppColors.neutral700 : AppColors.neutral200,
+                        color: isDark
+                            ? AppColors.neutral700
+                            : AppColors.neutral200,
                       ),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+                      borderRadius: BorderRadius.circular(
+                        AppSizes.radiusMedium,
+                      ),
                       borderSide: BorderSide(
-                        color: isDark ? AppColors.neutral700 : AppColors.neutral200,
+                        color: isDark
+                            ? AppColors.neutral700
+                            : AppColors.neutral200,
                       ),
                     ),
                   ),
                   hint: Text(
                     'Chọn trình độ học vấn',
                     style: TextStyle(
-                      color: isDark ? AppColors.neutral400 : AppColors.neutral600,
+                      color: isDark
+                          ? AppColors.neutral400
+                          : AppColors.neutral600,
                     ),
                   ),
                   items: _educationLevels.map((level) {
@@ -341,11 +362,13 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
 
                 SizedBox(height: AppSizes.p24),
 
-                
                 if (isAdmin) ...[
-                  _buildSectionTitle('Thông tin tài khoản', Icons.account_circle),
+                  _buildSectionTitle(
+                    'Thông tin tài khoản',
+                    Icons.account_circle,
+                  ),
                   SizedBox(height: AppSizes.p12),
-                              
+
                   _buildTextField(
                     controller: _usernameController,
                     label: 'Tên đăng nhập',
@@ -355,14 +378,17 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
                   ),
                   SizedBox(height: AppSizes.p16),
 
-                  
                   Container(
                     padding: EdgeInsets.all(AppSizes.p12),
                     decoration: BoxDecoration(
                       color: isDark ? AppColors.surfaceDark : AppColors.surface,
-                      borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+                      borderRadius: BorderRadius.circular(
+                        AppSizes.radiusMedium,
+                      ),
                       border: Border.all(
-                        color: isDark ? AppColors.neutral700 : AppColors.neutral200,
+                        color: isDark
+                            ? AppColors.neutral700
+                            : AppColors.neutral200,
                       ),
                     ),
                     child: Row(
@@ -370,7 +396,9 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
                         Icon(
                           Icons.lock_outline,
                           size: 20.sp,
-                          color: isDark ? AppColors.neutral400 : AppColors.neutral600,
+                          color: isDark
+                              ? AppColors.neutral400
+                              : AppColors.neutral600,
                         ),
                         SizedBox(width: AppSizes.p12),
                         Expanded(
@@ -394,7 +422,7 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
                       ],
                     ),
                   ),
-                  
+
                   if (_changePassword) ...[
                     SizedBox(height: AppSizes.p16),
                     _buildTextField(
@@ -405,8 +433,12 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
                       obscureText: !_showPassword,
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _showPassword ? Icons.visibility_off : Icons.visibility,
-                          color: isDark ? AppColors.neutral400 : AppColors.neutral600,
+                          _showPassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          color: isDark
+                              ? AppColors.neutral400
+                              : AppColors.neutral600,
                         ),
                         onPressed: () {
                           setState(() {
@@ -415,34 +447,38 @@ class _AdminEditStudentScreenState extends State<AdminEditStudentScreen> {
                         },
                       ),
                       validator: (value) {
-                        if (_changePassword && (value == null || value.isEmpty)) {
+                        if (_changePassword &&
+                            (value == null || value.isEmpty)) {
                           return 'Vui lòng nhập mật khẩu mới';
                         }
-                        if (_changePassword && value != null && value.length < 6) {
+                        if (_changePassword &&
+                            value != null &&
+                            value.length < 6) {
                           return 'Mật khẩu phải có ít nhất 6 ký tự';
                         }
                         return null;
                       },
                     ),
                   ],
-                  
+
                   SizedBox(height: AppSizes.p24),
                 ],
 
-                
                 SizedBox(
                   width: double.infinity,
                   child: BlocBuilder<AdminBloc, AdminState>(
                     builder: (context, state) {
                       final isLoading = state is AdminLoading;
-                      
+
                       return ElevatedButton(
                         onPressed: isLoading ? null : _saveChanges,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           padding: EdgeInsets.symmetric(vertical: 16.h),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+                            borderRadius: BorderRadius.circular(
+                              AppSizes.radiusMedium,
+                            ),
                           ),
                         ),
                         child: isLoading

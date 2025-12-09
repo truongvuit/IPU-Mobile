@@ -11,7 +11,6 @@ import '../widgets/schedule_detail_modal.dart';
 import '../../domain/entities/schedule.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../core/widgets/skeleton_widget.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 
 class ScheduleScreen extends StatefulWidget {
@@ -28,16 +27,46 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   DateTime _selectedDate = DateTime.now();
   String _viewMode = 'list';
   Timer? _monthNavDebounce;
+  
+  // Local cache to prevent reload when switching tabs
+  List<Schedule>? _cachedSchedules;
+  DateTime? _cachedMonth;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    // Always load schedule on init to ensure data is fresh
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        context.read<StudentBloc>().add(LoadSchedule(_selectedDate));
-      }
+      _loadScheduleIfNeeded();
     });
+  }
+
+  void _loadScheduleIfNeeded() {
+    if (!mounted) return;
+    
+    final bloc = context.read<StudentBloc>();
+    final state = bloc.state;
+    
+    // If already loaded for this month, use cache
+    if (state is ScheduleLoaded && 
+        state.selectedDate.month == _selectedDate.month &&
+        state.selectedDate.year == _selectedDate.year) {
+      _cachedSchedules = state.schedules;
+      _cachedMonth = _selectedDate;
+      _isLoading = false;
+      return;
+    }
+    
+    // If we have local cache for this month, don't reload
+    if (_cachedSchedules != null && 
+        _cachedMonth?.month == _selectedDate.month &&
+        _cachedMonth?.year == _selectedDate.year) {
+      return;
+    }
+    
+    // Otherwise load
+    _isLoading = true;
+    bloc.add(LoadSchedule(_selectedDate));
   }
 
   @override
@@ -52,6 +81,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         _selectedDate.year,
         _selectedDate.month + offset,
       );
+      // Clear cache when navigating to different month
+      _cachedSchedules = null;
+      _isLoading = true;
     });
 
     _monthNavDebounce?.cancel();
@@ -179,95 +211,70 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           ),
 
           Expanded(
-            child: BlocBuilder<StudentBloc, StudentState>(
-              buildWhen: (previous, current) {
+            child: BlocListener<StudentBloc, StudentState>(
+              listenWhen: (previous, current) {
                 return current is ScheduleLoaded ||
-                    current is WeekScheduleLoaded ||
                     current is StudentLoading ||
-                    current is StudentError ||
-                    current is StudentInitial;
+                    current is StudentError;
               },
-              builder: (context, state) {
-                if (state is StudentLoading || state is StudentInitial) {
-                  return ListView.builder(
-                    padding: EdgeInsets.all(AppSizes.paddingMedium),
-                    itemCount: 5,
-                    itemBuilder: (context, index) => Padding(
-                      padding: EdgeInsets.only(bottom: AppSizes.paddingSmall),
-                      child: SkeletonWidget.rectangular(height: 100.h),
-                    ),
-                  );
-                }
-
-                if (state is StudentError) {
-                  return Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(24.w),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.error_outline,
-                            size: 64,
-                            color: AppColors.error,
-                          ),
-                          SizedBox(height: 16.h),
-                          Text(
-                            state.message,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              color: isDark
-                                  ? Colors.white
-                                  : AppColors.textPrimary,
-                              fontFamily: 'Lexend',
-                            ),
-                          ),
-                          SizedBox(height: 16.h),
-                          ElevatedButton(
-                            onPressed: () {
-                              context.read<StudentBloc>().add(
-                                LoadSchedule(_selectedDate),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                            ),
-                            child: const Text(
-                              'Thử lại',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
+              listener: (context, state) {
                 if (state is ScheduleLoaded) {
-                  if (state.schedules.isEmpty) {
-                    return EmptyStateWidget(
-                      icon: Icons.event_busy,
-                      message: 'Không có lịch học nào trong tháng này',
-                    );
-                  }
-
-                  return _viewMode == 'calendar'
-                      ? _buildCalendarView(state.schedules, isDark, isDesktop)
-                      : _buildListView(state.schedules, isDark, isDesktop);
+                  setState(() {
+                    _cachedSchedules = state.schedules;
+                    _cachedMonth = state.selectedDate;
+                    _isLoading = false;
+                  });
+                } else if (state is StudentLoading) {
+                  setState(() {
+                    _isLoading = true;
+                  });
+                } else if (state is StudentError) {
+                  setState(() {
+                    _isLoading = false;
+                  });
                 }
-
-                // Fallback loading state
-                return Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.primary,
-                  ),
-                );
               },
+              child: _buildScheduleContent(isDark, isDesktop),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildScheduleContent(bool isDark, bool isDesktop) {
+    // Show loading only if no cache
+    if (_isLoading && _cachedSchedules == null) {
+      return EmptyStateWidget(
+        icon: Icons.hourglass_empty,
+        message: 'Đang tải lịch học...',
+      );
+    }
+
+    // Show cached data if available
+    if (_cachedSchedules != null) {
+      if (_cachedSchedules!.isEmpty) {
+        return EmptyStateWidget(
+          icon: Icons.event_busy,
+          message: 'Không có lịch học nào trong tháng này',
+        );
+      }
+
+      return _viewMode == 'calendar'
+          ? _buildCalendarView(_cachedSchedules!, isDark, isDesktop)
+          : _buildListView(_cachedSchedules!, isDark, isDesktop);
+    }
+
+    // Fallback - trigger load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<StudentBloc>().add(LoadSchedule(_selectedDate));
+      }
+    });
+    
+    return EmptyStateWidget(
+      icon: Icons.hourglass_empty,
+      message: 'Đang tải lịch học...',
     );
   }
 

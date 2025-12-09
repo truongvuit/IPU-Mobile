@@ -27,6 +27,17 @@ class StudentHomeTab extends StatefulWidget {
 class _StudentHomeTabState extends State<StudentHomeTab> {
   int _currentCarouselIndex = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    // Load dashboard data when tab first opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<StudentBloc>().add(const LoadDashboard());
+      }
+    });
+  }
+
   Widget _buildHeader(bool isDark, bool isDesktop) {
     return BlocBuilder<StudentBloc, StudentState>(
       builder: (context, state) {
@@ -74,7 +85,6 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
   Widget _buildTodayFocus(bool isDark, bool isDesktop) {
     return BlocBuilder<StudentBloc, StudentState>(
       builder: (context, state) {
-        
         if (state is StudentLoading || state is StudentInitial) {
           return Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -99,7 +109,9 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
                   child: Center(
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColors.primary,
+                      ),
                     ),
                   ),
                 ),
@@ -108,7 +120,6 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
           );
         }
 
-        
         if (state is StudentError) {
           return Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -117,11 +128,17 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
               decoration: BoxDecoration(
                 color: AppColors.error.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: AppColors.error.withValues(alpha: 0.3),
+                ),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.error_outline, color: AppColors.error, size: 24.sp),
+                  Icon(
+                    Icons.error_outline,
+                    color: AppColors.error,
+                    size: 24.sp,
+                  ),
                   SizedBox(width: 12.w),
                   Expanded(
                     child: Text(
@@ -163,7 +180,7 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
             break;
           }
         }
-        
+
         if (nextSchedule == null) {
           return const SizedBox.shrink();
         }
@@ -218,7 +235,6 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
   Widget _buildLearningProgress(bool isDark, bool isDesktop) {
     return BlocBuilder<StudentBloc, StudentState>(
       builder: (context, state) {
-        
         if (state is StudentLoading || state is StudentInitial) {
           return Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -236,21 +252,25 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
                 SizedBox(height: 16.h),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: List.generate(3, (_) => Container(
-                    width: 80.w,
-                    height: 80.h,
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE5E7EB),
-                      shape: BoxShape.circle,
+                  children: List.generate(
+                    3,
+                    (_) => Container(
+                      width: 80.w,
+                      height: 80.h,
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF1E293B)
+                            : const Color(0xFFE5E7EB),
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  )),
+                  ),
                 ),
               ],
             ),
           );
         }
 
-        
         if (state is StudentError) {
           return Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -271,11 +291,17 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
                   decoration: BoxDecoration(
                     color: AppColors.error.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: AppColors.error.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.error_outline, color: AppColors.error, size: 24.sp),
+                      Icon(
+                        Icons.error_outline,
+                        color: AppColors.error,
+                        size: 24.sp,
+                      ),
                       SizedBox(width: 12.w),
                       Expanded(
                         child: Text(
@@ -289,9 +315,14 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
                       ),
                       TextButton(
                         onPressed: () {
-                          context.read<StudentBloc>().add(const LoadDashboard());
+                          context.read<StudentBloc>().add(
+                            const LoadDashboard(),
+                          );
                         },
-                        child: Text('Thử lại', style: TextStyle(fontSize: 12.sp)),
+                        child: Text(
+                          'Thử lại',
+                          style: TextStyle(fontSize: 12.sp),
+                        ),
                       ),
                     ],
                   ),
@@ -374,7 +405,6 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
   Widget _buildPerformanceSnapshot(bool isDark, bool isDesktop) {
     return BlocBuilder<StudentBloc, StudentState>(
       builder: (context, state) {
-        
         if (state is StudentLoading || state is StudentInitial) {
           return Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -397,7 +427,9 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
                         aspectRatio: isDesktop ? 1.4 : 0.9,
                         child: Container(
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE5E7EB),
+                            color: isDark
+                                ? const Color(0xFF1E293B)
+                                : const Color(0xFFE5E7EB),
                             borderRadius: BorderRadius.circular(16.r),
                           ),
                         ),
@@ -409,7 +441,9 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
                         aspectRatio: isDesktop ? 1.4 : 0.9,
                         child: Container(
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE5E7EB),
+                            color: isDark
+                                ? const Color(0xFF1E293B)
+                                : const Color(0xFFE5E7EB),
                             borderRadius: BorderRadius.circular(16.r),
                           ),
                         ),
@@ -422,7 +456,6 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
           );
         }
 
-        
         if (state is StudentError) {
           return Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -443,11 +476,17 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
                   decoration: BoxDecoration(
                     color: AppColors.error.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: AppColors.error.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.error_outline, color: AppColors.error, size: 24.sp),
+                      Icon(
+                        Icons.error_outline,
+                        color: AppColors.error,
+                        size: 24.sp,
+                      ),
                       SizedBox(width: 12.w),
                       Expanded(
                         child: Text(
@@ -461,9 +500,14 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
                       ),
                       TextButton(
                         onPressed: () {
-                          context.read<StudentBloc>().add(const LoadDashboard());
+                          context.read<StudentBloc>().add(
+                            const LoadDashboard(),
+                          );
                         },
-                        child: Text('Thử lại', style: TextStyle(fontSize: 12.sp)),
+                        child: Text(
+                          'Thử lại',
+                          style: TextStyle(fontSize: 12.sp),
+                        ),
                       ),
                     ],
                   ),
@@ -578,6 +622,90 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
     );
   }
 
+  Widget _buildExploreCourses(bool isDark, bool isDesktop) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: GestureDetector(
+        onTap: () {
+          Navigator.pushNamed(context, AppRouter.studentCourses);
+        },
+        child: Container(
+          padding: EdgeInsets.all(16.w),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppColors.primary,
+                AppColors.primary.withValues(alpha: 0.8),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16.r),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.auto_awesome,
+                          color: Colors.white,
+                          size: 20.sp,
+                        ),
+                        SizedBox(width: 8.w),
+                        Text(
+                          'Khám phá khóa học',
+                          style: TextStyle(
+                            fontSize: isDesktop ? 18.sp : 16.sp,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            fontFamily: 'Lexend',
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8.h),
+                    Text(
+                      'Tìm kiếm và đăng ký các khóa học phù hợp với bạn',
+                      style: TextStyle(
+                        fontSize: isDesktop ? 14.sp : 12.sp,
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontFamily: 'Lexend',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Container(
+                padding: EdgeInsets.all(12.w),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Icon(
+                  Icons.arrow_forward,
+                  color: Colors.white,
+                  size: 24.sp,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -612,12 +740,10 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
             ),
             BlocBuilder<StudentBloc, StudentState>(
               builder: (context, state) {
-                final bloc = context.read<StudentBloc>();
                 String displayName = '';
                 bool isLoading =
                     state is StudentLoading || state is StudentInitial;
 
-                
                 if (state is DashboardLoaded && state.profile != null) {
                   displayName = state.profile!.fullName;
                 } else if (state is StudentLoaded && state.profile != null) {
@@ -626,9 +752,6 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
                   displayName = state.profile.fullName;
                 } else if (state is ProfileUpdated) {
                   displayName = state.profile.fullName;
-                } else if (bloc.cachedProfile != null) {
-                  
-                  displayName = bloc.cachedProfile!.fullName;
                 }
 
                 if (isLoading && displayName.isEmpty) {
@@ -687,15 +810,11 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
             children: [
               _buildHeader(isDark, isDesktop),
               SizedBox(height: 24.h),
-              _buildTodayFocus(isDark, isDesktop),
+              _buildExploreCourses(isDark, isDesktop),
               SizedBox(height: 24.h),
               _buildLearningProgress(isDark, isDesktop),
               SizedBox(height: 24.h),
               _buildPerformanceSnapshot(isDark, isDesktop),
-              SizedBox(height: 24.h),
-              _buildUpcomingClassesCarousel(isDark, isDesktop),
-              SizedBox(height: 24.h),
-
               SizedBox(height: 100.h),
             ],
           ),
@@ -707,7 +826,6 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
   Widget _buildUpcomingClassesCarousel(bool isDark, bool isDesktop) {
     return BlocBuilder<StudentBloc, StudentState>(
       builder: (context, state) {
-        
         if (state is StudentLoading || state is StudentInitial) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -729,7 +847,9 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
                 child: Center(
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      AppColors.primary,
+                    ),
                   ),
                 ),
               ),
@@ -737,7 +857,6 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
           );
         }
 
-        
         if (state is StudentError) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -761,11 +880,17 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
                   decoration: BoxDecoration(
                     color: AppColors.error.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: AppColors.error.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.error_outline, color: AppColors.error, size: 24.sp),
+                      Icon(
+                        Icons.error_outline,
+                        color: AppColors.error,
+                        size: 24.sp,
+                      ),
                       SizedBox(width: 12.w),
                       Expanded(
                         child: Text(
@@ -779,9 +904,14 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
                       ),
                       TextButton(
                         onPressed: () {
-                          context.read<StudentBloc>().add(const LoadDashboard());
+                          context.read<StudentBloc>().add(
+                            const LoadDashboard(),
+                          );
                         },
-                        child: Text('Thử lại', style: TextStyle(fontSize: 12.sp)),
+                        child: Text(
+                          'Thử lại',
+                          style: TextStyle(fontSize: 12.sp),
+                        ),
                       ),
                     ],
                   ),

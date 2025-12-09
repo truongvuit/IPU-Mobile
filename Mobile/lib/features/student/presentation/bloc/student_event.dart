@@ -183,3 +183,8 @@ class RemoveFromCart extends StudentEvent {
 class ClearCart extends StudentEvent {
   const ClearCart();
 }
+
+/// Reset student bloc state and cache (e.g., on logout)
+class ResetStudentState extends StudentEvent {
+  const ResetStudentState();
+}

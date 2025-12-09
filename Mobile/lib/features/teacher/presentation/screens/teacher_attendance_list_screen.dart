@@ -4,13 +4,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/routing/app_router.dart';
-import '../../../../core/widgets/skeleton_widget.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 import '../../domain/entities/teacher_schedule.dart';
 import '../../domain/entities/attendance_arguments.dart';
 import '../bloc/teacher_bloc.dart';
 import '../bloc/teacher_event.dart';
 import '../bloc/teacher_state.dart';
+import '../widgets/teacher_app_bar.dart';
 
 class TeacherAttendanceListScreen extends StatefulWidget {
   final VoidCallback? onOpenDrawer;
@@ -27,6 +27,7 @@ class _TeacherAttendanceListScreenState
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String _selectedFilter = 'active';
+  List<TeacherSchedule> _cachedTodaySchedule = [];
 
   @override
   void initState() {
@@ -101,110 +102,114 @@ class _TeacherAttendanceListScreenState
       backgroundColor: isDark
           ? const Color(0xFF111827)
           : const Color(0xFFF9FAFB),
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-        leading: widget.onOpenDrawer != null
-            ? IconButton(
-                icon: Icon(
-                  Icons.menu,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+      body: BlocListener<TeacherBloc, TeacherState>(
+        listener: (context, state) {
+          if (state is AttendanceSubmitted || state is AttendanceRecorded) {
+            _loadTodaySchedule();
+          }
+        },
+        child: Column(
+          children: [
+            TeacherAppBar(
+              title: 'Điểm danh',
+              showMenuButton: widget.onOpenDrawer != null,
+              onMenuPressed: widget.onOpenDrawer,
+              actions: [
+                IconButton(
+                  icon: Icon(
+                    Icons.refresh,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
+                  onPressed: _loadTodaySchedule,
                 ),
-                onPressed: widget.onOpenDrawer,
-              )
-            : null,
-        title: Text(
-          'Điểm danh',
-          style: TextStyle(
-            fontSize: 20.sp,
-            fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
-            fontFamily: 'Lexend',
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              Icons.refresh,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
+              ],
             ),
-            onPressed: _loadTodaySchedule,
-          ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: isDark
-              ? Colors.white70
-              : AppColors.textSecondary,
-          indicatorColor: AppColors.primary,
-          indicatorWeight: 3,
-          labelStyle: TextStyle(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w600,
-            fontFamily: 'Lexend',
-          ),
-          unselectedLabelStyle: TextStyle(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w500,
-            fontFamily: 'Lexend',
-          ),
-          tabs: const [
-            Tab(text: 'Cần điểm danh'),
-            Tab(text: 'Đã kết thúc'),
-            Tab(text: 'Tất cả'),
+
+            Container(
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              child: TabBar(
+                controller: _tabController,
+                labelColor: AppColors.primary,
+                unselectedLabelColor: isDark
+                    ? Colors.white70
+                    : AppColors.textSecondary,
+                indicatorColor: AppColors.primary,
+                indicatorWeight: 3,
+                labelStyle: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Lexend',
+                ),
+                unselectedLabelStyle: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Lexend',
+                ),
+                tabs: const [
+                  Tab(text: 'Cần điểm danh'),
+                  Tab(text: 'Đã kết thúc'),
+                  Tab(text: 'Tất cả'),
+                ],
+              ),
+            ),
+
+            Expanded(
+              child: BlocBuilder<TeacherBloc, TeacherState>(
+                builder: (context, state) {
+                  if (state is TeacherLoading) {
+                    return _buildLoadingState();
+                  }
+
+                  if (state is TeacherError) {
+                    return _buildErrorState(state.message);
+                  }
+
+                  List<TeacherSchedule> todaySchedule = _cachedTodaySchedule;
+
+                  if (state is DashboardLoaded) {
+                    todaySchedule = state.todaySchedule;
+                    _cachedTodaySchedule = todaySchedule;
+                  } else if (state is ScheduleLoaded) {
+                    todaySchedule = state.schedule;
+                    _cachedTodaySchedule = todaySchedule;
+                  } else if (state is AttendanceSubmitted ||
+                      state is AttendanceRecorded) {
+                    todaySchedule = _cachedTodaySchedule;
+                  }
+
+                  if (todaySchedule.isEmpty) {
+                    return _buildEmptyState(isDark);
+                  }
+
+                  final filteredSchedules = _filterSchedules(todaySchedule);
+
+                  if (filteredSchedules.isEmpty) {
+                    return _buildEmptyFilterState(isDark);
+                  }
+
+                  return _buildScheduleList(
+                    filteredSchedules,
+                    todaySchedule.length,
+                    isDark,
+                  );
+                },
+              ),
+            ),
           ],
         ),
-      ),
-      body: BlocBuilder<TeacherBloc, TeacherState>(
-        builder: (context, state) {
-          if (state is TeacherLoading) {
-            return _buildLoadingState();
-          }
-
-          if (state is TeacherError) {
-            return _buildErrorState(state.message);
-          }
-
-          List<TeacherSchedule> todaySchedule = [];
-
-          if (state is DashboardLoaded) {
-            todaySchedule = state.todaySchedule;
-          } else if (state is ScheduleLoaded) {
-            todaySchedule = state.schedule;
-          }
-
-          if (todaySchedule.isEmpty) {
-            return _buildEmptyState(isDark);
-          }
-
-          final filteredSchedules = _filterSchedules(todaySchedule);
-
-          if (filteredSchedules.isEmpty) {
-            return _buildEmptyFilterState(isDark);
-          }
-
-          return _buildScheduleList(
-            filteredSchedules,
-            todaySchedule.length,
-            isDark,
-          );
-        },
       ),
     );
   }
 
   Widget _buildLoadingState() {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16.w),
+    return Center(
       child: Column(
-        children: List.generate(
-          4,
-          (index) => Padding(
-            padding: EdgeInsets.only(bottom: 12.h),
-            child: SkeletonWidget.rectangular(height: 100.h),
-          ),
-        ),
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.hourglass_empty, size: 48.sp, color: AppColors.primary),
+          SizedBox(height: 16.h),
+          Text('Đang tải danh sách...', style: TextStyle(fontSize: 14.sp)),
+        ],
       ),
     );
   }
@@ -238,7 +243,7 @@ class _TeacherAttendanceListScreenState
   Widget _buildEmptyState(bool isDark) {
     return EmptyStateWidget(
       icon: Icons.event_available_outlined,
-      message: 'Không có buổi học hôm nay cần điểm danh',
+      message: 'Hôm nay bạn không có lịch dạy',
     );
   }
 
@@ -246,10 +251,10 @@ class _TeacherAttendanceListScreenState
     String message;
     switch (_selectedFilter) {
       case 'active':
-        message = 'Không có buổi học nào đang diễn ra hoặc sắp tới';
+        message = 'Chưa có buổi học nào trong khung giờ này';
         break;
       case 'completed':
-        message = 'Chưa có buổi học nào kết thúc hôm nay';
+        message = 'Chưa có buổi học nào hoàn thành hôm nay';
         break;
       default:
         message = 'Không có buổi học phù hợp với bộ lọc';
@@ -662,10 +667,10 @@ class _TeacherAttendanceListScreenState
     }
   }
 
-  void _doNavigateToAttendance(
+  Future<void> _doNavigateToAttendance(
     TeacherSchedule schedule, {
     required bool viewOnly,
-  }) {
+  }) async {
     final args = AttendanceArguments(
       classId: schedule.classId,
       sessionId: schedule.id,
@@ -675,9 +680,13 @@ class _TeacherAttendanceListScreenState
       viewOnly: viewOnly,
     );
 
-    Navigator.of(
+    final result = await Navigator.of(
       context,
       rootNavigator: true,
     ).pushNamed(AppRouter.teacherAttendance, arguments: args);
+
+    if (result == true) {
+      _loadTodaySchedule();
+    }
   }
 }

@@ -45,7 +45,11 @@ class _AdminTeacherFormScreenState extends State<AdminTeacherFormScreen> {
   @override
   void initState() {
     super.initState();
-    _loadFormData();
+    
+    // Load form data after frame is built to ensure context is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadFormData();
+    });
 
     if (widget.teacher != null) {
       _nameController.text = widget.teacher!.fullName;
@@ -55,7 +59,6 @@ class _AdminTeacherFormScreenState extends State<AdminTeacherFormScreen> {
       _dateOfBirth = widget.teacher!.dateOfBirth;
       _imageUrl = widget.teacher!.avatarUrl;
 
-      
       if (widget.teacher!.qualificationsList.isNotEmpty) {
         for (var qual in widget.teacher!.qualificationsList) {
           _selectedQualifications.add({
@@ -127,7 +130,6 @@ class _AdminTeacherFormScreenState extends State<AdminTeacherFormScreen> {
       final bloc = context.read<AdminBloc>();
 
       if (_isEditing) {
-        
         await bloc.adminRepository.updateTeacher(
           teacherId: widget.teacher!.id,
           name: _nameController.text.trim(),
@@ -148,10 +150,9 @@ class _AdminTeacherFormScreenState extends State<AdminTeacherFormScreen> {
           ),
         );
 
-        Navigator.pop(context, true); 
+        Navigator.pop(context, true);
         return;
       } else {
-        
         await bloc.adminRepository.createTeacher(
           name: _nameController.text.trim(),
           phoneNumber: _phoneController.text.trim(),
@@ -171,7 +172,7 @@ class _AdminTeacherFormScreenState extends State<AdminTeacherFormScreen> {
           ),
         );
 
-        Navigator.pop(context, true); 
+        Navigator.pop(context, true);
         return;
       }
     } catch (e) {
@@ -206,7 +207,7 @@ class _AdminTeacherFormScreenState extends State<AdminTeacherFormScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   DropdownButtonFormField<int>(
-                    initialValue: selectedDegreeId,
+                    value: selectedDegreeId,
                     decoration: const InputDecoration(
                       labelText: 'Loại bằng cấp',
                     ),
@@ -287,229 +288,221 @@ class _AdminTeacherFormScreenState extends State<AdminTeacherFormScreen> {
                     left: AppSizes.paddingMedium,
                     right: AppSizes.paddingMedium,
                     top: AppSizes.paddingMedium,
-                    bottom: MediaQuery.of(context).viewInsets.bottom + AppSizes.paddingMedium,
+                    bottom:
+                        MediaQuery.of(context).viewInsets.bottom +
+                        AppSizes.paddingMedium,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                    
-                    _buildLabel('Họ tên *'),
-                    SizedBox(height: AppSizes.p8),
-                    AppTextField(
-                      controller: _nameController,
-                      hintText: 'Nhập họ tên',
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Vui lòng nhập họ tên';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: AppSizes.paddingMedium),
-
-                    
-                    _buildLabel('Email'),
-                    SizedBox(height: AppSizes.p8),
-                    AppTextField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      hintText: 'Nhập email',
-                      validator: (value) {
-                        if (value != null &&
-                            value.isNotEmpty &&
-                            !value.contains('@')) {
-                          return 'Email không hợp lệ';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: AppSizes.paddingMedium),
-
-                    
-                    _buildLabel('Số điện thoại *'),
-                    SizedBox(height: AppSizes.p8),
-                    AppTextField(
-                      controller: _phoneController,
-                      keyboardType: TextInputType.phone,
-                      hintText: 'Nhập số điện thoại',
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Vui lòng nhập số điện thoại';
-                        }
-                        if (value.length < 10) {
-                          return 'Số điện thoại không hợp lệ';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: AppSizes.paddingMedium),
-
-                    
-                    _buildLabel('Ngày sinh'),
-                    SizedBox(height: AppSizes.p8),
-                    InkWell(
-                      onTap: _selectDateOfBirth,
-                      child: InputDecorator(
-                        decoration: const InputDecoration(
-                          hintText: 'Chọn ngày sinh',
-                          suffixIcon: Icon(
-                            Icons.calendar_today,
-                            size: 20,
-                          ),
-                        ),
-                        child: Text(
-                          _dateOfBirth != null
-                              ? DateFormat('dd/MM/yyyy').format(_dateOfBirth!)
-                              : 'Chọn ngày sinh',
-                          style: TextStyle(
-                            color: _dateOfBirth != null
-                                ? (isDark ? Colors.white : Colors.black)
-                                : (isDark
-                                      ? AppColors.neutral400
-                                      : AppColors.neutral500),
-                          ),
-                        ),
+                      _buildLabel('Họ tên *'),
+                      SizedBox(height: AppSizes.p8),
+                      AppTextField(
+                        controller: _nameController,
+                        hintText: 'Nhập họ tên',
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Vui lòng nhập họ tên';
+                          }
+                          return null;
+                        },
                       ),
-                    ),
-                    SizedBox(height: AppSizes.paddingMedium),
+                      SizedBox(height: AppSizes.paddingMedium),
 
-                    
-                    _buildLabel('Môn dạy'),
-                    SizedBox(height: AppSizes.p8),
-                    Wrap(
-                      spacing: AppSizes.p8,
-                      runSpacing: AppSizes.p8,
-                      children: _categories.map((category) {
-                        final categoryId = category['id'] as int;
-                        final isSelected = _selectedSubjectIds.contains(
-                          categoryId,
-                        );
-                        return FilterChip(
-                          label: Text(category['name'] as String),
-                          selected: isSelected,
-                          onSelected: (selected) {
-                            setState(() {
-                              if (selected) {
-                                _selectedSubjectIds.add(categoryId);
-                              } else {
-                                _selectedSubjectIds.remove(categoryId);
-                              }
-                            });
-                          },
-                          selectedColor: AppColors.primary.withValues(
-                            alpha: 0.2,
-                          ),
-                          checkmarkColor: AppColors.primary,
-                          labelStyle: TextStyle(
-                            color: isSelected
-                                ? AppColors.primary
-                                : (isDark ? Colors.white : Colors.black),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                    SizedBox(height: AppSizes.paddingMedium),
+                      _buildLabel('Email'),
+                      SizedBox(height: AppSizes.p8),
+                      AppTextField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        hintText: 'Nhập email',
+                        validator: (value) {
+                          if (value != null &&
+                              value.isNotEmpty &&
+                              !value.contains('@')) {
+                            return 'Email không hợp lệ';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: AppSizes.paddingMedium),
 
-                    
-                    _buildLabel('Kinh nghiệm'),
-                    SizedBox(height: AppSizes.p8),
-                    AppTextField(
-                      controller: _experienceController,
-                      maxLines: 3,
-                      hintText: 'Mô tả kinh nghiệm giảng dạy...',
-                    ),
-                    SizedBox(height: AppSizes.paddingMedium),
+                      _buildLabel('Số điện thoại *'),
+                      SizedBox(height: AppSizes.p8),
+                      AppTextField(
+                        controller: _phoneController,
+                        keyboardType: TextInputType.phone,
+                        hintText: 'Nhập số điện thoại',
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Vui lòng nhập số điện thoại';
+                          }
+                          if (value.length < 10) {
+                            return 'Số điện thoại không hợp lệ';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: AppSizes.paddingMedium),
 
-                    
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _buildLabel('Bằng cấp'),
-                        TextButton.icon(
-                          onPressed: _showAddQualificationDialog,
-                          icon: const Icon(Icons.add, size: 18),
-                          label: const Text('Thêm'),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: AppSizes.p8),
-                    if (_selectedQualifications.isEmpty)
-                      Container(
-                        padding: EdgeInsets.all(AppSizes.paddingMedium),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? AppColors.surfaceDark
-                              : AppColors.neutral100,
-                          borderRadius: BorderRadius.circular(
-                            AppSizes.radiusMedium,
+                      _buildLabel('Ngày sinh'),
+                      SizedBox(height: AppSizes.p8),
+                      InkWell(
+                        onTap: _selectDateOfBirth,
+                        child: InputDecorator(
+                          decoration: const InputDecoration(
+                            hintText: 'Chọn ngày sinh',
+                            suffixIcon: Icon(Icons.calendar_today, size: 20),
                           ),
-                          border: Border.all(
-                            color: isDark
-                                ? AppColors.neutral700
-                                : AppColors.neutral300,
-                          ),
-                        ),
-                        child: Center(
                           child: Text(
-                            'Chưa có bằng cấp nào',
+                            _dateOfBirth != null
+                                ? DateFormat('dd/MM/yyyy').format(_dateOfBirth!)
+                                : 'Chọn ngày sinh',
                             style: TextStyle(
-                              color: isDark
-                                  ? AppColors.neutral400
-                                  : AppColors.neutral600,
+                              color: _dateOfBirth != null
+                                  ? (isDark ? Colors.white : Colors.black)
+                                  : (isDark
+                                        ? AppColors.neutral400
+                                        : AppColors.neutral500),
                             ),
                           ),
                         ),
-                      )
-                    else
+                      ),
+                      SizedBox(height: AppSizes.paddingMedium),
+
+                      _buildLabel('Môn dạy'),
+                      SizedBox(height: AppSizes.p8),
                       Wrap(
                         spacing: AppSizes.p8,
                         runSpacing: AppSizes.p8,
-                        children: _selectedQualifications.asMap().entries.map((
-                          entry,
-                        ) {
-                          final index = entry.key;
-                          final qual = entry.value;
-                          final displayText = qual['level']?.isNotEmpty == true
-                              ? '${qual['degreeName']} - ${qual['level']}'
-                              : qual['degreeName'];
-                          return Chip(
-                            label: Text(
-                              displayText,
-                              style: TextStyle(fontSize: 12.sp),
-                            ),
-                            deleteIcon: const Icon(Icons.close, size: 16),
-                            onDeleted: () {
+                        children: _categories.map((category) {
+                          final categoryId = category['id'] as int;
+                          final isSelected = _selectedSubjectIds.contains(
+                            categoryId,
+                          );
+                          return FilterChip(
+                            label: Text(category['name'] as String),
+                            selected: isSelected,
+                            onSelected: (selected) {
                               setState(() {
-                                _selectedQualifications.removeAt(index);
+                                if (selected) {
+                                  _selectedSubjectIds.add(categoryId);
+                                } else {
+                                  _selectedSubjectIds.remove(categoryId);
+                                }
                               });
                             },
-                            backgroundColor: AppColors.primary.withValues(
-                              alpha: 0.1,
+                            selectedColor: AppColors.primary.withValues(
+                              alpha: 0.2,
                             ),
-                            labelStyle: TextStyle(color: AppColors.primary),
-                            side: BorderSide.none,
+                            checkmarkColor: AppColors.primary,
+                            labelStyle: TextStyle(
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : (isDark ? Colors.white : Colors.black),
+                            ),
                           );
                         }).toList(),
                       ),
+                      SizedBox(height: AppSizes.paddingMedium),
 
-                    SizedBox(height: 32.h),
+                      _buildLabel('Kinh nghiệm'),
+                      SizedBox(height: AppSizes.p8),
+                      AppTextField(
+                        controller: _experienceController,
+                        maxLines: 3,
+                        hintText: 'Mô tả kinh nghiệm giảng dạy...',
+                      ),
+                      SizedBox(height: AppSizes.paddingMedium),
 
-                    
-                    AppButton(
-                      text: _isEditing ? 'Cập nhật' : 'Thêm giảng viên',
-                      onPressed: _save,
-                      isLoading: _isLoading,
-                      width: double.infinity,
-                      height: 50.h,
-                    ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildLabel('Bằng cấp'),
+                          TextButton.icon(
+                            onPressed: _showAddQualificationDialog,
+                            icon: const Icon(Icons.add, size: 18),
+                            label: const Text('Thêm'),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: AppSizes.p8),
+                      if (_selectedQualifications.isEmpty)
+                        Container(
+                          padding: EdgeInsets.all(AppSizes.paddingMedium),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? AppColors.surfaceDark
+                                : AppColors.neutral100,
+                            borderRadius: BorderRadius.circular(
+                              AppSizes.radiusMedium,
+                            ),
+                            border: Border.all(
+                              color: isDark
+                                  ? AppColors.neutral700
+                                  : AppColors.neutral300,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Chưa có bằng cấp nào',
+                              style: TextStyle(
+                                color: isDark
+                                    ? AppColors.neutral400
+                                    : AppColors.neutral600,
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        Wrap(
+                          spacing: AppSizes.p8,
+                          runSpacing: AppSizes.p8,
+                          children: _selectedQualifications.asMap().entries.map(
+                            (entry) {
+                              final index = entry.key;
+                              final qual = entry.value;
+                              final displayText =
+                                  qual['level']?.isNotEmpty == true
+                                  ? '${qual['degreeName']} - ${qual['level']}'
+                                  : qual['degreeName'];
+                              return Chip(
+                                label: Text(
+                                  displayText,
+                                  style: TextStyle(fontSize: 12.sp),
+                                ),
+                                deleteIcon: const Icon(Icons.close, size: 16),
+                                onDeleted: () {
+                                  setState(() {
+                                    _selectedQualifications.removeAt(index);
+                                  });
+                                },
+                                backgroundColor: AppColors.primary.withValues(
+                                  alpha: 0.1,
+                                ),
+                                labelStyle: TextStyle(color: AppColors.primary),
+                                side: BorderSide.none,
+                              );
+                            },
+                          ).toList(),
+                        ),
 
-                    SizedBox(
-                      height: MediaQuery.of(context).padding.bottom + 24.h,
-                    ),
-                  ],
+                      SizedBox(height: 32.h),
+
+                      AppButton(
+                        text: _isEditing ? 'Cập nhật' : 'Thêm giảng viên',
+                        onPressed: _save,
+                        isLoading: _isLoading,
+                        width: double.infinity,
+                        height: 50.h,
+                      ),
+
+                      SizedBox(
+                        height: MediaQuery.of(context).padding.bottom + 24.h,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
             ),
     );
   }
