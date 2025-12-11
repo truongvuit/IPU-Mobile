@@ -327,7 +327,7 @@ class UpdateCourseRequest {
       'trangthai': isActive,
     };
 
-    // Only include optional fields if they have values
+    
     if (videoUrl != null && videoUrl!.isNotEmpty) {
       json['video'] = videoUrl;
     }

@@ -133,6 +133,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Expanded(
             child: BlocListener<StudentBloc, StudentState>(
               listenWhen: (previous, current) {
+                if (current is StudentLoading &&
+                    current.action != 'LoadProfile' &&
+                    current.action != 'UpdateProfile') {
+                  return false;
+                }
                 return current is ProfileLoaded ||
                     current is ProfileUpdated ||
                     current is StudentLoading ||
@@ -229,6 +234,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: ClipOval(
               child: CustomImage(
                 imageUrl: profile.avatarUrl ?? '',
+                cacheKey:
+                    '${profile.avatarUrl ?? ''}_${DateTime.now().millisecondsSinceEpoch ~/ 60000}',
                 width: isDesktop ? 140.w : 120.w,
                 height: isDesktop ? 140.h : 120.h,
                 fit: BoxFit.cover,
@@ -255,9 +262,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               fontFamily: 'Lexend',
             ),
           ),
-          SizedBox(height: 24.h),
 
-          _buildStatsSection(profile, isDark, isDesktop),
           SizedBox(height: 24.h),
 
           Padding(
@@ -266,12 +271,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () async {
-                  // Navigate to edit screen and wait for it to close
+                  
                   await Navigator.pushNamed(
                     context,
                     AppRouter.studentEditProfile,
                   );
-                  // Reload profile when returning (always reload to catch any updates)
+                  
                   if (mounted) {
                     context.read<StudentBloc>().add(LoadProfile());
                   }
@@ -434,97 +439,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatsSection(dynamic profile, bool isDark, bool isDesktop) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildStatCard(
-              Icons.school_outlined,
-              '${profile.activeCourses}',
-              'Lớp học',
-              AppColors.primary,
-              isDark,
-              isDesktop,
-            ),
-          ),
-          SizedBox(width: AppSizes.p12),
-          Expanded(
-            child: _buildStatCard(
-              Icons.star_outline,
-              '${profile.gpa}',
-              'Sao',
-              AppColors.warning,
-              isDark,
-              isDesktop,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatCard(
-    IconData icon,
-    String value,
-    String label,
-    Color color,
-    bool isDark,
-    bool isDesktop,
-  ) {
-    return Container(
-      padding: EdgeInsets.all(isDesktop ? AppSizes.p16 : AppSizes.p12),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1F2937) : Colors.white,
-        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-        border: Border.all(
-          color: isDark ? const Color(0xFF374151) : AppColors.divider,
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: EdgeInsets.all(AppSizes.p8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
-            ),
-            child: Icon(icon, color: color, size: isDesktop ? 24.sp : 20.sp),
-          ),
-          SizedBox(height: 8.h),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: isDesktop ? AppSizes.textXl : AppSizes.textLg,
-              fontWeight: FontWeight.w700,
-              color: isDark ? Colors.white : AppColors.textPrimary,
-              fontFamily: 'Lexend',
-            ),
-          ),
-          SizedBox(height: 2.h),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: isDesktop ? AppSizes.textXs : 10.sp,
-              color: AppColors.textSecondary,
-              fontFamily: 'Lexend',
-            ),
-            textAlign: TextAlign.center,
           ),
         ],
       ),

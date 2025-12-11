@@ -25,6 +25,9 @@ class StudentClassModel extends StudentClass {
     super.students = const [],
     super.attendanceRate = 0.0,
     super.progress = 0.0,
+    super.schedulePattern,
+    super.dailyStartTime,
+    super.dailyEndTime,
   });
 
   factory StudentClassModel.fromJson(Map<String, dynamic> json) {
@@ -87,6 +90,9 @@ class StudentClassModel extends StudentClass {
       students: studentList,
       attendanceRate: (json['attendanceRate'] ?? 0.0).toDouble(),
       progress: (json['progress'] ?? 0.0).toDouble(),
+      schedulePattern: json['schedulePattern'],
+      dailyStartTime: json['startTime'],
+      dailyEndTime: json['endTime'],
     );
   }
 
@@ -118,6 +124,9 @@ class StudentClassModel extends StudentClass {
           .toList(),
       'attendanceRate': attendanceRate,
       'progress': progress,
+      'schedulePattern': schedulePattern,
+      'startTime': dailyStartTime,
+      'endTime': dailyEndTime,
     };
   }
 
@@ -146,6 +155,9 @@ class StudentClassModel extends StudentClass {
       students: studentClass.students,
       attendanceRate: studentClass.attendanceRate,
       progress: studentClass.progress,
+      schedulePattern: studentClass.schedulePattern,
+      dailyStartTime: studentClass.dailyStartTime,
+      dailyEndTime: studentClass.dailyEndTime,
     );
   }
 
@@ -174,6 +186,9 @@ class StudentClassModel extends StudentClass {
     List<ClassStudent>? students,
     double? attendanceRate,
     double? progress,
+    String? schedulePattern,
+    String? dailyStartTime,
+    String? dailyEndTime,
   }) {
     return StudentClassModel(
       id: id ?? this.id,
@@ -200,6 +215,9 @@ class StudentClassModel extends StudentClass {
       students: students ?? this.students,
       attendanceRate: attendanceRate ?? this.attendanceRate,
       progress: progress ?? this.progress,
+      schedulePattern: schedulePattern ?? this.schedulePattern,
+      dailyStartTime: dailyStartTime ?? this.dailyStartTime,
+      dailyEndTime: dailyEndTime ?? this.dailyEndTime,
     );
   }
 }

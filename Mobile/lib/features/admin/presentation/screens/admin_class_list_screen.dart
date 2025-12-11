@@ -137,6 +137,9 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
       ),
       body: BlocBuilder<AdminBloc, AdminState>(
         buildWhen: (previous, current) {
+          if (current is AdminLoading && current.action != 'LoadClassList') {
+            return false;
+          }
           return current is AdminLoading ||
               current is AdminError ||
               current is ClassListLoaded;
@@ -147,9 +150,16 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.hourglass_empty, size: 48.sp, color: AppColors.primary),
+                  Icon(
+                    Icons.hourglass_empty,
+                    size: 48.sp,
+                    color: AppColors.primary,
+                  ),
                   SizedBox(height: 16.h),
-                  Text('Đang tải danh sách lớp...', style: TextStyle(fontSize: 14.sp)),
+                  Text(
+                    'Đang tải danh sách lớp...',
+                    style: TextStyle(fontSize: 14.sp),
+                  ),
                 ],
               ),
             );
@@ -163,13 +173,17 @@ class _AdminClassListScreenState extends State<AdminClassListScreen>
             return _buildClassList(state, isDark, theme);
           }
 
-          // Don't dispatch here - HomeAdminScreen will dispatch when tab is selected
-          // This prevents race condition during initial load with IndexedStack
+          
+          
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.class_outlined, size: 48.sp, color: AppColors.primary),
+                Icon(
+                  Icons.class_outlined,
+                  size: 48.sp,
+                  color: AppColors.primary,
+                ),
                 SizedBox(height: 16.h),
                 Text('Đang tải...', style: TextStyle(fontSize: 14.sp)),
               ],

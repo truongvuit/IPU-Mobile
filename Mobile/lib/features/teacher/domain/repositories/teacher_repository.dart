@@ -34,10 +34,10 @@ abstract class TeacherRepository {
     List<Map<String, dynamic>> records,
   );
 
-  
   Future<Either<String, List<TeacherSchedule>>> getWeekSchedule(DateTime date);
   Future<Either<String, List<TeacherSchedule>>> getTodaySchedule();
 
   Future<Either<String, TeacherProfile>> getProfile();
   Future<Either<String, void>> updateProfile(TeacherProfile profile);
+  Future<Either<String, String>> uploadAvatar(String filePath);
 }

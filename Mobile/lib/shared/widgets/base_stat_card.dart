@@ -2,34 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../core/theme/app_colors.dart';
 
-
-
 class BaseStatCard extends StatelessWidget {
-  
   final String label;
-  
-  
+
   final String value;
-  
-  
+
   final IconData icon;
-  
-  
+
   final Color color;
-  
-  
+
   final String? subtitle;
-  
-  
+
   final double? trendValue;
-  
-  
+
   final bool compact;
-  
-  
+
   final VoidCallback? onTap;
-  
-  
+
   final Widget? child;
 
   const BaseStatCard({
@@ -163,7 +152,7 @@ class BaseStatCard extends StatelessWidget {
   Widget _buildTrendIndicator() {
     final isPositive = trendValue! >= 0;
     final trendColor = isPositive ? AppColors.success : AppColors.error;
-    
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
       decoration: BoxDecoration(
@@ -193,7 +182,6 @@ class BaseStatCard extends StatelessWidget {
   }
 }
 
-
 class BaseQuickActionButton extends StatelessWidget {
   final String label;
   final IconData icon;
@@ -210,9 +198,6 @@ class BaseQuickActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -223,9 +208,7 @@ class BaseQuickActionButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(
-              color: color.withValues(alpha: 0.3),
-            ),
+            border: Border.all(color: color.withValues(alpha: 0.3)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,

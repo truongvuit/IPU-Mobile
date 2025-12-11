@@ -12,7 +12,7 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
   TeacherProfile? _cachedProfile;
   TeacherProfile? get cachedProfile => _cachedProfile;
 
-  // Dashboard cache
+  
   DashboardLoaded? _cachedDashboard;
 
   TeacherBloc({required this.repository}) : super(TeacherInitial()) {
@@ -48,13 +48,13 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
     LoadTeacherDashboard event,
     Emitter<TeacherState> emit,
   ) async {
-    // Nếu có cache và không force refresh thì dùng cache
+    
     if (!event.forceRefresh && _cachedDashboard != null) {
       emit(_cachedDashboard!);
       return;
     }
 
-    emit(const TeacherLoading(action: 'Đang tải dashboard...'));
+    emit(const TeacherLoading(action: 'LoadTeacherDashboard'));
 
     try {
       final todayScheduleResult = await repository.getTodaySchedule();
@@ -131,29 +131,30 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
     LoadMyClasses event,
     Emitter<TeacherState> emit,
   ) async {
-    emit(const TeacherLoading(action: 'Đang tải danh sách lớp...'));
+    emit(const TeacherLoading(action: 'LoadMyClasses'));
     final result = await repository.getMyClasses();
     result.fold((error) => emit(TeacherError(error)), (classes) {
       _cachedClasses = classes;
-      // Sort: current/upcoming classes first, then past/completed classes
+      
       final sortedClasses = _sortClassesByStatus(classes);
       emit(ClassesLoaded(sortedClasses));
     });
   }
 
-  /// Sort classes: Active/Upcoming first, then Past/Completed at the bottom
+  
   List<TeacherClass> _sortClassesByStatus(List<TeacherClass> classes) {
     final now = DateTime.now();
-    
+
     final activeClasses = <TeacherClass>[];
     final upcomingClasses = <TeacherClass>[];
     final pastClasses = <TeacherClass>[];
-    
+
     for (final c in classes) {
-      final isCompleted = c.status?.toLowerCase() == 'completed' || 
-                          c.status?.toLowerCase() == 'hoàn thành';
+      final isCompleted =
+          c.status?.toLowerCase() == 'completed' ||
+          c.status?.toLowerCase() == 'hoàn thành';
       final isPast = c.endDate != null && c.endDate!.isBefore(now);
-      
+
       if (isCompleted || isPast) {
         pastClasses.add(c);
       } else if (c.startDate.isAfter(now)) {
@@ -162,12 +163,14 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
         activeClasses.add(c);
       }
     }
+
     
-    // Sort each group by start date
     activeClasses.sort((a, b) => a.startDate.compareTo(b.startDate));
     upcomingClasses.sort((a, b) => a.startDate.compareTo(b.startDate));
-    pastClasses.sort((a, b) => (b.endDate ?? b.startDate).compareTo(a.endDate ?? a.startDate));
-    
+    pastClasses.sort(
+      (a, b) => (b.endDate ?? b.startDate).compareTo(a.endDate ?? a.startDate),
+    );
+
     return [...activeClasses, ...upcomingClasses, ...pastClasses];
   }
 
@@ -232,7 +235,7 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
     LoadClassDetail event,
     Emitter<TeacherState> emit,
   ) async {
-    emit(const TeacherLoading(action: 'Đang tải chi tiết lớp'));
+    emit(const TeacherLoading(action: 'LoadClassDetail'));
 
     try {
       final classDetailResult = await repository.getClassDetail(event.classId);
@@ -300,7 +303,7 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
     LoadAttendance event,
     Emitter<TeacherState> emit,
   ) async {
-    emit(TeacherLoading());
+    emit(const TeacherLoading(action: 'LoadAttendance'));
 
     final result = await repository.getAttendanceBySessionId(event.sessionId);
     result.fold(
@@ -358,15 +361,15 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
     );
   }
 
-  // Note: _onSubmitAttendance, _onLoadClassScores, _onLoadStudentScores removed
-  // because repository methods getClassScores, getStudentScores, submitAttendance
-  // are not implemented
+  
+  
+  
 
   Future<void> _onLoadWeekSchedule(
     LoadWeekSchedule event,
     Emitter<TeacherState> emit,
   ) async {
-    emit(TeacherLoading());
+    emit(const TeacherLoading(action: 'LoadWeekSchedule'));
     final result = await repository.getWeekSchedule(event.date);
     result.fold(
       (error) => emit(TeacherError(error)),
@@ -390,7 +393,7 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
     LoadTeacherProfile event,
     Emitter<TeacherState> emit,
   ) async {
-    emit(TeacherLoading());
+    emit(const TeacherLoading(action: 'LoadTeacherProfile'));
     final result = await repository.getProfile();
     result.fold((error) => emit(TeacherError(error)), (profile) {
       _cachedProfile = profile;
@@ -403,10 +406,25 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
     Emitter<TeacherState> emit,
   ) async {
     emit(TeacherLoading());
-    final result = await repository.updateProfile(event.profile);
+
+    var profileToUpdate = event.profile;
+
+    
+    if (event.imagePath != null) {
+      final uploadResult = await repository.uploadAvatar(event.imagePath!);
+      if (uploadResult.isLeft()) {
+        final error = uploadResult.fold((l) => l, (_) => '');
+        emit(TeacherError(error));
+        return;
+      }
+      final avatarUrl = uploadResult.getOrElse(() => '');
+      profileToUpdate = profileToUpdate.copyWith(avatarUrl: avatarUrl);
+    }
+
+    final result = await repository.updateProfile(profileToUpdate);
     result.fold((error) => emit(TeacherError(error)), (_) {
-      _cachedProfile = event.profile;
-      emit(ProfileUpdated('Hồ sơ đã được cập nhật', profile: event.profile));
+      _cachedProfile = profileToUpdate;
+      emit(ProfileUpdated('Hồ sơ đã được cập nhật', profile: profileToUpdate));
     });
   }
 }

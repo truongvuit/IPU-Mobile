@@ -88,7 +88,10 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
               final studentClass = state.studentClass;
 
               String scheduleText = 'Chưa có lịch';
-              if (studentClass.schedule.isNotEmpty) {
+              if (studentClass.schedulePattern != null &&
+                  studentClass.schedulePattern!.isNotEmpty) {
+                scheduleText = studentClass.schedulePattern!;
+              } else if (studentClass.schedule.isNotEmpty) {
                 final weekdays = <int>{};
                 for (var dt in studentClass.schedule) {
                   weekdays.add(dt.weekday);
@@ -105,6 +108,23 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                   'CN',
                 ];
                 scheduleText = sortedDays.map((d) => dayNames[d]).join(', ');
+              }
+
+              String timeText = 'Chưa có giờ';
+              if (studentClass.dailyStartTime != null &&
+                  studentClass.dailyEndTime != null) {
+                
+                try {
+                  final start = studentClass.dailyStartTime!.substring(0, 5);
+                  final end = studentClass.dailyEndTime!.substring(0, 5);
+                  timeText = '$start - $end';
+                } catch (e) {
+                  timeText =
+                      '${studentClass.dailyStartTime} - ${studentClass.dailyEndTime}';
+                }
+              } else {
+                timeText =
+                    '${timeFormat.format(studentClass.startTime)} - ${timeFormat.format(studentClass.endTime)}';
               }
 
               return CustomScrollView(
@@ -236,7 +256,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                             scheduleText: scheduleText,
                             isOnline: studentClass.isOnline,
                             room: studentClass.room,
-                            timeText: '${timeFormat.format(studentClass.startTime)} - ${timeFormat.format(studentClass.endTime)}',
+                            timeText: timeText,
                           ),
                         ),
 
@@ -248,8 +268,10 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                             isDark: isDark,
                             teacherName: studentClass.teacherName,
                             teacherEmail: studentClass.teacherEmail,
-                            teacherSpecialization: studentClass.teacherSpecialization,
-                            teacherCertificates: studentClass.teacherCertificates,
+                            teacherSpecialization:
+                                studentClass.teacherSpecialization,
+                            teacherCertificates:
+                                studentClass.teacherCertificates,
                           ),
                         ),
 

@@ -128,7 +128,7 @@ class LoadClassFeedbacks extends AdminEvent {
   List<Object?> get props => [classId];
 }
 
-/// Event to reset admin bloc state (e.g., on logout)
+
 class ResetAdminState extends AdminEvent {
   const ResetAdminState();
 }

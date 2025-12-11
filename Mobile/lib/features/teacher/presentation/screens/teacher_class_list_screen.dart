@@ -31,7 +31,7 @@ class _TeacherClassListScreenState extends State<TeacherClassListScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     context.read<TeacherBloc>().add(LoadMyClasses());
   }
 
@@ -92,9 +92,19 @@ class _TeacherClassListScreenState extends State<TeacherClassListScreen> {
           ),
         ),
 
-        
         Expanded(
           child: BlocBuilder<TeacherBloc, TeacherState>(
+            buildWhen: (previous, current) {
+              
+              if (current is TeacherLoading &&
+                  current.action != 'LoadMyClasses') {
+                return false;
+              }
+              if (current is ClassesLoaded || current is TeacherError) {
+                return true;
+              }
+              return true;
+            },
             builder: (context, state) {
               if (state is TeacherError) {
                 return Center(
@@ -185,7 +195,6 @@ class _TeacherClassListScreenState extends State<TeacherClassListScreen> {
                                 onTap: () {
                                   final classId = state.classes[index].id;
 
-                                  
                                   Navigator.of(
                                     context,
                                     rootNavigator: true,
@@ -200,7 +209,6 @@ class _TeacherClassListScreenState extends State<TeacherClassListScreen> {
                                 onTap: () {
                                   final classId = state.classes[index].id;
 
-                                  
                                   Navigator.of(
                                     context,
                                     rootNavigator: true,

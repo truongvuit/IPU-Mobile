@@ -36,7 +36,7 @@ class CourseCard extends StatelessWidget {
         : _buildVerticalCard(context);
   }
 
-  /// Horizontal layout - image as leading (for mobile list view)
+  
   Widget _buildHorizontalCard(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
@@ -62,7 +62,7 @@ class CourseCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Leading Image
+              
               ClipRRect(
                 borderRadius: const BorderRadius.horizontal(
                   left: Radius.circular(12),
@@ -73,7 +73,7 @@ class CourseCard extends StatelessWidget {
                     fit: StackFit.expand,
                     children: [
                       CustomImage(imageUrl: course.imageUrl, fit: BoxFit.cover),
-                      // Class count badge
+                      
                       if (classCount > 0)
                         Positioned(
                           top: 6,
@@ -103,7 +103,7 @@ class CourseCard extends StatelessWidget {
                 ),
               ),
 
-              // Content
+              
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
@@ -111,7 +111,7 @@ class CourseCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Title
+                      
                       Text(
                         course.name,
                         maxLines: 2,
@@ -128,7 +128,7 @@ class CourseCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
 
-                      // Category + Level chips
+                      
                       Wrap(
                         spacing: 6,
                         runSpacing: 4,
@@ -143,7 +143,7 @@ class CourseCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
 
-                      // Price
+                      
                       Row(
                         children: [
                           Icon(
@@ -167,7 +167,7 @@ class CourseCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                          // Quick action button
+                          
                           if (classCount > 0)
                             GestureDetector(
                               onTap: () => ClassSelectionBottomSheet.show(
@@ -226,7 +226,7 @@ class CourseCard extends StatelessWidget {
     );
   }
 
-  /// Vertical layout - original card design (for tablet/desktop grid)
+  
   Widget _buildVerticalCard(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
@@ -265,7 +265,7 @@ class CourseCard extends StatelessWidget {
                       height: double.infinity,
                       fit: BoxFit.cover,
                     ),
-                    // Class count badge
+                    
                     if (classCount > 0)
                       Positioned(
                         top: 8,
@@ -326,7 +326,7 @@ class CourseCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
 
-                    // Category + Level row
+                    
                     Row(
                       children: [
                         Container(
@@ -378,7 +378,7 @@ class CourseCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
 
-                    // Price row
+                    
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -410,7 +410,7 @@ class CourseCard extends StatelessWidget {
 
                     const Spacer(),
 
-                    // Action buttons
+                    
                     Row(
                       children: [
                         Expanded(

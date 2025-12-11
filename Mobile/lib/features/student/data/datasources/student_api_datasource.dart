@@ -223,7 +223,7 @@ class StudentApiDataSourceImpl implements StudentApiDataSource {
   Future<CourseModel> getCourseDetail(String courseId) async {
     try {
       final response = await dioClient.get(
-        '${ApiEndpoints.courseDetail}/$courseId',
+        '${ApiEndpoints.courseDetail}/$courseId?mode=all',
       );
 
       if (response.statusCode == 200 && response.data['code'] == 1000) {
@@ -586,7 +586,7 @@ class StudentApiDataSourceImpl implements StudentApiDataSource {
           'orderInfo': 'Thanh toan khoa hoc',
         },
 
-        // Tell backend to use mobile deep link for VNPay return URL
+        
         queryParameters: {'platform': 'mobile'},
 
         options: Options(

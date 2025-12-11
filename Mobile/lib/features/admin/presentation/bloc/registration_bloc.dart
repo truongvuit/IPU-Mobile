@@ -655,16 +655,16 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
           int paymentMethodId;
           switch (current.paymentMethod) {
             case PaymentMethod.cash:
-              paymentMethodId = 1; // Tiền mặt
+              paymentMethodId = 1; 
               break;
             case PaymentMethod.transfer:
-              paymentMethodId = 3; // Chuyển khoản ngân hàng
+              paymentMethodId = 3; 
               break;
             case PaymentMethod.vnpay:
-              paymentMethodId = 2; // VNPay
+              paymentMethodId = 2; 
               break;
             case PaymentMethod.card:
-              paymentMethodId = 3; // Chuyển khoản ngân hàng (fallback)
+              paymentMethodId = 3; 
               break;
           }
 
@@ -682,15 +682,15 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
 
           final invoiceIdInt = int.tryParse(invoiceId.toString());
 
-          // Nếu thanh toán tiền mặt hoặc chuyển khoản thì tự động xác nhận thanh toán và gửi email hóa đơn
+          
           if (invoiceIdInt != null &&
               (current.paymentMethod == PaymentMethod.cash ||
                   current.paymentMethod == PaymentMethod.transfer)) {
             try {
               await adminRepository!.confirmCashPayment(invoiceIdInt);
             } catch (e) {
-              // Không fail nếu gửi email lỗi, chỉ log warning
-              // ignore: avoid_print
+              
+              
               print('Warning: Failed to confirm cash payment: $e');
             }
           }

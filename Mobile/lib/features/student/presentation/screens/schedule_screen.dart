@@ -27,8 +27,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   DateTime _selectedDate = DateTime.now();
   String _viewMode = 'list';
   Timer? _monthNavDebounce;
+
   
-  // Local cache to prevent reload when switching tabs
   List<Schedule>? _cachedSchedules;
   DateTime? _cachedMonth;
   bool _isLoading = false;
@@ -43,12 +43,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
   void _loadScheduleIfNeeded() {
     if (!mounted) return;
-    
+
     final bloc = context.read<StudentBloc>();
     final state = bloc.state;
+
     
-    // If already loaded for this month, use cache
-    if (state is ScheduleLoaded && 
+    if (state is ScheduleLoaded &&
         state.selectedDate.month == _selectedDate.month &&
         state.selectedDate.year == _selectedDate.year) {
       _cachedSchedules = state.schedules;
@@ -56,15 +56,15 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       _isLoading = false;
       return;
     }
+
     
-    // If we have local cache for this month, don't reload
-    if (_cachedSchedules != null && 
+    if (_cachedSchedules != null &&
         _cachedMonth?.month == _selectedDate.month &&
         _cachedMonth?.year == _selectedDate.year) {
       return;
     }
+
     
-    // Otherwise load
     _isLoading = true;
     bloc.add(LoadSchedule(_selectedDate));
   }
@@ -81,7 +81,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         _selectedDate.year,
         _selectedDate.month + offset,
       );
-      // Clear cache when navigating to different month
+      
       _cachedSchedules = null;
       _isLoading = true;
     });
@@ -213,6 +213,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           Expanded(
             child: BlocListener<StudentBloc, StudentState>(
               listenWhen: (previous, current) {
+                if (current is StudentLoading &&
+                    current.action != 'LoadSchedule') {
+                  return false;
+                }
                 return current is ScheduleLoaded ||
                     current is StudentLoading ||
                     current is StudentError;
@@ -243,7 +247,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   }
 
   Widget _buildScheduleContent(bool isDark, bool isDesktop) {
-    // Show loading only if no cache
+    
     if (_isLoading && _cachedSchedules == null) {
       return EmptyStateWidget(
         icon: Icons.hourglass_empty,
@@ -251,7 +255,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       );
     }
 
-    // Show cached data if available
+    
     if (_cachedSchedules != null) {
       if (_cachedSchedules!.isEmpty) {
         return EmptyStateWidget(
@@ -265,13 +269,13 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           : _buildListView(_cachedSchedules!, isDark, isDesktop);
     }
 
-    // Fallback - trigger load
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<StudentBloc>().add(LoadSchedule(_selectedDate));
       }
     });
-    
+
     return EmptyStateWidget(
       icon: Icons.hourglass_empty,
       message: 'Đang tải lịch học...',

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/custom_image.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/teacher_bloc.dart';
 import '../bloc/teacher_event.dart';
@@ -80,44 +81,14 @@ class TeacherDrawerWidget extends StatelessWidget {
                                   displayAvatar != null &&
                                       displayAvatar.isNotEmpty
                                   ? ClipOval(
-                                      child: Image.network(
-                                        displayAvatar,
+                                      child: CustomImage(
+                                        imageUrl: displayAvatar,
+                                        cacheKey:
+                                            '${displayAvatar}_${DateTime.now().millisecondsSinceEpoch ~/ 60000}',
                                         width: 64.w,
                                         height: 64.h,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return ClipOval(
-                                            child: Image.asset(
-                                              'assets/images/avatar-default.png',
-                                              width: 64.w,
-                                              height: 64.h,
-                                              fit: BoxFit.cover,
-                                            ),
-                                          );
-                                        },
-                                        loadingBuilder: (context, child, loadingProgress) {
-                                          if (loadingProgress == null) {
-                                            return child;
-                                          }
-                                          return Center(
-                                            child: CircularProgressIndicator(
-                                              value:
-                                                  loadingProgress
-                                                          .expectedTotalBytes !=
-                                                      null
-                                                  ? loadingProgress
-                                                            .cumulativeBytesLoaded /
-                                                        loadingProgress
-                                                            .expectedTotalBytes!
-                                                  : null,
-                                              strokeWidth: 2,
-                                              valueColor:
-                                                  const AlwaysStoppedAnimation<
-                                                    Color
-                                                  >(Color(0xFF135BEC)),
-                                            ),
-                                          );
-                                        },
+                                        isAvatar: true,
                                       ),
                                     )
                                   : ClipOval(
@@ -402,18 +373,18 @@ class TeacherDrawerWidget extends StatelessWidget {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () async {
-                        Navigator.pop(dialogContext); // Close dialog
-                        Navigator.of(context).pop(); // Close drawer first
+                        Navigator.pop(dialogContext); 
+                        Navigator.of(context).pop(); 
+
                         
-                        // Reset teacher state
                         try {
                           final teacherBloc = context.read<TeacherBloc>();
                           teacherBloc.add(ResetTeacherState());
                         } catch (_) {
-                          // Bloc may already be closed, ignore
+                          
                         }
+
                         
-                        // Navigate to welcome screen immediately
                         if (context.mounted) {
                           Navigator.pushNamedAndRemoveUntil(
                             context,
@@ -421,12 +392,12 @@ class TeacherDrawerWidget extends StatelessWidget {
                             (route) => false,
                           );
                         }
+
                         
-                        // Then trigger logout (this clears token)
                         try {
                           authBloc.add(const LogoutRequested());
                         } catch (_) {
-                          // Bloc may already be closed, ignore
+                          
                         }
                       },
                       style: ElevatedButton.styleFrom(

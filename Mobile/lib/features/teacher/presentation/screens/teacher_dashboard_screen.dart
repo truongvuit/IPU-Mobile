@@ -32,22 +32,28 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     final now = DateTime.now();
     _startOfWeek = _getStartOfWeek(now);
     _selectedDayIndex = now.weekday - 1;
-    // Load dashboard - sẽ dùng cache nếu có
-    context.read<TeacherBloc>().add(const LoadTeacherDashboard());
+    
+    final state = context.read<TeacherBloc>().state;
+    if (state is! DashboardLoaded) {
+      context.read<TeacherBloc>().add(const LoadTeacherDashboard());
+    }
   }
 
   DateTime _getStartOfWeek(DateTime date) {
-    return DateTime(date.year, date.month, date.day)
-        .subtract(Duration(days: date.weekday - 1));
+    return DateTime(
+      date.year,
+      date.month,
+      date.day,
+    ).subtract(Duration(days: date.weekday - 1));
   }
 
   bool _isSameDate(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
   String _getDayName(int index) {
-    return AppStrings.dayOfWeek(index + 1)
-        .replaceAll('Thứ ', 'T')
-        .replaceAll('Chủ nhật', 'CN');
+    return AppStrings.dayOfWeek(
+      index + 1,
+    ).replaceAll('Thứ ', 'T').replaceAll('Chủ nhật', 'CN');
   }
 
   @override
@@ -55,6 +61,26 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return BlocBuilder<TeacherBloc, TeacherState>(
+      buildWhen: (previous, current) {
+        
+        if (current is TeacherLoading &&
+            current.action != 'LoadTeacherDashboard') {
+          return false;
+        }
+        if (current is DashboardLoaded || current is TeacherError) {
+          return true;
+        }
+        
+        
+        if (current is ClassDetailLoaded ||
+            current is ClassesLoaded ||
+            current is ProfileLoaded ||
+            current is ScheduleLoaded) {
+          return true;
+        }
+        
+        return true;
+      },
       builder: (context, state) {
         if (state is TeacherLoading) {
           return _buildLoadingState();
@@ -68,14 +94,13 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           return _buildDashboard(state, isDark);
         }
 
-        // For initial state, load dashboard (will use cache if available)
-        if (state is TeacherInitial) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              context.read<TeacherBloc>().add(const LoadTeacherDashboard());
-            }
-          });
-        }
+        
+        
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            context.read<TeacherBloc>().add(const LoadTeacherDashboard());
+          }
+        });
         return _buildLoadingState();
       },
     );
@@ -109,8 +134,9 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             Text(message, textAlign: TextAlign.center),
             SizedBox(height: 16.h),
             ElevatedButton(
-              onPressed: () =>
-                  context.read<TeacherBloc>().add(const LoadTeacherDashboard(forceRefresh: true)),
+              onPressed: () => context.read<TeacherBloc>().add(
+                const LoadTeacherDashboard(forceRefresh: true),
+              ),
               child: const Text('Thử lại'),
             ),
           ],
@@ -130,18 +156,17 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     return RefreshIndicator(
       color: AppColors.primary,
       onRefresh: () async {
-        context.read<TeacherBloc>().add(const LoadTeacherDashboard(forceRefresh: true));
+        context.read<TeacherBloc>().add(
+          const LoadTeacherDashboard(forceRefresh: true),
+        );
       },
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
-          
           SliverToBoxAdapter(child: _buildHeader(state, isDark)),
-          
-          
+
           SliverToBoxAdapter(child: _buildWeekSelector(isDark)),
-          
-          
+
           SliverToBoxAdapter(
             child: _buildSectionTitle(
               _isSameDate(selectedDate, DateTime.now())
@@ -150,8 +175,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
               isDark,
             ),
           ),
-          
-          
+
           if (schedules.isEmpty)
             SliverToBoxAdapter(child: _buildEmptySchedule(isDark))
           else
@@ -159,15 +183,15 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
               padding: EdgeInsets.symmetric(horizontal: 16.w),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
-                  (context, index) => _buildScheduleItem(schedules[index], isDark),
+                  (context, index) =>
+                      _buildScheduleItem(schedules[index], isDark),
                   childCount: schedules.length,
                 ),
               ),
             ),
-          
-          
+
           SliverToBoxAdapter(child: _buildClassesSectionHeader(isDark)),
-          
+
           if (state.recentClasses.isEmpty)
             SliverToBoxAdapter(
               child: Padding(
@@ -187,10 +211,13 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                     if (index >= 3) return null;
                     return TeacherClassCard(
                       classItem: state.recentClasses[index],
-                      onTap: () => _navigateToClassDetail(state.recentClasses[index].id),
+                      onTap: () =>
+                          _navigateToClassDetail(state.recentClasses[index].id),
                     );
                   },
-                  childCount: state.recentClasses.length > 3 ? 3 : state.recentClasses.length,
+                  childCount: state.recentClasses.length > 3
+                      ? 3
+                      : state.recentClasses.length,
                 ),
               ),
             ),
@@ -234,7 +261,9 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             ),
             SizedBox(width: 12.w),
             Text(
-              AppStrings.welcomeGreeting(state.profile.fullName.split(' ').last),
+              AppStrings.welcomeGreeting(
+                state.profile.fullName.split(' ').last,
+              ),
               style: TextStyle(
                 fontSize: 17.sp,
                 fontWeight: FontWeight.w700,
@@ -269,7 +298,9 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                 decoration: BoxDecoration(
                   color: isSelected
                       ? AppColors.primary
-                      : (isToday ? AppColors.primary.withValues(alpha: 0.1) : Colors.transparent),
+                      : (isToday
+                            ? AppColors.primary.withValues(alpha: 0.1)
+                            : Colors.transparent),
                   borderRadius: BorderRadius.circular(10.r),
                 ),
                 child: Column(
@@ -282,7 +313,9 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                         fontWeight: FontWeight.w600,
                         color: isSelected
                             ? Colors.white
-                            : (isDark ? AppColors.neutral400 : AppColors.neutral600),
+                            : (isDark
+                                  ? AppColors.neutral400
+                                  : AppColors.neutral600),
                       ),
                     ),
                     SizedBox(height: 2.h),
@@ -294,8 +327,10 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                         color: isSelected
                             ? Colors.white
                             : (isToday
-                                ? AppColors.primary
-                                : (isDark ? Colors.white : AppColors.textPrimary)),
+                                  ? AppColors.primary
+                                  : (isDark
+                                        ? Colors.white
+                                        : AppColors.textPrimary)),
                       ),
                     ),
                   ],
@@ -345,7 +380,8 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
 
   Widget _buildScheduleItem(dynamic schedule, bool isDark) {
     final now = DateTime.now();
-    final isOngoing = now.isAfter(schedule.startTime) && now.isBefore(schedule.endTime);
+    final isOngoing =
+        now.isAfter(schedule.startTime) && now.isBefore(schedule.endTime);
     final isCompleted = now.isAfter(schedule.endTime);
 
     Color statusColor = AppColors.info;
@@ -374,7 +410,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         ),
         child: Row(
           children: [
-            
             Container(
               width: 52.w,
               padding: EdgeInsets.symmetric(vertical: 6.h),
@@ -394,13 +429,16 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                   ),
                   Text(
                     _formatTime(schedule.endTime),
-                    style: TextStyle(fontSize: 10.sp, color: AppColors.neutral500),
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      color: AppColors.neutral500,
+                    ),
                   ),
                 ],
               ),
             ),
             SizedBox(width: 10.w),
-            
+
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -418,12 +456,19 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                   SizedBox(height: 3.h),
                   Row(
                     children: [
-                      Icon(Icons.location_on_outlined, size: 12.sp, color: AppColors.neutral500),
+                      Icon(
+                        Icons.location_on_outlined,
+                        size: 12.sp,
+                        color: AppColors.neutral500,
+                      ),
                       SizedBox(width: 3.w),
                       Expanded(
                         child: Text(
                           schedule.room,
-                          style: TextStyle(fontSize: 11.sp, color: AppColors.neutral500),
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: AppColors.neutral500,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -435,7 +480,12 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                     children: [
                       _buildBadge(statusText, statusColor, isDark),
                       SizedBox(width: 4.w),
-                      _buildBadge("Sessio...", AppColors.neutral500, isDark, outlined: true),
+                      _buildBadge(
+                        "Sessio...",
+                        AppColors.neutral500,
+                        isDark,
+                        outlined: true,
+                      ),
                     ],
                   ),
                 ],
@@ -448,7 +498,12 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     );
   }
 
-  Widget _buildBadge(String text, Color color, bool isDark, {bool outlined = false}) {
+  Widget _buildBadge(
+    String text,
+    Color color,
+    bool isDark, {
+    bool outlined = false,
+  }) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
       decoration: BoxDecoration(
@@ -482,7 +537,10 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             ),
           ),
           TextButton(
-            onPressed: () => Navigator.of(context, rootNavigator: true).pushNamed(AppRouter.teacherClasses),
+            onPressed: () => Navigator.of(
+              context,
+              rootNavigator: true,
+            ).pushNamed(AppRouter.teacherClasses),
             style: TextButton.styleFrom(
               padding: EdgeInsets.symmetric(horizontal: 8.w),
               minimumSize: Size.zero,
@@ -502,7 +560,9 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     try {
       List<dynamic> schedules = [];
       if (state.weekSchedule != null) {
-        schedules = state.weekSchedule!.where((s) => _isSameDate(s.startTime, date)).toList();
+        schedules = state.weekSchedule!
+            .where((s) => _isSameDate(s.startTime, date))
+            .toList();
       } else if (_isSameDate(date, DateTime.now())) {
         schedules = state.todaySchedule;
       }
@@ -514,6 +574,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           if (s.startTime.isAfter(now)) return 1;
           return 2;
         }
+
         final p = getPriority(a).compareTo(getPriority(b));
         return p != 0 ? p : a.startTime.compareTo(b.startTime);
       });
@@ -526,10 +587,10 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
 
   void _navigateToClassDetail(String classId) {
     if (classId.isNotEmpty) {
-      Navigator.of(context, rootNavigator: true).pushNamed(
-        AppRouter.teacherClassDetail,
-        arguments: classId,
-      );
+      Navigator.of(
+        context,
+        rootNavigator: true,
+      ).pushNamed(AppRouter.teacherClassDetail, arguments: classId);
     }
   }
 

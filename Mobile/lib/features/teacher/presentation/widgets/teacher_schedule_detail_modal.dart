@@ -1,27 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+
+import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/constants/app_sizes.dart';
 import '../../domain/entities/teacher_schedule.dart';
-import '../../domain/entities/attendance_arguments.dart';
-
 
 class TeacherScheduleDetailModal extends StatelessWidget {
   final TeacherSchedule schedule;
+  final VoidCallback? onAttendanceTap;
 
   const TeacherScheduleDetailModal({
     super.key,
     required this.schedule,
+    this.onAttendanceTap,
   });
 
-  static void show(BuildContext context, TeacherSchedule schedule) {
+  static void show(
+    BuildContext context,
+    TeacherSchedule schedule, {
+    VoidCallback? onAttendanceTap,
+  }) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => TeacherScheduleDetailModal(schedule: schedule),
+      builder: (context) => TeacherScheduleDetailModal(
+        schedule: schedule,
+        onAttendanceTap: onAttendanceTap,
+      ),
     );
   }
 
@@ -33,7 +41,10 @@ class TeacherScheduleDetailModal extends StatelessWidget {
 
     final startTime = DateFormat('HH:mm').format(schedule.startTime);
     final endTime = DateFormat('HH:mm').format(schedule.endTime);
-    final date = DateFormat('EEEE, dd/MM/yyyy', 'vi').format(schedule.startTime);
+    final date = DateFormat(
+      'EEEE, dd/MM/yyyy',
+      'vi',
+    ).format(schedule.startTime);
 
     return Container(
       constraints: BoxConstraints(
@@ -49,7 +60,6 @@ class TeacherScheduleDetailModal extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          
           Container(
             margin: EdgeInsets.only(top: AppSizes.p12),
             width: 40.w,
@@ -59,8 +69,6 @@ class TeacherScheduleDetailModal extends StatelessWidget {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-
-          
           Container(
             padding: EdgeInsets.all(AppSizes.paddingMedium),
             decoration: BoxDecoration(
@@ -73,7 +81,6 @@ class TeacherScheduleDetailModal extends StatelessWidget {
             ),
             child: Row(
               children: [
-                
                 Container(
                   padding: EdgeInsets.symmetric(
                     horizontal: AppSizes.p16,
@@ -98,7 +105,9 @@ class TeacherScheduleDetailModal extends StatelessWidget {
                       Text(
                         startTime,
                         style: TextStyle(
-                          fontSize: isDesktop ? AppSizes.textLg : AppSizes.textBase,
+                          fontSize: isDesktop
+                              ? AppSizes.textLg
+                              : AppSizes.textBase,
                           fontWeight: FontWeight.w700,
                           color: AppColors.primary,
                         ),
@@ -106,7 +115,9 @@ class TeacherScheduleDetailModal extends StatelessWidget {
                       Text(
                         endTime,
                         style: TextStyle(
-                          fontSize: isDesktop ? AppSizes.textSm : AppSizes.textXs,
+                          fontSize: isDesktop
+                              ? AppSizes.textSm
+                              : AppSizes.textXs,
                           color: AppColors.textSecondary,
                         ),
                       ),
@@ -114,7 +125,6 @@ class TeacherScheduleDetailModal extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: AppSizes.p16),
-                
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,7 +133,9 @@ class TeacherScheduleDetailModal extends StatelessWidget {
                         schedule.className,
                         style: textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w700,
-                          fontSize: isDesktop ? AppSizes.text2Xl : AppSizes.textXl,
+                          fontSize: isDesktop
+                              ? AppSizes.text2Xl
+                              : AppSizes.textXl,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -133,13 +145,14 @@ class TeacherScheduleDetailModal extends StatelessWidget {
                         date,
                         style: textTheme.bodyMedium?.copyWith(
                           color: AppColors.textSecondary,
-                          fontSize: isDesktop ? AppSizes.textBase : AppSizes.textSm,
+                          fontSize: isDesktop
+                              ? AppSizes.textBase
+                              : AppSizes.textSm,
                         ),
                       ),
                     ],
                   ),
                 ),
-                
                 IconButton(
                   onPressed: () => Navigator.pop(context),
                   icon: Icon(
@@ -150,15 +163,12 @@ class TeacherScheduleDetailModal extends StatelessWidget {
               ],
             ),
           ),
-
-          
           Flexible(
             child: SingleChildScrollView(
               padding: EdgeInsets.all(AppSizes.paddingMedium),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  
                   Row(
                     children: [
                       _buildStatCard(
@@ -171,13 +181,9 @@ class TeacherScheduleDetailModal extends StatelessWidget {
                       ),
                     ],
                   ),
-
                   SizedBox(height: AppSizes.p24),
-
-                  
                   _buildSectionTitle('Thông tin chi tiết', isDark, isDesktop),
                   SizedBox(height: AppSizes.p12),
-
                   _buildDetailRow(
                     context,
                     Icons.school,
@@ -187,7 +193,6 @@ class TeacherScheduleDetailModal extends StatelessWidget {
                     isDesktop,
                   ),
                   SizedBox(height: AppSizes.p12),
-
                   _buildDetailRow(
                     context,
                     Icons.schedule,
@@ -197,7 +202,6 @@ class TeacherScheduleDetailModal extends StatelessWidget {
                     isDesktop,
                   ),
                   SizedBox(height: AppSizes.p12),
-
                   _buildDetailRow(
                     context,
                     Icons.calendar_today,
@@ -207,7 +211,6 @@ class TeacherScheduleDetailModal extends StatelessWidget {
                     isDesktop,
                   ),
                   SizedBox(height: AppSizes.p12),
-
                   _buildDetailRow(
                     context,
                     Icons.room,
@@ -216,7 +219,6 @@ class TeacherScheduleDetailModal extends StatelessWidget {
                     isDark,
                     isDesktop,
                   ),
-
                   if (schedule.note != null && schedule.note!.isNotEmpty) ...[
                     SizedBox(height: AppSizes.p24),
                     _buildSectionTitle('Ghi chú', isDark, isDesktop),
@@ -227,27 +229,31 @@ class TeacherScheduleDetailModal extends StatelessWidget {
                         color: isDark
                             ? AppColors.neutral900.withValues(alpha: 0.5)
                             : AppColors.backgroundAlt,
-                        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+                        borderRadius: BorderRadius.circular(
+                          AppSizes.radiusSmall,
+                        ),
                       ),
                       child: Text(
                         schedule.note!,
                         style: textTheme.bodyMedium?.copyWith(
-                          fontSize: isDesktop ? AppSizes.textBase : AppSizes.textSm,
+                          fontSize: isDesktop
+                              ? AppSizes.textBase
+                              : AppSizes.textSm,
                         ),
                       ),
                     ),
                   ],
-
                   SizedBox(height: AppSizes.p24),
-
-                  
                   Row(
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: () {
                             Navigator.pop(context);
-                            Navigator.of(context, rootNavigator: true).pushNamed(
+                            Navigator.of(
+                              context,
+                              rootNavigator: true,
+                            ).pushNamed(
                               AppRouter.teacherClassDetail,
                               arguments: schedule.classId,
                             );
@@ -269,25 +275,27 @@ class TeacherScheduleDetailModal extends StatelessWidget {
                           onPressed: schedule.isCompleted
                               ? null
                               : () {
-                                  Navigator.pop(context);
-                                  Navigator.of(context, rootNavigator: true).pushNamed(
-                                    AppRouter.teacherAttendance,
-                                    arguments: AttendanceArguments.fromSchedule(
-                                      sessionId: schedule.id,
-                                      classId: schedule.classId,
-                                      className: schedule.className,
-                                      sessionDate: schedule.startTime,
-                                      room: schedule.room,
-                                    ),
-                                  );
+                                  if (onAttendanceTap != null) {
+                                    onAttendanceTap!();
+                                  } else {
+                                    Navigator.pop(context);
+                                  }
                                 },
-                          icon: Icon(schedule.isCompleted ? Icons.lock_outline : Icons.checklist),
-                          label: Text(schedule.isCompleted ? 'Đã kết thúc' : 'Điểm danh'),
+                          icon: Icon(
+                            schedule.isCompleted
+                                ? Icons.lock_outline
+                                : Icons.checklist,
+                          ),
+                          label: Text(
+                            schedule.isCompleted ? 'Đã kết thúc' : 'Điểm danh',
+                          ),
                           style: ElevatedButton.styleFrom(
                             padding: EdgeInsets.symmetric(
                               vertical: isDesktop ? AppSizes.p16 : AppSizes.p12,
                             ),
-                            backgroundColor: schedule.isCompleted ? AppColors.neutral400 : AppColors.primary,
+                            backgroundColor: schedule.isCompleted
+                                ? AppColors.neutral400
+                                : AppColors.primary,
                             foregroundColor: Colors.white,
                             disabledBackgroundColor: AppColors.neutral300,
                             disabledForegroundColor: AppColors.neutral500,
@@ -296,9 +304,10 @@ class TeacherScheduleDetailModal extends StatelessWidget {
                       ),
                     ],
                   ),
-
-                  
-                  SizedBox(height: MediaQuery.of(context).padding.bottom + AppSizes.p16),
+                  SizedBox(
+                    height:
+                        MediaQuery.of(context).padding.bottom + AppSizes.p16,
+                  ),
                 ],
               ),
             ),
@@ -427,7 +436,7 @@ class TeacherScheduleDetailModal extends StatelessWidget {
     final duration = end.difference(start);
     final hours = duration.inHours;
     final minutes = duration.inMinutes.remainder(60);
-    
+
     if (hours > 0 && minutes > 0) {
       return '$hours giờ $minutes phút';
     } else if (hours > 0) {

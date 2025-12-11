@@ -44,7 +44,7 @@ class StudentCartItem extends Equatable {
   });
 
   factory StudentCartItem.fromJson(Map<String, dynamic> json) {
-    // API returns: originalPrice, finalPrice
+    
     final tuition = _parseDouble(json['originalPrice'] ?? json['tuitionFee']);
     final finalAmt = _parseDouble(json['finalPrice'] ?? json['finalAmount']);
 
@@ -99,7 +99,7 @@ class StudentCartSummary extends Equatable {
   });
 
   factory StudentCartSummary.fromJson(Map<String, dynamic> json) {
-    // API returns: totalOriginalPrice, totalDiscountAmount, finalAmount, returningDiscountAmount, appliedCombos
+    
     final tuition = _parseDouble(
       json['totalOriginalPrice'] ?? json['totalTuitionFee'],
     );
@@ -109,14 +109,14 @@ class StudentCartSummary extends Equatable {
     );
     final returningDiscount = _parseDouble(json['returningDiscountAmount']);
 
-    // Parse applied combos
+    
     final combos =
         (json['appliedCombos'] as List<dynamic>?)
             ?.map((e) => e.toString())
             .toList() ??
         [];
 
-    // Calculate returning student discount percent if amount is available
+    
     int returningPercent = _parseInt(json['returningStudentDiscountPercent']);
     if (returningPercent == 0 && returningDiscount > 0 && tuition > 0) {
       returningPercent = ((returningDiscount / tuition) * 100).round();

@@ -157,27 +157,27 @@ class StudentRepositoryWithApi implements StudentRepository {
   Future<Either<Failure, List<Schedule>>> getScheduleByDate(
     DateTime date,
   ) async {
-    // Lấy tất cả các tuần trong tháng
+    
     try {
       final List<Schedule> allSchedules = [];
 
-      // Xác định ngày đầu và cuối tháng
+      
       final firstDayOfMonth = DateTime(date.year, date.month, 1);
       final lastDayOfMonth = DateTime(date.year, date.month + 1, 0);
 
-      // Lấy từng tuần trong tháng
+      
       DateTime currentWeekStart = firstDayOfMonth;
-      final Set<String> addedScheduleIds = {}; // Tránh duplicate
+      final Set<String> addedScheduleIds = {}; 
 
       while (currentWeekStart.isBefore(lastDayOfMonth) ||
           currentWeekStart.isAtSameMomentAs(lastDayOfMonth)) {
         final weekResult = await _getWeekScheduleInternal(currentWeekStart);
 
         weekResult.fold(
-          (failure) {}, // Bỏ qua lỗi từng tuần
+          (failure) {}, 
           (schedules) {
             for (final schedule in schedules) {
-              // Chỉ thêm schedule trong tháng này và chưa có
+              
               if (schedule.startTime.month == date.month &&
                   schedule.startTime.year == date.year) {
                 final uniqueId =
@@ -191,11 +191,11 @@ class StudentRepositoryWithApi implements StudentRepository {
           },
         );
 
-        // Chuyển sang tuần tiếp theo (7 ngày)
+        
         currentWeekStart = currentWeekStart.add(const Duration(days: 7));
       }
 
-      // Sắp xếp theo ngày
+      
       allSchedules.sort((a, b) => a.startTime.compareTo(b.startTime));
 
       return Right(allSchedules);
@@ -214,16 +214,16 @@ class StudentRepositoryWithApi implements StudentRepository {
 
       final List<Schedule> schedules = [];
 
-      // WeeklyScheduleResponse has .days property (List<WeeklyScheduleDay>)
+      
       for (final day in response.days) {
         final dateStr = day.date;
         if (dateStr.isEmpty) continue;
 
-        // Each day has .periods (List<WeeklySchedulePeriod>)
+        
         for (final period in day.periods) {
           final periodName = period.periodName;
 
-          // Each period has .sessions (List<WeeklyScheduleSession>)
+          
           for (final session in period.sessions) {
             schedules.add(
               Schedule(
@@ -285,7 +285,7 @@ class StudentRepositoryWithApi implements StudentRepository {
       final today = DateTime.now();
       final todayStart = DateTime(today.year, today.month, today.day);
 
-      // WeeklyScheduleResponse has .days property (List<WeeklyScheduleDay>)
+      
       for (final day in response.days) {
         final dateStr = day.date;
         if (dateStr.isEmpty) continue;
@@ -299,11 +299,11 @@ class StudentRepositoryWithApi implements StudentRepository {
         );
         if (sessionDay.isBefore(todayStart)) continue;
 
-        // Each day has .periods (List<WeeklySchedulePeriod>)
+        
         for (final period in day.periods) {
           final periodName = period.periodName;
 
-          // Each period has .sessions (List<WeeklyScheduleSession>)
+          
           for (final session in period.sessions) {
             schedules.add(
               Schedule(
@@ -377,7 +377,7 @@ class StudentRepositoryWithApi implements StudentRepository {
   @override
   Future<Either<Failure, List<Grade>>> getMyGrades() async {
     try {
-      // apiDataSource.getGrades() already returns List<GradeModel> which extends Grade
+      
       final result = await apiDataSource.getGrades();
       return Right(result.cast<Grade>());
     } on ServerException catch (e) {

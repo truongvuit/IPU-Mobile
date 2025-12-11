@@ -66,7 +66,7 @@ class PromotionBloc extends Bloc<PromotionEvent, PromotionState> {
     TogglePromotionStatus event,
     Emitter<PromotionState> emit,
   ) async {
-    // Sử dụng deletePromotion vì nó đã được implement để gọi PUT /promotions/{id}/toggle
+    
     final result = await repository.deletePromotion(event.id);
     result.fold((failure) => emit(PromotionError(failure.message)), (_) {
       emit(

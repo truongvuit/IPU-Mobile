@@ -415,18 +415,18 @@ class AdminDrawer extends StatelessWidget {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () async {
-                        Navigator.pop(dialogContext); // Close dialog
-                        Navigator.of(context).pop(); // Close drawer first
+                        Navigator.pop(dialogContext); 
+                        Navigator.of(context).pop(); 
                         
-                        // Reset admin state
+                        
                         try {
                           adminBloc.add(const ResetAdminState());
                         } catch (_) {
-                          // Bloc may already be closed, ignore
+                          
                         }
                         
-                        // Navigate to welcome screen immediately
-                        // The auth state will be cleared by logout
+                        
+                        
                         if (context.mounted) {
                           Navigator.pushNamedAndRemoveUntil(
                             context,
@@ -435,11 +435,11 @@ class AdminDrawer extends StatelessWidget {
                           );
                         }
                         
-                        // Then trigger logout (this clears token)
+                        
                         try {
                           authBloc.add(LogoutRequested());
                         } catch (_) {
-                          // Bloc may already be closed, ignore
+                          
                         }
                       },
                       style: ElevatedButton.styleFrom(

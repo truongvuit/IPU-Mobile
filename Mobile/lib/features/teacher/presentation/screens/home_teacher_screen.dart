@@ -35,7 +35,8 @@ class _HomeTeacherScreenState extends State<HomeTeacherScreen> {
   void initState() {
     super.initState();
 
-    context.read<TeacherBloc>().add(const LoadTeacherDashboard());
+    
+    
     context.read<TeacherBloc>().add(LoadTeacherProfile());
   }
 
@@ -49,7 +50,10 @@ class _HomeTeacherScreenState extends State<HomeTeacherScreen> {
 
       switch (index) {
         case 0:
-          context.read<TeacherBloc>().add(const LoadTeacherDashboard());
+          final state = context.read<TeacherBloc>().state;
+          if (state is! DashboardLoaded) {
+            context.read<TeacherBloc>().add(const LoadTeacherDashboard());
+          }
           break;
         case 1:
           context.read<TeacherBloc>().add(LoadWeekSchedule(DateTime.now()));
@@ -127,8 +131,10 @@ class _HomeTeacherScreenState extends State<HomeTeacherScreen> {
 
         if (state is AttendanceSubmitted || state is AttendanceRecorded) {
           if (!context.mounted) return;
-          onTabTapped(0); // jump to dashboard
-          context.read<TeacherBloc>().add(const LoadTeacherDashboard(forceRefresh: true));
+          onTabTapped(0); 
+          context.read<TeacherBloc>().add(
+            const LoadTeacherDashboard(forceRefresh: true),
+          );
         }
       },
       child: Scaffold(

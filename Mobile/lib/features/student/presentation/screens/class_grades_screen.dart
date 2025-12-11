@@ -98,7 +98,6 @@ class _ClassGradesScreenState extends State<ClassGradesScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          
           Row(
             children: [
               CircleAvatar(
@@ -135,7 +134,6 @@ class _ClassGradesScreenState extends State<ClassGradesScreen> {
 
           SizedBox(height: AppSizes.p24),
 
-          
           Text(
             'Chi tiết điểm',
             style: theme.textTheme.titleSmall?.copyWith(
@@ -145,7 +143,6 @@ class _ClassGradesScreenState extends State<ClassGradesScreen> {
           ),
           SizedBox(height: AppSizes.p12),
 
-          
           if (grade.attendanceScore != null)
             _buildGradeRow(
               'Điểm chuyên cần',
@@ -155,7 +152,6 @@ class _ClassGradesScreenState extends State<ClassGradesScreen> {
               theme,
             ),
 
-          
           if (grade.midtermScore != null)
             _buildGradeRow(
               'Điểm giữa kỳ',
@@ -165,7 +161,6 @@ class _ClassGradesScreenState extends State<ClassGradesScreen> {
               theme,
             ),
 
-          
           if (grade.finalScore != null)
             _buildGradeRow(
               'Điểm cuối kỳ',
@@ -177,7 +172,6 @@ class _ClassGradesScreenState extends State<ClassGradesScreen> {
 
           const Divider(height: 24),
 
-          
           Container(
             padding: EdgeInsets.all(AppSizes.p12),
             decoration: BoxDecoration(
@@ -204,8 +198,7 @@ class _ClassGradesScreenState extends State<ClassGradesScreen> {
             ),
           ),
 
-          
-          if (grade.status != null) ...[
+          if (grade.status != null && grade.status != 'Chưa hoàn thành') ...[
             SizedBox(height: AppSizes.p12),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,

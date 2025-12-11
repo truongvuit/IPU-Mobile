@@ -122,7 +122,7 @@ Future<void> initializeDependencies() async {
     ),
   );
 
-  // Use registerFactory so new instance is created each time (prevents closed bloc issue after logout)
+  
   getIt.registerFactory<StudentBloc>(
     () => StudentBloc(repository: getIt<StudentRepository>()),
   );
@@ -142,7 +142,7 @@ Future<void> initializeDependencies() async {
     ),
   );
 
-  // Changed to singleton to preserve cache and prevent "Cannot add events after close" error
+  
   getIt.registerLazySingleton<TeacherBloc>(
     () => TeacherBloc(repository: getIt<TeacherRepository>()),
   );

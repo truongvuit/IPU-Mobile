@@ -72,7 +72,7 @@ class _AdminTeacherDetailScreenState extends State<AdminTeacherDetailScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          SizedBox(height: 40.h),
+                          SizedBox(height: 36.h),
 
                           Container(
                             decoration: BoxDecoration(
@@ -95,7 +95,7 @@ class _AdminTeacherDetailScreenState extends State<AdminTeacherDetailScreen> {
                               ),
                             ),
                           ),
-                          SizedBox(height: 12.h),
+                          SizedBox(height: 10.h),
 
                           Padding(
                             padding: EdgeInsets.symmetric(
@@ -113,12 +113,12 @@ class _AdminTeacherDetailScreenState extends State<AdminTeacherDetailScreen> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          SizedBox(height: 4.h),
+                          SizedBox(height: 2.h),
 
                           Container(
                             padding: EdgeInsets.symmetric(
                               horizontal: 12,
-                              vertical: 4,
+                              vertical: 3,
                             ),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.2),

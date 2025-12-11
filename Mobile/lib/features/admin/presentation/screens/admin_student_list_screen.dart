@@ -250,15 +250,31 @@ class _AdminStudentListScreenState extends State<AdminStudentListScreen> {
 
           Expanded(
             child: BlocBuilder<AdminBloc, AdminState>(
+              buildWhen: (previous, current) {
+                if (current is AdminLoading &&
+                    current.action != 'LoadStudentList') {
+                  return false;
+                }
+                return current is AdminLoading ||
+                    current is AdminError ||
+                    current is StudentListLoaded;
+              },
               builder: (context, state) {
                 if (state is AdminLoading) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.hourglass_empty, size: 48.sp, color: AppColors.primary),
+                        Icon(
+                          Icons.hourglass_empty,
+                          size: 48.sp,
+                          color: AppColors.primary,
+                        ),
                         SizedBox(height: 16.h),
-                        Text('Đang tải danh sách...', style: TextStyle(fontSize: 14.sp)),
+                        Text(
+                          'Đang tải danh sách...',
+                          style: TextStyle(fontSize: 14.sp),
+                        ),
                       ],
                     ),
                   );
@@ -360,7 +376,7 @@ class _AdminStudentListScreenState extends State<AdminStudentListScreen> {
           padding: EdgeInsets.all(AppSizes.p16),
           child: Row(
             children: [
-              // Avatar - consistent with teacher
+              
               ClipOval(
                 child:
                     student.avatarUrl != null && student.avatarUrl!.isNotEmpty
@@ -387,12 +403,12 @@ class _AdminStudentListScreenState extends State<AdminStudentListScreen> {
               ),
               SizedBox(width: AppSizes.p12),
 
-              // Content
+              
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Name row - same as teacher
+                    
                     Text(
                       student.fullName,
                       style: theme.textTheme.titleMedium?.copyWith(
@@ -403,7 +419,7 @@ class _AdminStudentListScreenState extends State<AdminStudentListScreen> {
                     ),
                     SizedBox(height: 4.h),
 
-                    // Secondary info - email (matching teacher's phone style)
+                    
                     Text(
                       student.email,
                       style: TextStyle(
@@ -417,7 +433,7 @@ class _AdminStudentListScreenState extends State<AdminStudentListScreen> {
                     ),
                     SizedBox(height: 6.h),
 
-                    // Stats row - same layout as teacher
+                    
                     Row(
                       children: [
                         Icon(

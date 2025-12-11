@@ -10,6 +10,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/input_validators.dart';
+import '../../../../core/widgets/custom_image.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -115,161 +116,148 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   MediaQuery.of(context).viewInsets.bottom +
                   AppSizes.paddingMedium,
             ),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                Center(
-                  child: Stack(
-                    children: [
-                      Container(
-                        width: 120.w,
-                        height: 120.h,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppColors.primary,
-                            width: 2,
-                          ),
-                        ),
-                        child: ClipOval(
-                          child: _pickedImage != null
-                              ? Image.file(
-                                  _pickedImage!,
-                                  width: 120.w,
-                                  height: 120.h,
-                                  fit: BoxFit.cover,
-                                )
-                              : (_avatarUrl != null
-                                    ? Image.network(
-                                        _avatarUrl!,
-                                        width: 120.w,
-                                        height: 120.h,
-                                        fit: BoxFit.cover,
-                                        errorBuilder:
-                                            (context, error, stackTrace) {
-                                              return Icon(
-                                                Icons.person,
-                                                size: 60.sp,
-                                                color: AppColors.primary,
-                                              );
-                                            },
-                                      )
-                                    : Icon(
-                                        Icons.person,
-                                        size: 60.sp,
-                                        color: AppColors.primary,
-                                      )),
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          width: 36.w,
-                          height: 36.h,
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  Center(
+                    child: Stack(
+                      children: [
+                        Container(
+                          width: 120.w,
+                          height: 120.h,
                           decoration: BoxDecoration(
-                            color: AppColors.primary,
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                          child: IconButton(
-                            padding: EdgeInsets.zero,
-                            icon: Icon(
-                              Icons.camera_alt,
-                              size: 20.sp,
-                              color: Colors.white,
-                            ),
-                            onPressed: _pickImage,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 24.h),
-
-                _buildTextField(
-                  _nameController,
-                  'Họ và tên',
-                  Icons.person,
-                  isDark,
-                  isDesktop,
-                  validator: InputValidators.name,
-                ),
-                SizedBox(height: AppSizes.paddingMedium),
-                _buildTextField(
-                  _emailController,
-                  'Email',
-                  Icons.email,
-                  isDark,
-                  isDesktop,
-                  enabled: false,
-                  validator: InputValidators.email,
-                ),
-                SizedBox(height: AppSizes.paddingMedium),
-                _buildTextField(
-                  _phoneController,
-                  'Số điện thoại',
-                  Icons.phone,
-                  isDark,
-                  isDesktop,
-                  validator: InputValidators.phone,
-                ),
-                SizedBox(height: AppSizes.paddingMedium),
-                _buildTextField(
-                  _addressController,
-                  'Địa chỉ',
-                  Icons.location_on,
-                  isDark,
-                  isDesktop,
-                  validator: InputValidators.address,
-                ),
-                SizedBox(height: AppSizes.paddingMedium),
-                _buildDateField(isDark, isDesktop),
-                SizedBox(height: AppSizes.paddingExtraLarge),
-
-                BlocBuilder<StudentBloc, StudentState>(
-                  builder: (context, state) {
-                    final isLoading = state is StudentLoading;
-                    return SizedBox(
-                      width: double.infinity,
-                      height: isDesktop ? 56.h : 48.h,
-                      child: ElevatedButton(
-                        onPressed: isLoading ? null : _saveProfile,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              AppSizes.radiusMedium,
+                            border: Border.all(
+                              color: AppColors.primary,
+                              width: 2,
                             ),
                           ),
+                          child: ClipOval(
+                            child: _pickedImage != null
+                                ? Image.file(
+                                    _pickedImage!,
+                                    width: 120.w,
+                                    height: 120.h,
+                                    fit: BoxFit.cover,
+                                  )
+                                : CustomImage(
+                                    imageUrl: _avatarUrl ?? '',
+                                    width: 120.w,
+                                    height: 120.h,
+                                    fit: BoxFit.cover,
+                                    isAvatar: true,
+                                  ),
+                          ),
                         ),
-                        child: isLoading
-                            ? SizedBox(
-                                height: 24.h,
-                                width: 24.h,
-                                child: const CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Text(
-                                "Lưu thay đổi",
-                                style: TextStyle(
-                                  fontFamily: 'Lexend',
-                                  fontSize: isDesktop ? 18.sp : 16.sp,
-                                ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            width: 36.w,
+                            height: 36.h,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              icon: Icon(
+                                Icons.camera_alt,
+                                size: 20.sp,
+                                color: Colors.white,
                               ),
-                      ),
-                    );
-                  },
-                ),
-              ],
+                              onPressed: _pickImage,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 24.h),
+
+                  _buildTextField(
+                    _nameController,
+                    'Họ và tên',
+                    Icons.person,
+                    isDark,
+                    isDesktop,
+                    validator: InputValidators.name,
+                  ),
+                  SizedBox(height: AppSizes.paddingMedium),
+                  _buildTextField(
+                    _emailController,
+                    'Email',
+                    Icons.email,
+                    isDark,
+                    isDesktop,
+                    enabled: false,
+                    validator: InputValidators.email,
+                  ),
+                  SizedBox(height: AppSizes.paddingMedium),
+                  _buildTextField(
+                    _phoneController,
+                    'Số điện thoại',
+                    Icons.phone,
+                    isDark,
+                    isDesktop,
+                    validator: InputValidators.phone,
+                  ),
+                  SizedBox(height: AppSizes.paddingMedium),
+                  _buildTextField(
+                    _addressController,
+                    'Địa chỉ',
+                    Icons.location_on,
+                    isDark,
+                    isDesktop,
+                    validator: InputValidators.address,
+                  ),
+                  SizedBox(height: AppSizes.paddingMedium),
+                  _buildDateField(isDark, isDesktop),
+                  SizedBox(height: AppSizes.paddingExtraLarge),
+
+                  BlocBuilder<StudentBloc, StudentState>(
+                    builder: (context, state) {
+                      final isLoading = state is StudentLoading;
+                      return SizedBox(
+                        width: double.infinity,
+                        height: isDesktop ? 56.h : 48.h,
+                        child: ElevatedButton(
+                          onPressed: isLoading ? null : _saveProfile,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppSizes.radiusMedium,
+                              ),
+                            ),
+                          ),
+                          child: isLoading
+                              ? SizedBox(
+                                  height: 24.h,
+                                  width: 24.h,
+                                  child: const CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(
+                                  "Lưu thay đổi",
+                                  style: TextStyle(
+                                    fontFamily: 'Lexend',
+                                    fontSize: isDesktop ? 18.sp : 16.sp,
+                                  ),
+                                ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
         ),
       ),
     );

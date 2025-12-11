@@ -37,7 +37,7 @@ class AuthInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     
-    // Skip token refresh for auth endpoints
+    
     final path = err.requestOptions.path;
     if (path.contains('/auth/refreshtoken') ||
         path.contains('/auth/login') ||

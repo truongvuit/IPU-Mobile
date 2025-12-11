@@ -12,6 +12,7 @@ class CustomImage extends StatelessWidget {
   final BoxFit fit;
   final bool isAvatar;
   final String? defaultAsset;
+  final String? cacheKey;
 
   const CustomImage({
     super.key,
@@ -22,28 +23,30 @@ class CustomImage extends StatelessWidget {
     this.fit = BoxFit.cover,
     this.isAvatar = false,
     this.defaultAsset,
+    this.cacheKey,
   });
 
-  /// Normalize image URL - handle relative paths and missing protocol
+  
   String _normalizeImageUrl(String url) {
     if (url.isEmpty) return '';
 
-    // Already a full URL
+    
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return url;
     }
 
-    // Handle relative path - prepend base URL
+    
     final baseUrl = AppConstants.baseUrl;
 
-    // If it's a path starting with /
+    
     if (url.startsWith('/')) {
       return '$baseUrl$url';
     }
 
-    // Assume it's an image in uploads folder
+    
+    
     if (!url.contains('/')) {
-      return '$baseUrl/uploads/images/$url';
+      return '$baseUrl/files/$url';
     }
 
     return '$baseUrl/$url';
@@ -61,6 +64,7 @@ class CustomImage extends StatelessWidget {
       borderRadius: BorderRadius.circular(borderRadius),
       child: CachedNetworkImage(
         imageUrl: normalizedUrl,
+        cacheKey: cacheKey ?? normalizedUrl,
         width: width,
         height: height,
         fit: fit,
@@ -96,7 +100,7 @@ class CustomImage extends StatelessWidget {
   }
 
   Widget _buildErrorWidget() {
-    // Calculate icon size, ensuring it's finite
+    
     double? iconSize;
     if (width != null &&
         height != null &&
@@ -108,7 +112,7 @@ class CustomImage extends StatelessWidget {
     } else if (height != null && height!.isFinite) {
       iconSize = height! * 0.5;
     }
-    // Default to 48 if no valid size, and clamp to reasonable bounds
+    
     iconSize = (iconSize ?? 48).clamp(24, 96);
 
     return Container(

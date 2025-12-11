@@ -21,6 +21,7 @@ abstract class TeacherApiDataSource {
     List<Map<String, dynamic>> entries,
   );
   Future<TeacherStudentModel> getStudentDetail(int studentId);
+  Future<String> uploadAvatar(String filePath);
 }
 
 class TeacherApiDataSourceImpl implements TeacherApiDataSource {
@@ -54,7 +55,7 @@ class TeacherApiDataSourceImpl implements TeacherApiDataSource {
   @override
   Future<void> updateProfile(TeacherProfileModel profile) async {
     try {
-      // Chuyển đổi gender từ string sang boolean
+      
       bool? genderBoolean;
       if (profile.gender != null) {
         if (profile.gender == 'Nam') {
@@ -64,7 +65,7 @@ class TeacherApiDataSourceImpl implements TeacherApiDataSource {
         }
       }
 
-      // Sử dụng endpoint PUT /lecturers/me để giảng viên tự cập nhật
+      
       final response = await dioClient.put(
         '/lecturers/me',
         data: {
@@ -351,6 +352,25 @@ class TeacherApiDataSourceImpl implements TeacherApiDataSource {
       rethrow;
     } catch (e) {
       throw ServerException('Không thể tải thông tin học viên: $e');
+    }
+  }
+
+  Future<String> uploadAvatar(String filePath) async {
+    try {
+      final response = await dioClient.uploadFile(
+        ApiEndpoints.uploadFile,
+        filePath,
+      );
+
+      if (response.statusCode == 200 && response.data['code'] == 1000) {
+        return response.data['data']['fileUrl'];
+      } else {
+        throw ServerException(
+          response.data['message'] ?? 'Upload avatar failed',
+        );
+      }
+    } on DioException catch (e) {
+      throw ServerException(e.response?.data['message'] ?? 'Network error');
     }
   }
 }

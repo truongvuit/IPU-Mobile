@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
-import 'package:trungtamngoaingu/features/teacher/domain/entities/attendance.dart';
+
+import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/empty_state_widget.dart';
 import '../../../../core/widgets/custom_image.dart';
+import '../../../../core/widgets/empty_state_widget.dart';
+import '../../domain/entities/attendance.dart';
 import '../../domain/entities/attendance_arguments.dart';
 import '../bloc/teacher_bloc.dart';
 import '../bloc/teacher_event.dart';
 import '../bloc/teacher_state.dart';
-import '../widgets/teacher_app_bar.dart';
+
+enum SortType { name, code }
 
 class TeacherAttendanceScreen extends StatefulWidget {
   final AttendanceArguments args;
@@ -24,46 +27,29 @@ class TeacherAttendanceScreen extends StatefulWidget {
 
 class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
   final TextEditingController _searchController = TextEditingController();
-  final TextEditingController _sessionNoteController = TextEditingController();
+  final TextEditingController _noteController = TextEditingController();
   String _searchQuery = '';
-  bool _showSearch = false;
-
-  Map<String, String> _localAttendance = {};
-  bool _hasChanges = false;
-  AttendanceSession? _currentSession;
-
-  
-  
-  bool get isSessionCompleted {
-    
-    if (widget.args.viewOnly) return true;
-    
-    
-    if (_currentSession != null && _currentSession!.isCompleted) {
-      return true;
-    }
-    
-    
-    final sessionDate = widget.args.sessionDate;
-    if (sessionDate == null) return false;
-    
-    return DateTime.now().isAfter(sessionDate.add(const Duration(hours: 3)));
-  }
+  bool _isSearching = false;
+  SortType _sortType = SortType.name;
+  final Map<String, bool> _attendanceMap = {};
 
   @override
   void initState() {
     super.initState();
-    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadAttendance();
     });
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _noteController.dispose();
+    super.dispose();
+  }
+
   void _loadAttendance() {
-    
-    if (!widget.args.hasSessionId) {
-      return;
-    }
+    if (!widget.args.hasSessionId) return;
     context.read<TeacherBloc>().add(
       LoadAttendance(
         sessionId: widget.args.sessionId,
@@ -72,60 +58,23 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
     );
   }
 
-  void _initLocalState(AttendanceSession session) {
-    if (_currentSession?.id != session.id) {
-      _localAttendance = {};
-      for (final record in session.records) {
-        _localAttendance[record.studentId] = record.status;
-      }
-      _currentSession = session;
-      _hasChanges = false;
-    }
-  }
-
   void _toggleAttendance(String studentId) {
-    
-    if (isSessionCompleted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Không thể điểm danh. Buổi học đã kết thúc.',
-            style: TextStyle(fontFamily: 'Lexend'),
-          ),
-          backgroundColor: AppColors.warning,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-      return;
-    }
-    
     setState(() {
-      final currentStatus = _localAttendance[studentId] ?? 'absent';
-      _localAttendance[studentId] = currentStatus == 'present'
-          ? 'absent'
-          : 'present';
-      _hasChanges = true;
+      final current = _attendanceMap[studentId] ?? false;
+      _attendanceMap[studentId] = !current;
     });
   }
 
-  String _getStatus(String studentId) {
-    return _localAttendance[studentId] ?? 'absent';
-  }
-
   void _submitAttendance() {
-    if (!_hasChanges) return;
-
-    final entries = _localAttendance.entries
-        .map(
-          (e) => {
-            'studentId': int.tryParse(e.key) ?? 0,
-            'absent': e.value == 'absent',
-            'note': _sessionNoteController.text.trim().isEmpty
-                ? null
-                : _sessionNoteController.text.trim(),
-          },
-        )
-        .toList();
+    final entries = _attendanceMap.entries.map((e) {
+      return {
+        'studentId': int.tryParse(e.key) ?? 0,
+        'absent': !e.value, 
+        'note': _noteController.text.trim().isEmpty
+            ? null
+            : _noteController.text.trim(),
+      };
+    }).toList();
 
     context.read<TeacherBloc>().add(
       BatchRecordAttendance(sessionId: widget.args.sessionId, entries: entries),
@@ -133,461 +82,285 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
   }
 
   @override
-  void dispose() {
-    _searchController.dispose();
-    _sessionNoteController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    
-    
-    
-    
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final theme = Theme.of(context);
+    final isDesktop = MediaQuery.of(context).size.width >= 1024;
 
-    if (!widget.args.hasSessionId) {
-      return Scaffold(
-        backgroundColor: isDark
-            ? AppColors.backgroundDark
-            : AppColors.backgroundLight,
-        appBar: AppBar(
-          title: const Text('Điểm danh'),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.pop(context),
+    return BlocConsumer<TeacherBloc, TeacherState>(
+      listener: (context, state) {
+        if (state is AttendanceSubmitted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Đã lưu điểm danh thành công'),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          Navigator.pop(context);
+        } else if (state is TeacherError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      },
+      builder: (context, state) {
+        return Scaffold(
+          backgroundColor: isDark
+              ? AppColors.neutral900
+              : AppColors.backgroundLight,
+          appBar: AppBar(
+            backgroundColor: isDark
+                ? AppColors.neutral900
+                : AppColors.backgroundLight,
+            elevation: 0,
+            leading: IconButton(
+              icon: Icon(
+                Icons.arrow_back,
+                color: isDark ? Colors.white : AppColors.textPrimary,
+              ),
+              onPressed: () => Navigator.pop(context),
+            ),
+            title: _isSearching
+                ? TextField(
+                    controller: _searchController,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      hintText: 'Tìm kiếm học viên...',
+                      border: InputBorder.none,
+                      hintStyle: TextStyle(
+                        color: isDark
+                            ? Colors.white70
+                            : AppColors.textSecondary,
+                      ),
+                    ),
+                    style: TextStyle(
+                      color: isDark ? Colors.white : AppColors.textPrimary,
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value;
+                      });
+                    },
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.args.className ?? 'Lớp học',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : AppColors.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        '${DateFormat('dd/MM/yyyy').format(widget.args.sessionDate ?? DateTime.now())} - ${widget.args.room ?? 'Chưa cập nhật'}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+            actions: [
+              if (!_isSearching)
+                PopupMenuButton<SortType>(
+                  icon: Icon(
+                    Icons.sort,
+                    color: isDark ? Colors.white : AppColors.textPrimary,
+                  ),
+                  onSelected: (SortType result) {
+                    setState(() {
+                      _sortType = result;
+                    });
+                  },
+                  itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<SortType>>[
+                        const PopupMenuItem<SortType>(
+                          value: SortType.name,
+                          child: Text('Sắp xếp theo tên'),
+                        ),
+                        const PopupMenuItem<SortType>(
+                          value: SortType.code,
+                          child: Text('Sắp xếp theo mã số'),
+                        ),
+                      ],
+                ),
+              IconButton(
+                icon: Icon(
+                  _isSearching ? Icons.close : Icons.search,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isSearching = !_isSearching;
+                    if (!_isSearching) {
+                      _searchController.clear();
+                      _searchQuery = '';
+                    }
+                  });
+                },
+              ),
+            ],
           ),
-        ),
-        body: _buildNoSessionState(theme, isDark),
+          body: _buildBody(context, state, isDark, theme, isDesktop),
+          bottomNavigationBar: _buildBottomActionArea(
+            context,
+            isDark,
+            theme,
+            isDesktop,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBody(
+    BuildContext context,
+    TeacherState state,
+    bool isDark,
+    ThemeData theme,
+    bool isDesktop,
+  ) {
+    if (state is TeacherLoading) {
+      return _buildLoadingState();
+    }
+
+    if (state is AttendanceLoaded) {
+      
+      if (_attendanceMap.isEmpty) {
+        for (var record in state.session.records) {
+          
+          _attendanceMap[record.studentId] = record.status == 'present';
+        }
+      }
+
+      return _buildAttendanceContent(
+        context,
+        state.session.records,
+        isDark,
+        theme,
+        isDesktop,
       );
     }
 
-    return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.backgroundDark
-          : AppColors.backgroundLight,
-      body: SafeArea(
-        child: Column(
-          children: [
-            TeacherAppBar(
-              title: 'Điểm danh',
-              showBackButton: true,
-              onBackPressed: () => Navigator.pop(context, false),
-            ),
-
-            _buildSessionInfo(theme, isDark),
-
-            Expanded(
-              child: BlocConsumer<TeacherBloc, TeacherState>(
-                listener: (context, state) {
-                  if (state is AttendanceSubmitted) {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(state.message),
-                        backgroundColor: AppColors.success,
-                      ),
-                    );
-                    Navigator.pop(context, true);
-                  }
-                },
-                builder: (context, state) {
-                  if (state is TeacherLoading) {
-                    return _buildLoadingState();
-                  }
-
-                  if (state is TeacherError) {
-                    return _buildErrorState(state.message);
-                  }
-
-                  if (state is AttendanceLoaded ||
-                      state is AttendanceRecorded) {
-                    final session = state is AttendanceLoaded
-                        ? state.session
-                        : (state as AttendanceRecorded).session;
-
-                    _initLocalState(session);
-
-                    return _buildAttendanceContent(session, isDark, theme);
-                  }
-
-                  
-                  return _buildLoadingState();
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNoSessionState(ThemeData theme, bool isDark) {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(24.w),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: EdgeInsets.all(20.w),
-              decoration: BoxDecoration(
-                color: AppColors.warning.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.event_busy,
-                size: 48.sp,
-                color: AppColors.warning,
-              ),
-            ),
-            SizedBox(height: 20.h),
-            Text(
-              'Chưa chọn buổi học',
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : AppColors.textPrimary,
-              ),
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              'Vui lòng chọn buổi học từ lịch dạy để điểm danh.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: isDark ? AppColors.neutral400 : AppColors.textSecondary,
-              ),
-            ),
-            SizedBox(height: 24.h),
-            ElevatedButton.icon(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back),
-              label: const Text('Quay lại'),
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // header replaced by TeacherAppBar for consistency
-
-  Widget _buildSessionInfo(ThemeData theme, bool isDark) {
-    final sessionDate = widget.args.sessionDate;
-    final room = widget.args.room;
-    final className = widget.args.className ?? 'Lớp học';
-
-    String dateStr = 'Hôm nay';
-    String timeStr = '';
-
-    if (sessionDate != null) {
-      final isToday =
-          sessionDate.year == DateTime.now().year &&
-          sessionDate.month == DateTime.now().month &&
-          sessionDate.day == DateTime.now().day;
-
-      dateStr = isToday
-          ? 'Hôm nay'
-          : DateFormat('EEEE, dd/MM/yyyy', 'vi').format(sessionDate);
-      timeStr = DateFormat('HH:mm').format(sessionDate);
+    if (state is AttendanceRecorded) {
+      if (_attendanceMap.isEmpty) {
+        for (var record in state.session.records) {
+          _attendanceMap[record.studentId] = record.status == 'present';
+        }
+      }
+      return _buildAttendanceContent(
+        context,
+        state.session.records,
+        isDark,
+        theme,
+        isDesktop,
+      );
     }
 
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
-      color: isDark ? AppColors.neutral800 : Colors.white,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  className,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : AppColors.textPrimary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (isSessionCompleted)
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
-                  decoration: BoxDecoration(
-                    color: AppColors.warning.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Text(
-                    'Chỉ xem',
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.warning,
-                      fontFamily: 'Lexend',
-                    ),
-                  ),
-                ),
-            ],
-          ),
-
-          SizedBox(height: 10.h),
-
-          Row(
-            children: [
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10.r),
-              border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.3),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.calendar_today,
-                  color: AppColors.primary,
-                  size: 16.sp,
-                ),
-                SizedBox(width: 8.w),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      dateStr,
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    if (timeStr.isNotEmpty)
-                      Text(
-                        timeStr,
-                        style: TextStyle(
-                          color: AppColors.primary.withValues(alpha: 0.8),
-                          fontSize: 11.sp,
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          SizedBox(width: 12.w),
-
-          if (room != null && room.isNotEmpty)
-            Expanded(
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.neutral700 : AppColors.neutral100,
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.room_outlined,
-                      color: isDark ? AppColors.neutral300 : AppColors.neutral600,
-                      size: 16.sp,
-                    ),
-                    SizedBox(width: 8.w),
-                    Flexible(
-                      child: Text(
-                        room,
-                        style: TextStyle(
-                          color: isDark ? AppColors.neutral300 : AppColors.neutral700,
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            ],
-          ),
-        ],
-      ),
-    );
+    return const SizedBox.shrink();
   }
 
   Widget _buildAttendanceContent(
-    dynamic session,
+    BuildContext context,
+    List<AttendanceRecord> records,
     bool isDark,
     ThemeData theme,
+    bool isDesktop,
   ) {
-    final filteredRecords = _searchQuery.isEmpty
-        ? session.records
-        : session.records.where((record) {
-            final studentName = (record.studentName ?? '').toLowerCase();
-            final studentCode = (record.studentCode ?? '').toLowerCase();
-            final query = _searchQuery.toLowerCase();
+    final filteredRecords = records.where((record) {
+      final name = (record.studentName ?? '').toLowerCase();
+      final code = (record.studentCode ?? '').toLowerCase();
+      final query = _searchQuery.toLowerCase();
+      return name.contains(query) || code.contains(query);
+    }).toList();
 
-            return studentName.contains(query) || studentCode.contains(query);
-          }).toList();
+    filteredRecords.sort((a, b) {
+      if (_sortType == SortType.name) {
+        return (a.studentName ?? '').compareTo(b.studentName ?? '');
+      } else {
+        return (a.studentCode ?? '').compareTo(b.studentCode ?? '');
+      }
+    });
 
     return Column(
       children: [
-        _buildQuickStats(session, theme, isDark),
-
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: () {
-                setState(() {
-                  _showSearch = !_showSearch;
-                  if (!_showSearch) {
-                    _searchController.clear();
-                    _searchQuery = '';
-                  }
-                });
-              },
-              icon: Icon(_showSearch ? Icons.close : Icons.search, size: 18.sp),
-              label: Text(
-                _showSearch ? 'Ẩn tìm kiếm' : 'Tìm kiếm',
-                style: TextStyle(fontSize: 13.sp),
-              ),
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
-              ),
-            ),
-          ),
-        ),
-
-        AnimatedCrossFade(
-          firstChild: const SizedBox.shrink(),
-          secondChild: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Tìm kiếm học viên...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: isDark ? AppColors.neutral700 : AppColors.neutral100,
-                contentPadding: EdgeInsets.symmetric(
-                  vertical: 0,
-                  horizontal: 12.w,
-                ),
-              ),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
-            ),
-          ),
-          crossFadeState:
-              _showSearch ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-          duration: const Duration(milliseconds: 200),
-        ),
-
+        _buildQuickStats(context, records, isDark, theme, isDesktop),
         Expanded(
           child: filteredRecords.isEmpty
               ? const EmptyStateWidget(
                   icon: Icons.people_outline,
                   message: 'Không có học viên nào',
                 )
-              : LayoutBuilder(
-                  builder: (context, constraints) {
-                    final crossAxisCount = constraints.maxWidth >= 380 ? 2 : 1;
-                    return GridView.builder(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 8.h,
-                      ),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: crossAxisCount,
-                        mainAxisSpacing: 8.h,
-                        crossAxisSpacing: 8.w,
-                        childAspectRatio: crossAxisCount == 1 ? 3.8 : 3.2,
-                      ),
-                      itemCount: filteredRecords.length,
-                      itemBuilder: (context, index) {
-                        final record = filteredRecords[index];
-                        return _buildStudentCheckboxItem(
-                          context,
-                          record,
-                          isDark,
-                          theme,
-                        );
-                      },
+              : ListView.separated(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isDesktop ? AppSizes.p32 : AppSizes.p16,
+                    vertical: AppSizes.p8,
+                  ),
+                  itemCount: filteredRecords.length,
+                  separatorBuilder: (context, index) =>
+                      SizedBox(height: AppSizes.p12),
+                  itemBuilder: (context, index) {
+                    final record = filteredRecords[index];
+                    return _buildStudentListItem(
+                      context,
+                      record,
+                      isDark,
+                      theme,
                     );
                   },
                 ),
         ),
-
-        _buildSessionNote(isDark, theme),
-
-        _buildSubmitButton(session, isDark)
       ],
     );
   }
 
-  Widget _buildQuickStats(dynamic session, ThemeData theme, bool isDark) {
-    final totalStudents = session.records.length;
-
-    final presentCount = _localAttendance.values
-        .where((s) => s == 'present')
-        .length;
-    final absentCount = totalStudents - presentCount;
+  Widget _buildQuickStats(
+    BuildContext context,
+    List<AttendanceRecord> records,
+    bool isDark,
+    ThemeData theme,
+    bool isDesktop,
+  ) {
+    final presentCount = _attendanceMap.values.where((v) => v).length;
+    final absentCount = records.length - presentCount;
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? AppSizes.p32 : AppSizes.p16,
+        vertical: AppSizes.p8,
+      ),
+      color: isDark ? AppColors.neutral800 : Colors.white,
       child: Row(
         children: [
           Expanded(
-            child: _buildStatItem(
-              icon: Icons.people,
-              label: 'Tổng',
-              value: totalStudents.toString(),
-              color: AppColors.primary,
-              isDark: isDark,
+            child: _buildCompactStatItem(
+              'Có mặt',
+              presentCount.toString(),
+              AppColors.success,
+              isDark,
             ),
           ),
-          SizedBox(width: 6.w),
-
+          SizedBox(width: AppSizes.p12),
           Expanded(
-            child: _buildStatItem(
-              icon: Icons.check_circle,
-              label: 'Có mặt',
-              value: presentCount.toString(),
-              color: AppColors.success,
-              isDark: isDark,
+            child: _buildCompactStatItem(
+              'Vắng mặt',
+              absentCount.toString(),
+              AppColors.error,
+              isDark,
             ),
           ),
-          SizedBox(width: 6.w),
-
+          SizedBox(width: AppSizes.p12),
           Expanded(
-            child: _buildStatItem(
-              icon: Icons.cancel,
-              label: 'Vắng',
-              value: absentCount.toString(),
-              color: AppColors.error,
-              isDark: isDark,
+            child: _buildCompactStatItem(
+              'Tổng số',
+              records.length.toString(),
+              AppColors.primary,
+              isDark,
             ),
           ),
         ],
@@ -595,39 +368,38 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
     );
   }
 
-  Widget _buildStatItem({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-    required bool isDark,
-  }) {
+  Widget _buildCompactStatItem(
+    String label,
+    String value,
+    Color color,
+    bool isDark,
+  ) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+      padding: EdgeInsets.symmetric(
+        vertical: AppSizes.p8,
+        horizontal: AppSizes.p12,
+      ),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.neutral800 : Colors.white,
-        borderRadius: BorderRadius.circular(10.r),
-        border: Border.all(
-          color: isDark ? AppColors.neutral700 : AppColors.neutral200,
-        ),
+        color: isDark ? AppColors.neutral900 : AppColors.backgroundAlt,
+        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       ),
       child: Column(
         children: [
-          Icon(icon, color: color, size: 18.sp),
-          SizedBox(height: 2.h),
           Text(
             value,
             style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w700,
+              fontSize: AppSizes.textLg,
+              fontWeight: FontWeight.bold,
               color: color,
             ),
           ),
           Text(
             label,
             style: TextStyle(
-              fontSize: 11.sp,
-              color: isDark ? AppColors.neutral400 : AppColors.neutral600,
+              fontSize: AppSizes.textXs,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -635,239 +407,166 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
     );
   }
 
-  Widget _buildStudentCheckboxItem(
+  Widget _buildStudentListItem(
     BuildContext context,
-    dynamic record,
+    AttendanceRecord record,
     bool isDark,
     ThemeData theme,
   ) {
-    
-    final isPresent = _getStatus(record.studentId) == 'present';
-    final studentName =
-        record.studentName ??
-        'Học viên ${record.studentId.substring(record.studentId.length > 7 ? 7 : 0)}';
+    final isPresent = _attendanceMap[record.studentId] ?? false;
+    final studentName = record.studentName ?? 'Học viên';
+    final studentCode = record.studentCode ?? '';
 
-    return Container(
-      margin: EdgeInsets.only(bottom: 8.h),
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.neutral800 : Colors.white,
-        borderRadius: BorderRadius.circular(10.r),
-        border: Border.all(
-          color: isDark ? AppColors.neutral700 : AppColors.neutral200,
+    return InkWell(
+      onTap: () => _toggleAttendance(record.studentId),
+      borderRadius: BorderRadius.circular(12.r),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.neutral800 : Colors.white,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(
+            color: isPresent
+                ? AppColors.success.withValues(alpha: 0.5)
+                : (isDark ? AppColors.neutral700 : AppColors.neutral200),
+            width: isPresent ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            ClipOval(
+              child: CustomImage(
+                imageUrl: record.studentAvatar ?? '',
+                width: 40.r,
+                height: 40.r,
+                fit: BoxFit.cover,
+              ),
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    studentName,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14.sp,
+                    ),
+                  ),
+                  if (studentCode.isNotEmpty) ...[
+                    SizedBox(height: 2.h),
+                    Text(
+                      studentCode,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColors.textSecondary,
+                        fontSize: 12.sp,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Container(
+              width: 28.w,
+              height: 28.h,
+              decoration: BoxDecoration(
+                color: isPresent
+                    ? AppColors.success
+                    : (isDark ? AppColors.neutral700 : AppColors.neutral100),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isPresent ? Icons.check : Icons.circle_outlined,
+                color: isPresent
+                    ? Colors.white
+                    : (isDark ? AppColors.neutral500 : AppColors.neutral400),
+                size: 18.sp,
+              ),
+            ),
+          ],
         ),
       ),
-      child: Row(
-        children: [
-          ClipOval(
-            child: CustomImage(
-              imageUrl: record.studentAvatar ?? '',
-              width: 28.r,
-              height: 28.r,
-              fit: BoxFit.cover,
-            ),
-          ),
-          SizedBox(width: 8.w),
+    );
+  }
 
-          Expanded(
-            child: Text(
-              studentName,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-                fontSize: 12.5.sp,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-
-          InkWell(
-            onTap: () => _toggleAttendance(record.studentId),
-            borderRadius: BorderRadius.circular(10.r),
-            child: Container(
-              width: 36.w,
-              height: 36.h,
-              alignment: Alignment.center,
-              child: Container(
-                width: 22.w,
-                height: 22.w,
-                decoration: BoxDecoration(
-                  color: isPresent ? AppColors.success : Colors.transparent,
-                  borderRadius: BorderRadius.circular(6.r),
-                  border: Border.all(
-                    color: isPresent
-                        ? AppColors.success
-                        : (isDark ? AppColors.neutral600 : AppColors.neutral400),
-                    width: 2,
-                  ),
-                ),
-                child: isPresent
-                    ? Icon(Icons.check, color: Colors.white, size: 14.sp)
-                    : null,
-              ),
-            ),
+  Widget _buildBottomActionArea(
+    BuildContext context,
+    bool isDark,
+    ThemeData theme,
+    bool isDesktop,
+  ) {
+    return Container(
+      padding: EdgeInsets.all(isDesktop ? AppSizes.p24 : AppSizes.p16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.neutral800 : Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
           ),
         ],
+      ),
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildSessionNote(isDark, theme),
+            SizedBox(height: AppSizes.p16),
+            _buildSubmitButton(isDark),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildSessionNote(bool isDark, ThemeData theme) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-      child: TextField(
-        controller: _sessionNoteController,
-        maxLines: 3,
-        minLines: 2,
-        decoration: InputDecoration(
-          hintText: 'Ghi chú buổi học (tuỳ chọn)',
-          prefixIcon: const Icon(Icons.note_alt_outlined),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-          filled: true,
-          fillColor: isDark ? AppColors.neutral800 : Colors.white,
+    return TextField(
+      controller: _noteController,
+      maxLines: 2,
+      minLines: 1,
+      decoration: InputDecoration(
+        hintText: 'Ghi chú buổi học...',
+        prefixIcon: const Icon(Icons.note_alt_outlined),
+        filled: true,
+        fillColor: isDark ? AppColors.neutral900 : AppColors.neutral100,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+          borderSide: BorderSide.none,
         ),
-        style: theme.textTheme.bodyMedium,
-        onChanged: (_) {
-          setState(() {
-            _hasChanges = true;
-          });
-        },
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: AppSizes.p16,
+          vertical: AppSizes.p12,
+        ),
       ),
+      style: theme.textTheme.bodyMedium,
     );
   }
 
-  Widget _buildSubmitButton(dynamic session, bool isDark) {
-    final isDisabled = isSessionCompleted || !_hasChanges;
-
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 12.h),
-        child: SizedBox(
-          width: double.infinity,
-          height: 48.h,
-          child: ElevatedButton.icon(
-            onPressed: isDisabled ? null : _submitAttendance,
-            icon: Icon(
-              isSessionCompleted ? Icons.lock_clock : Icons.save,
-              size: 18.sp,
-            ),
-            label: Text(
-              isSessionCompleted ? 'Buổi học đã khóa' : 'Lưu điểm danh',
-              style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  isSessionCompleted ? AppColors.neutral400 : AppColors.primary,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor:
-                  isDark ? AppColors.neutral700 : AppColors.neutral300,
-              disabledForegroundColor:
-                  isDark ? AppColors.neutral400 : AppColors.neutral600,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-            ),
+  Widget _buildSubmitButton(bool isDark) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _submitAttendance,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          padding: EdgeInsets.symmetric(vertical: AppSizes.p16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
           ),
+          elevation: 0,
+        ),
+        child: const Text(
+          'Lưu điểm danh',
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
     );
   }
 
   Widget _buildLoadingState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.hourglass_empty, size: 48.sp, color: AppColors.primary),
-          SizedBox(height: 16.h),
-          Text('Đang tải điểm danh...', style: TextStyle(fontSize: 14.sp)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildErrorState(String message) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isNotImplemented = message.toLowerCase().contains('not implemented');
-
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(24.w),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: EdgeInsets.all(20.w),
-              decoration: BoxDecoration(
-                color: (isNotImplemented ? AppColors.warning : AppColors.error)
-                    .withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                isNotImplemented ? Icons.construction : Icons.error_outline,
-                size: 48.sp,
-                color: isNotImplemented ? AppColors.warning : AppColors.error,
-              ),
-            ),
-            SizedBox(height: 20.h),
-            Text(
-              isNotImplemented
-                  ? 'Chức năng đang phát triển'
-                  : 'Không thể tải dữ liệu',
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : AppColors.textPrimary,
-              ),
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              isNotImplemented
-                  ? 'Chức năng điểm danh sẽ được cập nhật trong phiên bản tiếp theo.'
-                  : message,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: isDark ? AppColors.neutral400 : AppColors.textSecondary,
-              ),
-            ),
-            SizedBox(height: 24.h),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.arrow_back),
-                  label: const Text('Quay lại'),
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 20.w,
-                      vertical: 12.h,
-                    ),
-                  ),
-                ),
-                if (!isNotImplemented) ...[
-                  SizedBox(width: 12.w),
-                  ElevatedButton.icon(
-                    onPressed: _loadAttendance,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Thử lại'),
-                    style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 20.w,
-                        vertical: 12.h,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
+    return const Center(child: CircularProgressIndicator());
   }
 }

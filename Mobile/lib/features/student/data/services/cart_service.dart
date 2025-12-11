@@ -1,6 +1,6 @@
 import '../../presentation/bloc/student_state.dart';
 
-/// Singleton service to persist cart state across StudentBloc instances
+
 class CartService {
   CartService._internal();
   static final CartService _instance = CartService._internal();

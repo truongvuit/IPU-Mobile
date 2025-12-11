@@ -408,6 +408,15 @@ class _AdminTeacherListScreenState extends State<AdminTeacherListScreen> {
 
           Expanded(
             child: BlocBuilder<AdminBloc, AdminState>(
+              buildWhen: (previous, current) {
+                if (current is AdminLoading &&
+                    current.action != 'LoadTeacherList') {
+                  return false;
+                }
+                return current is AdminLoading ||
+                    current is AdminError ||
+                    current is TeacherListLoaded;
+              },
               builder: (context, state) {
                 if (state is AdminLoading) {
                   return _buildLoadingState();

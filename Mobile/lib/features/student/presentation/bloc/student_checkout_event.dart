@@ -24,7 +24,7 @@ class CreateOrder extends StudentCheckoutEvent {
   const CreateOrder({
     required this.classIds,
     required this.studentId,
-    this.paymentMethodId = 2, // Default to VNPay (ID=2)
+    this.paymentMethodId = 2, 
   });
 
   @override

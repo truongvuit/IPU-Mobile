@@ -70,7 +70,7 @@ class _PromotionListScreenContentState
           } else if (state is PromotionOperationSuccess) {
             return const Center(child: CircularProgressIndicator());
           } else if (state is PromotionLoaded) {
-            // Sắp xếp: Active đầu tiên, rồi scheduled, rồi draft, cuối cùng là expired
+            
             final sortedPromotions = List<Promotion>.from(state.promotions)
               ..sort((a, b) {
                 int getPriority(PromotionStatus status) {

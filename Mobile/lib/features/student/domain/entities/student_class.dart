@@ -38,7 +38,6 @@ class StudentClass extends Equatable {
 
   final String? meetingUrl;
 
-  
   final String? teacherEmail;
 
   final String? teacherSpecialization;
@@ -58,6 +57,12 @@ class StudentClass extends Equatable {
   final double attendanceRate;
 
   final double progress;
+
+  final String? schedulePattern;
+
+  final String? dailyStartTime;
+
+  final String? dailyEndTime;
 
   const StudentClass({
     required this.id,
@@ -83,6 +88,9 @@ class StudentClass extends Equatable {
     this.students = const [],
     this.attendanceRate = 0.0,
     this.progress = 0.0,
+    this.schedulePattern,
+    this.dailyStartTime,
+    this.dailyEndTime,
   });
 
   @override
@@ -110,6 +118,9 @@ class StudentClass extends Equatable {
     students,
     attendanceRate,
     progress,
+    schedulePattern,
+    dailyStartTime,
+    dailyEndTime,
   ];
 
   StudentClass copyWith({
@@ -136,6 +147,9 @@ class StudentClass extends Equatable {
     List<ClassStudent>? students,
     double? attendanceRate,
     double? progress,
+    String? schedulePattern,
+    String? dailyStartTime,
+    String? dailyEndTime,
   }) {
     return StudentClass(
       id: id ?? this.id,
@@ -162,6 +176,9 @@ class StudentClass extends Equatable {
       students: students ?? this.students,
       attendanceRate: attendanceRate ?? this.attendanceRate,
       progress: progress ?? this.progress,
+      schedulePattern: schedulePattern ?? this.schedulePattern,
+      dailyStartTime: dailyStartTime ?? this.dailyStartTime,
+      dailyEndTime: dailyEndTime ?? this.dailyEndTime,
     );
   }
 }

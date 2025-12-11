@@ -11,6 +11,8 @@ import '../bloc/teacher_event.dart';
 import '../bloc/teacher_state.dart';
 import '../../domain/entities/teacher_schedule.dart';
 import '../widgets/teacher_app_bar.dart';
+import '../../../../core/routing/app_router.dart';
+import '../../domain/entities/attendance_arguments.dart';
 import '../widgets/teacher_schedule_detail_modal.dart';
 import '../widgets/teacher_schedule_card.dart';
 
@@ -54,12 +56,10 @@ class _TeacherScheduleScreenState extends State<TeacherScheduleScreen> {
   }
 
   List<TeacherSchedule> _filterSchedules(List<TeacherSchedule> schedules) {
-    
     final dateFiltered = schedules
         .where((s) => isSameDay(s.startTime, _selectedDay))
         .toList();
 
-    
     List<TeacherSchedule> filtered;
     if (_searchQuery.isEmpty) {
       filtered = dateFiltered;
@@ -70,11 +70,10 @@ class _TeacherScheduleScreenState extends State<TeacherScheduleScreen> {
       }).toList();
     }
 
-    
     filtered.sort((a, b) {
       final priorityCompare = a.sortPriority.compareTo(b.sortPriority);
       if (priorityCompare != 0) return priorityCompare;
-      
+
       return a.startTime.compareTo(b.startTime);
     });
 
@@ -222,7 +221,9 @@ class _TeacherScheduleScreenState extends State<TeacherScheduleScreen> {
                           : AppColors.backgroundAlt,
                       border: Border(
                         bottom: BorderSide(
-                          color: isDark ? AppColors.neutral700 : AppColors.divider,
+                          color: isDark
+                              ? AppColors.neutral700
+                              : AppColors.divider,
                           width: 1,
                         ),
                       ),
@@ -271,79 +272,22 @@ class _TeacherScheduleScreenState extends State<TeacherScheduleScreen> {
 
           Expanded(
             child: BlocBuilder<TeacherBloc, TeacherState>(
+              buildWhen: (previous, current) {
+                
+                if (current is TeacherLoading &&
+                    current.action != 'LoadWeekSchedule') {
+                  return false;
+                }
+                
+                if (current is AttendanceLoaded ||
+                    current is AttendanceRecorded ||
+                    current is AttendanceSubmitted ||
+                    current is ClassDetailLoaded) {
+                  return false;
+                }
+                return true;
+              },
               builder: (context, state) {
-                if (state is TeacherLoading) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.hourglass_empty, size: 48.sp, color: AppColors.primary),
-                        SizedBox(height: 16.h),
-                        Text('Đang tải lịch...', style: TextStyle(fontSize: 14.sp)),
-                      ],
-                    ),
-                  );
-                }
-
-                if (state is TeacherError) {
-                  return Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(
-                        isDesktop ? AppSizes.p32 : AppSizes.p24,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.error_outline,
-                            size: isDesktop ? 64.sp : 48.sp,
-                            color: AppColors.error,
-                          ),
-                          SizedBox(
-                            height: isDesktop ? AppSizes.p24 : AppSizes.p16,
-                          ),
-                          Text(
-                            state.message,
-                            style: TextStyle(
-                              fontSize: isDesktop
-                                  ? AppSizes.textXl
-                                  : AppSizes.textLg,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(
-                            height: isDesktop ? AppSizes.p24 : AppSizes.p16,
-                          ),
-                          ElevatedButton.icon(
-                            onPressed: () => context.read<TeacherBloc>().add(
-                              LoadWeekSchedule(_selectedDay),
-                            ),
-                            icon: const Icon(Icons.refresh),
-                            label: Text(
-                              'Thử lại',
-                              style: TextStyle(
-                                fontSize: isDesktop
-                                    ? AppSizes.textLg
-                                    : AppSizes.textBase,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(
-                                vertical: isDesktop
-                                    ? AppSizes.p16
-                                    : AppSizes.p12,
-                                horizontal: isDesktop
-                                    ? AppSizes.p32
-                                    : AppSizes.p24,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
                 if (state is ScheduleLoaded) {
                   final filteredSchedules = _filterSchedules(state.schedule);
                   final isToday = isSameDay(_selectedDay, DateTime.now());
@@ -497,6 +441,34 @@ class _TeacherScheduleScreenState extends State<TeacherScheduleScreen> {
                                       TeacherScheduleDetailModal.show(
                                         context,
                                         schedule,
+                                        onAttendanceTap: () async {
+                                          
+                                          Navigator.pop(context);
+
+                                          
+                                          await Navigator.of(
+                                            context,
+                                            rootNavigator: true,
+                                          ).pushNamed(
+                                            AppRouter.teacherAttendance,
+                                            arguments:
+                                                AttendanceArguments.fromSchedule(
+                                                  sessionId: schedule.id,
+                                                  classId: schedule.classId,
+                                                  className: schedule.className,
+                                                  sessionDate:
+                                                      schedule.startTime,
+                                                  room: schedule.room,
+                                                ),
+                                          );
+
+                                          
+                                          if (context.mounted) {
+                                            context.read<TeacherBloc>().add(
+                                              LoadWeekSchedule(_selectedDay),
+                                            );
+                                          }
+                                        },
                                       );
                                     } catch (e) {
                                       ScaffoldMessenger.of(
@@ -517,7 +489,83 @@ class _TeacherScheduleScreenState extends State<TeacherScheduleScreen> {
                   );
                 }
 
-                return const SizedBox.shrink();
+                if (state is TeacherError) {
+                  return Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(
+                        isDesktop ? AppSizes.p32 : AppSizes.p24,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: isDesktop ? 64.sp : 48.sp,
+                            color: AppColors.error,
+                          ),
+                          SizedBox(
+                            height: isDesktop ? AppSizes.p24 : AppSizes.p16,
+                          ),
+                          Text(
+                            state.message,
+                            style: TextStyle(
+                              fontSize: isDesktop
+                                  ? AppSizes.textXl
+                                  : AppSizes.textLg,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          SizedBox(
+                            height: isDesktop ? AppSizes.p24 : AppSizes.p16,
+                          ),
+                          ElevatedButton.icon(
+                            onPressed: () => context.read<TeacherBloc>().add(
+                              LoadWeekSchedule(_selectedDay),
+                            ),
+                            icon: const Icon(Icons.refresh),
+                            label: Text(
+                              'Thử lại',
+                              style: TextStyle(
+                                fontSize: isDesktop
+                                    ? AppSizes.textLg
+                                    : AppSizes.textBase,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(
+                                vertical: isDesktop
+                                    ? AppSizes.p16
+                                    : AppSizes.p12,
+                                horizontal: isDesktop
+                                    ? AppSizes.p32
+                                    : AppSizes.p24,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.hourglass_empty,
+                        size: 48.sp,
+                        color: AppColors.primary,
+                      ),
+                      SizedBox(height: 16.h),
+                      Text(
+                        'Đang tải lịch...',
+                        style: TextStyle(fontSize: 14.sp),
+                      ),
+                    ],
+                  ),
+                );
               },
             ),
           ),

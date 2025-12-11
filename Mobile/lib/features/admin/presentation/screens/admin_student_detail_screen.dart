@@ -722,7 +722,7 @@ class _AdminStudentDetailScreenState extends State<AdminStudentDetailScreen> {
   Widget _buildClassCard(BuildContext context, dynamic classItem, bool isDark) {
     final theme = Theme.of(context);
     
-    // Safely extract class properties
+    
     final String classId = classItem.id?.toString() ?? '';
     final String className = classItem.name?.toString() ?? 'N/A';
     final String schedule = classItem.schedule?.toString() ?? '';

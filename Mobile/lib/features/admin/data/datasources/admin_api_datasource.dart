@@ -126,6 +126,6 @@ abstract class AdminApiDataSource {
 
   Future<String?> uploadFile(File file);
 
-  /// Xác nhận thanh toán tiền mặt - đánh dấu hóa đơn đã thanh toán và gửi email
+  
   Future<void> confirmCashPayment(int invoiceId);
 }

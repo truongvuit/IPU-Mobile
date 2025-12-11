@@ -9,6 +9,7 @@ import '../datasources/teacher_api_datasource.dart';
 import '../datasources/teacher_local_datasource.dart';
 import '../models/teacher_profile_model.dart';
 import '../../../../core/errors/exceptions.dart';
+import '../../../../core/constants/app_constants.dart';
 
 class TeacherRepositoryWithApi implements TeacherRepository {
   final TeacherApiDataSource apiDataSource;
@@ -46,7 +47,7 @@ class TeacherRepositoryWithApi implements TeacherRepository {
   Future<Either<String, List<TeacherClass>>> getMyClasses() async {
     try {
       final result = await apiDataSource.getMyClasses();
-      
+
       final activeClasses = result.where((cls) {
         final statusLower = (cls.status ?? '').toLowerCase();
         return statusLower == 'active' ||
@@ -107,7 +108,6 @@ class TeacherRepositoryWithApi implements TeacherRepository {
   Future<Either<String, List<AttendanceSession>>> getClassSessions(
     String classId,
   ) async {
-    
     return const Left('Vui lòng chọn buổi học cụ thể từ lịch dạy');
   }
 
@@ -155,7 +155,6 @@ class TeacherRepositoryWithApi implements TeacherRepository {
     String status,
     String? note,
   ) async {
-    
     return const Left(
       'Chức năng này đã được thay thế. Vui lòng sử dụng điểm danh hàng loạt.',
     );
@@ -185,11 +184,9 @@ class TeacherRepositoryWithApi implements TeacherRepository {
     DateTime date,
   ) async {
     try {
-      
       if (localDataSource != null && localDataSource!.isCacheValid()) {
         final cachedSchedules = await localDataSource!.getCachedSchedules();
         if (cachedSchedules != null && cachedSchedules.isNotEmpty) {
-          
           final weekStart = date.subtract(Duration(days: date.weekday - 1));
           final weekEnd = weekStart.add(const Duration(days: 7));
           final filteredSchedules = cachedSchedules.where((s) {
@@ -205,17 +202,14 @@ class TeacherRepositoryWithApi implements TeacherRepository {
         }
       }
 
-      
       final result = await apiDataSource.getWeekSchedule(date);
 
-      
       if (localDataSource != null && result.isNotEmpty) {
         await localDataSource!.cacheSchedules(result);
       }
 
       return Right(result);
     } on ServerException catch (e) {
-      
       if (localDataSource != null) {
         final cachedSchedules = await localDataSource!.getCachedSchedules();
         if (cachedSchedules != null && cachedSchedules.isNotEmpty) {
@@ -240,5 +234,21 @@ class TeacherRepositoryWithApi implements TeacherRepository {
             s.startTime.day == now.day;
       }).toList();
     });
+  }
+
+  @override
+  Future<Either<String, String>> uploadAvatar(String filePath) async {
+    try {
+      final fileUrl = await apiDataSource.uploadAvatar(filePath);
+      
+      if (!fileUrl.startsWith('http')) {
+        return Right('${AppConstants.baseUrl}/images/$fileUrl');
+      }
+      return Right(fileUrl);
+    } on ServerException catch (e) {
+      return Left(e.message);
+    } catch (e) {
+      return Left(e.toString());
+    }
   }
 }

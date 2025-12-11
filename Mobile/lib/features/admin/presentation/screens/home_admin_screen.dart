@@ -41,12 +41,12 @@ class _HomeAdminScreenState extends State<HomeAdminScreen> {
       const AdminProfileScreen(isTab: true),
     ];
 
-    // Only load dashboard if not already loaded
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         final bloc = context.read<AdminBloc>();
         final state = bloc.state;
-        // Only load if not already loaded (AdminDashboardLoaded)
+        
         if (state is! AdminDashboardLoaded) {
           _loadDataForTab(0);
         }

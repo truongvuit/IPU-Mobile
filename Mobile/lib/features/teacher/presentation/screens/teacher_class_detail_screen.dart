@@ -374,7 +374,7 @@ class _TeacherClassDetailScreenState extends State<TeacherClassDetailScreen>
           ),
           SizedBox(height: 24.h),
 
-          // Quick actions removed per request (button mở lịch dạy)
+          
         ],
       ),
     );

@@ -70,13 +70,21 @@ class _PromotionFormContentState extends State<_PromotionFormContent> {
     _titleController = TextEditingController(text: p?.title ?? '');
     _descriptionController = TextEditingController(text: p?.description ?? '');
     _discountValueController = TextEditingController(
-      text: p?.discountValue.toString() ?? '',
+      text: p?.discountValue != null
+          ? (p!.discountValue % 1 == 0
+                ? p.discountValue.toInt().toString()
+                : p.discountValue.toString())
+          : '',
     );
     _usageLimitController = TextEditingController(
       text: p?.usageLimit?.toString() ?? '',
     );
     _minOrderValueController = TextEditingController(
-      text: p?.minOrderValue?.toString() ?? '',
+      text: p?.minOrderValue != null
+          ? (p!.minOrderValue! % 1 == 0
+                ? p.minOrderValue!.toInt().toString()
+                : p.minOrderValue.toString())
+          : '',
     );
 
     _discountType = p?.discountType ?? DiscountType.percentage;

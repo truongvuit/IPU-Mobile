@@ -33,6 +33,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
   String? _selectedGender;
   TeacherProfile? _currentProfile;
   Uint8List? _selectedImageBytes;
+  XFile? _pickedFile;
   final ImagePicker _imagePicker = ImagePicker();
 
   @override
@@ -105,6 +106,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
         final bytes = await image.readAsBytes();
         setState(() {
           _selectedImageBytes = bytes;
+          _pickedFile = image;
         });
       }
     } catch (e) {
@@ -138,7 +140,9 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
         gender: _selectedGender,
       );
 
-      context.read<TeacherBloc>().add(UpdateTeacherProfile(updatedProfile));
+      context.read<TeacherBloc>().add(
+        UpdateTeacherProfile(updatedProfile, imagePath: _pickedFile?.path),
+      );
     }
   }
 

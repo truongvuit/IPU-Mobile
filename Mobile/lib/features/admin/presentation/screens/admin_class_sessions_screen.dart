@@ -172,7 +172,7 @@ class _AdminClassSessionsScreenState extends State<AdminClassSessionsScreen> {
       },
     );
 
-    // If an updated session was returned, update the list
+    
     if (result != null && result is ClassSession) {
       final index = _sessions.indexWhere((s) => s.id == result.id);
       if (index != -1) {
@@ -456,7 +456,7 @@ class _SessionCard extends StatelessWidget {
                 ),
               ),
 
-              // Compact status pill with text only
+              
               GestureDetector(
                 onTap: onStatusChange,
                 child: Container(

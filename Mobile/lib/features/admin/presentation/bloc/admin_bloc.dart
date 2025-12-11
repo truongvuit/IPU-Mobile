@@ -39,11 +39,8 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     on<ResetAdminState>(_onResetAdminState);
   }
 
-  /// Reset admin state (e.g., on logout)
-  void _onResetAdminState(
-    ResetAdminState event,
-    Emitter<AdminState> emit,
-  ) {
+  
+  void _onResetAdminState(ResetAdminState event, Emitter<AdminState> emit) {
     _isLoadingDashboard = false;
     emit(const AdminInitial());
   }
@@ -52,14 +49,14 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     LoadAdminDashboard event,
     Emitter<AdminState> emit,
   ) async {
-    // Guard 1: Already loading
+    
     if (_isLoadingDashboard) return;
 
-    // Guard 2: Already loaded in current state
+    
     if (state is AdminDashboardLoaded) return;
 
     _isLoadingDashboard = true;
-    emit(const AdminLoading());
+    emit(const AdminLoading(action: 'LoadAdminDashboard'));
 
     try {
       AdminProfile profile;
@@ -182,7 +179,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     LoadAdminProfile event,
     Emitter<AdminState> emit,
   ) async {
-    emit(const AdminLoading());
+    emit(const AdminLoading(action: 'LoadAdminProfile'));
 
     try {
       final profile = await _repository.getAdminProfile('1');
@@ -216,7 +213,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     LoadClassList event,
     Emitter<AdminState> emit,
   ) async {
-    emit(const AdminLoading());
+    emit(const AdminLoading(action: 'LoadClassList'));
 
     try {
       final classes = await _repository.getClasses(
@@ -235,7 +232,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     LoadClassDetail event,
     Emitter<AdminState> emit,
   ) async {
-    emit(const AdminLoading());
+    emit(const AdminLoading(action: 'LoadClassDetail'));
 
     try {
       final classInfo = await _repository.getClassById(event.classId);
@@ -273,7 +270,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     LoadStudentList event,
     Emitter<AdminState> emit,
   ) async {
-    emit(const AdminLoading());
+    emit(const AdminLoading(action: 'LoadStudentList'));
 
     try {
       final students = await _repository.getStudents(
@@ -292,7 +289,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     LoadClassStudentList event,
     Emitter<AdminState> emit,
   ) async {
-    emit(const AdminLoading());
+    emit(const AdminLoading(action: 'LoadClassStudentList'));
 
     try {
       final classInfo = await _repository.getClassById(event.classId);
@@ -314,7 +311,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     LoadStudentDetail event,
     Emitter<AdminState> emit,
   ) async {
-    emit(const AdminLoading());
+    emit(const AdminLoading(action: 'LoadStudentDetail'));
 
     try {
       final student = await _repository.getStudentById(event.studentId);
@@ -370,7 +367,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     LoadTeacherList event,
     Emitter<AdminState> emit,
   ) async {
-    emit(const AdminLoading());
+    emit(const AdminLoading(action: 'LoadTeacherList'));
 
     try {
       final teachers = await _repository.getTeachers(
@@ -389,7 +386,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     LoadTeacherDetail event,
     Emitter<AdminState> emit,
   ) async {
-    emit(const AdminLoading());
+    emit(const AdminLoading(action: 'LoadTeacherDetail'));
 
     try {
       final teacher = await _repository.getTeacherById(event.teacherId);
@@ -404,7 +401,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     LoadClassFeedbacks event,
     Emitter<AdminState> emit,
   ) async {
-    emit(const AdminLoading());
+    emit(const AdminLoading(action: 'LoadClassFeedbacks'));
 
     try {
       final feedbacks = await _repository.getClassFeedbacks(event.classId);

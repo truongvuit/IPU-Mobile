@@ -359,7 +359,7 @@ class _AdminClassDetailScreenState extends State<AdminClassDetailScreen> {
 
                     SizedBox(height: AppSizes.p20),
 
-                    // Nút xem phản hồi ở cuối màn hình
+                    
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(

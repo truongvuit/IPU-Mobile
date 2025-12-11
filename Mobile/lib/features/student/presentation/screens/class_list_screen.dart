@@ -172,23 +172,29 @@ class _ClassListScreenState extends State<ClassListScreen> {
               Expanded(
                 child: BlocBuilder<StudentBloc, StudentState>(
                   buildWhen: (previous, current) {
+                    if (current is StudentLoading &&
+                        current.action != 'LoadMyClasses') {
+                      return false;
+                    }
                     return current is ClassesLoaded ||
                         current is StudentLoading ||
                         current is StudentError ||
                         current is DashboardLoaded;
                   },
                   builder: (context, state) {
-                    // For unrelated states, trigger load if needed
+                    
                     if (state is! ClassesLoaded &&
                         state is! StudentLoading &&
                         state is! StudentError &&
                         state is! DashboardLoaded) {
-                      // Trigger load if not already loading
+                      
                       if (!_hasLoadedData) {
                         WidgetsBinding.instance.addPostFrameCallback((_) {
                           if (mounted) {
                             _hasLoadedData = true;
-                            context.read<StudentBloc>().add(const LoadMyClasses());
+                            context.read<StudentBloc>().add(
+                              const LoadMyClasses(),
+                            );
                           }
                         });
                       }
@@ -203,7 +209,7 @@ class _ClassListScreenState extends State<ClassListScreen> {
                     }
 
                     if (state is StudentLoading) {
-                      // If we have local data, show it while loading
+                      
                       if (_activeClasses.isNotEmpty) {
                         return _buildClassList(
                           _activeClasses,
@@ -219,7 +225,7 @@ class _ClassListScreenState extends State<ClassListScreen> {
                     }
 
                     if (state is StudentError) {
-                      // If we have local data, show it with error toast
+                      
                       if (_activeClasses.isNotEmpty) {
                         return _buildClassList(
                           _activeClasses,

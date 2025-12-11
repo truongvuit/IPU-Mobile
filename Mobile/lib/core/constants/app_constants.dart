@@ -1,5 +1,3 @@
-
-
 class AppConstants {
   static const double excellentGrade = 8.0;
   static const double goodGrade = 6.5;
@@ -18,25 +16,26 @@ class AppConstants {
   static const String statusCancelled = 'Đã hủy';
 
   
+  static const int paymentMethodCash = 1;
+  static const int paymentMethodVNPay = 2;
+  static const int paymentMethodTransfer = 3;
 
   
-  static const String _devBaseUrl = 'http://localhost:8080';
+  static const int promotionTypeCourse = 1;
+  static const int promotionTypeCombo = 2;
+  static const int promotionTypeOldStudent = 3;
+  static const int promotionTypeTime = 4;
 
-  
+  static const String _devBaseUrl = 'http://192.168.1.9:8080';
+
   static const String _androidEmulatorUrl = 'http://10.0.2.2:8080';
 
-  
-  static const String _deviceLanUrl = 'http://192.168.1.100:8080';
+  static const String _deviceLanUrl = 'http://192.168.1.9:8080';
 
-  
   static const String _productionUrl = 'https://api.yourdomain.com';
 
-  
   static String get baseUrl {
-    return _devBaseUrl; 
-    
-    
-    
+    return _devBaseUrl;
   }
 
   static const Duration connectionTimeout = Duration(seconds: 30);
@@ -86,9 +85,9 @@ class AppConstants {
   static const String termsUrl = 'https://trungtamngoaingu.com/terms';
   static const String supportEmail = 'support@trungtamngoaingu.com';
   static const String supportPhone = '1900-xxxx';
-  
-  
-  static const String courseRegistrationWebUrl = 'https://trungtamngoaingu.com/courses';
+
+  static const String courseRegistrationWebUrl =
+      'https://trungtamngoaingu.com/courses';
 
   static const String appName = 'Trung Tâm Ngoại Ngữ';
   static const String appVersion = '1.0.0';
@@ -149,11 +148,12 @@ class ApiEndpoints {
   static const String teacherMaterials = '/files';
   static const String teacherMaterialUpdate = '/files';
   static const String teacherAttendance = '/lecturers/sessions';
-  
-  
-  static String teacherClassGrades(String classId) => '/lecturers/grades/class/$classId';
+
+  static String teacherClassGrades(String classId) =>
+      '/lecturers/grades/class/$classId';
   static const String teacherSubmitGrade = '/lecturers/grades';
-  static String teacherUpdateGrade(String gradeId) => '/lecturers/grades/$gradeId';
+  static String teacherUpdateGrade(String gradeId) =>
+      '/lecturers/grades/$gradeId';
 
   static const String roomsAvailable = '/rooms/available';
   static const String roomsName = '/rooms/room-name';

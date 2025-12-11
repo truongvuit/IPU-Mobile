@@ -128,10 +128,11 @@ class LoadTeacherProfile extends TeacherEvent {}
 
 class UpdateTeacherProfile extends TeacherEvent {
   final TeacherProfile profile;
-  const UpdateTeacherProfile(this.profile);
+  final String? imagePath;
+  const UpdateTeacherProfile(this.profile, {this.imagePath});
   @override
-  List<Object> get props => [profile];
+  List<Object?> get props => [profile, imagePath];
 }
 
-/// Event để reset state khi đăng xuất
+
 class ResetTeacherState extends TeacherEvent {}

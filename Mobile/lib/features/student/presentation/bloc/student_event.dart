@@ -145,9 +145,9 @@ class LoadClassReview extends StudentEvent {
   List<Object?> get props => [classId];
 }
 
-// ==================== CART EVENTS ====================
 
-/// Add a course (with its class) to cart
+
+
 class AddCourseToCart extends StudentEvent {
   final String courseId;
   final String courseName;
@@ -169,7 +169,7 @@ class AddCourseToCart extends StudentEvent {
   List<Object?> get props => [courseId, classId, courseName, className, price];
 }
 
-/// Remove a course from cart by classId
+
 class RemoveFromCart extends StudentEvent {
   final int classId;
 
@@ -179,12 +179,12 @@ class RemoveFromCart extends StudentEvent {
   List<Object?> get props => [classId];
 }
 
-/// Clear all items from cart
+
 class ClearCart extends StudentEvent {
   const ClearCart();
 }
 
-/// Reset student bloc state and cache (e.g., on logout)
+
 class ResetStudentState extends StudentEvent {
   const ResetStudentState();
 }

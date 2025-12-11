@@ -62,7 +62,7 @@ class _GradesScreenState extends State<GradesScreen> {
     final bloc = context.read<StudentBloc>();
     final state = bloc.state;
 
-    // If already loaded, use cached data from state
+    
     if (state is GradesLoaded) {
       _cachedGrades = state.grades;
       _hasLoadedGrades = true;
@@ -75,8 +75,8 @@ class _GradesScreenState extends State<GradesScreen> {
       _isLoading = false;
       return;
     }
+
     
-    // If not loaded yet, trigger load
     if (!_hasLoadedGrades) {
       _isLoading = true;
       bloc.add(const LoadGradesByCourse(''));
@@ -236,6 +236,11 @@ class _GradesScreenState extends State<GradesScreen> {
           Expanded(
             child: BlocListener<StudentBloc, StudentState>(
               listenWhen: (previous, current) {
+                if (current is StudentLoading &&
+                    current.action != 'LoadGradesByCourse' &&
+                    current.action != 'LoadMyGrades') {
+                  return false;
+                }
                 return current is StudentLoading ||
                     current is GradesLoaded ||
                     current is CourseGradesLoaded ||
@@ -417,92 +422,100 @@ class _GradesScreenState extends State<GradesScreen> {
     final letterGrade = grade.grade ?? '';
 
     return Container(
-      margin: EdgeInsets.only(bottom: 16.h),
+      margin: EdgeInsets.only(bottom: 12.h),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1F2937) : const Color(0xFFF3F4F6),
+        color: isDark ? const Color(0xFF1F2937) : Colors.white,
         borderRadius: BorderRadius.circular(16.r),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: EdgeInsets.all(16.w),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        grade.courseName ?? 'Chưa xác định',
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : AppColors.textPrimary,
-                          fontFamily: 'Lexend',
-                        ),
-                      ),
-                      if (grade.className != null) ...[
-                        SizedBox(height: 4.h),
-                        Text(
-                          grade.className!,
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            color: isDark
-                                ? const Color(0xFF9CA3AF)
-                                : const Color(0xFF6B7280),
-                            fontFamily: 'Lexend',
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 12.w,
-                    vertical: 4.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20.r),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (letterGrade.isNotEmpty) ...[
-                        Text(
-                          letterGrade,
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w700,
-                            color: statusColor,
-                            fontFamily: 'Lexend',
-                          ),
-                        ),
-                        SizedBox(width: 6.w),
-                      ],
-                      Text(
-                        status,
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w600,
-                          color: statusColor,
-                          fontFamily: 'Lexend',
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
           ),
-
-          Container(
-            color: isDark ? const Color(0xFF374151) : Colors.white,
-            padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 8.w),
-            child: Row(
+        ],
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+          childrenPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
+          title: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      grade.courseName ?? 'Chưa xác định',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : AppColors.textPrimary,
+                        fontFamily: 'Lexend',
+                      ),
+                    ),
+                    if (grade.className != null) ...[
+                      SizedBox(height: 4.h),
+                      Text(
+                        grade.className!,
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: isDark
+                              ? const Color(0xFF9CA3AF)
+                              : const Color(0xFF6B7280),
+                          fontFamily: 'Lexend',
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.w,
+                      vertical: 4.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Text(
+                      grade.totalScore != null
+                          ? grade.totalScore!.toStringAsFixed(1)
+                          : '--',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                        color: statusColor,
+                        fontFamily: 'Lexend',
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    status,
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w500,
+                      color: statusColor,
+                      fontFamily: 'Lexend',
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          children: [
+            Divider(
+              height: 1,
+              color: isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB),
+            ),
+            SizedBox(height: 16.h),
+            Row(
               children: [
                 Expanded(
                   child: _buildScoreColumn(
@@ -523,51 +536,57 @@ class _GradesScreenState extends State<GradesScreen> {
                 ),
                 Expanded(
                   child: _buildScoreColumn(
-                    'Tổng',
-                    totalScore,
+                    'Điểm chữ',
+                    null, 
                     isDark,
+                    customValue: letterGrade, 
                     isAverage: true,
                   ),
                 ),
               ],
             ),
-          ),
-
-          if (grade.comment != null && grade.comment!.isNotEmpty)
-            Padding(
-              padding: EdgeInsets.all(16.w),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.comment_outlined,
-                    size: 16.sp,
-                    color: isDark
-                        ? const Color(0xFF9CA3AF)
-                        : const Color(0xFF6B7280),
-                  ),
-                  SizedBox(width: 8.w),
-                  Expanded(
-                    child: Text(
-                      grade.comment!,
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        fontStyle: FontStyle.italic,
-                        color: isDark
-                            ? const Color(0xFF9CA3AF)
-                            : const Color(0xFF6B7280),
-                        fontFamily: 'Lexend',
+            if (grade.comment != null && grade.comment!.isNotEmpty) ...[
+              SizedBox(height: 16.h),
+              Container(
+                padding: EdgeInsets.all(12.w),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF374151)
+                      : const Color(0xFFF3F4F6),
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.comment_outlined,
+                      size: 16.sp,
+                      color: isDark
+                          ? const Color(0xFF9CA3AF)
+                          : const Color(0xFF6B7280),
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: Text(
+                        grade.comment!,
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontStyle: FontStyle.italic,
+                          color: isDark
+                              ? const Color(0xFFD1D5DB)
+                              : const Color(0xFF4B5563),
+                          fontFamily: 'Lexend',
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-
-          if (grade.gradedByName != null || grade.lastGradedAt != null)
-            Padding(
-              padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 8.h),
-              child: Row(
+            ],
+            if (grade.gradedByName != null || grade.lastGradedAt != null) ...[
+              SizedBox(height: 12.h),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   if (grade.gradedByName != null) ...[
                     Icon(
@@ -612,23 +631,9 @@ class _GradesScreenState extends State<GradesScreen> {
                   ],
                 ],
               ),
-            ),
-
-          Padding(
-            padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 16.h),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(4.r),
-              child: LinearProgressIndicator(
-                value: (totalScore / 10).clamp(0.0, 1.0),
-                backgroundColor: isDark
-                    ? const Color(0xFF4B5563)
-                    : const Color(0xFFE5E7EB),
-                valueColor: AlwaysStoppedAnimation<Color>(statusColor),
-                minHeight: 6.h,
-              ),
-            ),
-          ),
-        ],
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -642,6 +647,7 @@ class _GradesScreenState extends State<GradesScreen> {
     double? score,
     bool isDark, {
     bool isAverage = false,
+    String? customValue,
   }) {
     return Column(
       children: [
@@ -655,9 +661,9 @@ class _GradesScreenState extends State<GradesScreen> {
         ),
         SizedBox(height: 8.h),
         Text(
-          score != null ? score.toStringAsFixed(1) : '--',
+          customValue ?? (score != null ? score.toStringAsFixed(1) : '--'),
           style: TextStyle(
-            fontSize: 18.sp,
+            fontSize: 16.sp,
             fontWeight: FontWeight.w700,
             color: isAverage
                 ? const Color(0xFF2563EB)

@@ -143,7 +143,7 @@ class TeacherAppBar extends StatelessWidget implements PreferredSizeWidget {
       );
     }
 
-    return SizedBox(width: 48.w); // balance title centering
+    return SizedBox(width: 48.w); 
   }
 
   Widget _buildTrailing(bool isDark) {
@@ -183,7 +183,7 @@ class TeacherAppBar extends StatelessWidget implements PreferredSizeWidget {
     }
 
     if (trailing.isEmpty) {
-      return SizedBox(width: 48.w); // mirror leading width when no actions
+      return SizedBox(width: 48.w); 
     }
 
     return Row(mainAxisSize: MainAxisSize.min, children: trailing);

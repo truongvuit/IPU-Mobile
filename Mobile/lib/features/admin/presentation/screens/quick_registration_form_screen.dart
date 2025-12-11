@@ -452,7 +452,7 @@ class _QuickRegistrationFormScreenState
                       ),
                     SizedBox(height: AppSizes.p20),
 
-                    // Payment method selection removed - it's in PaymentScreen
+                    
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(

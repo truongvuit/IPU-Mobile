@@ -11,7 +11,6 @@ import '../bloc/teacher_event.dart';
 import '../bloc/teacher_state.dart';
 import '../widgets/teacher_app_bar.dart';
 
-
 class TeacherProfileScreen extends StatefulWidget {
   const TeacherProfileScreen({super.key});
 
@@ -23,7 +22,7 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     context.read<TeacherBloc>().add(LoadTeacherProfile());
   }
 
@@ -34,17 +33,16 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
 
     return Column(
       children: [
-        
         TeacherAppBar(
           title: 'Hồ sơ giảng viên',
           showBackButton: false,
           actions: [
             IconButton(
               onPressed: () {
-                
-                Navigator.of(context, rootNavigator: true).pushNamed(
-                  AppRouter.teacherEditProfile,
-                );
+                Navigator.of(
+                  context,
+                  rootNavigator: true,
+                ).pushNamed(AppRouter.teacherEditProfile);
               },
               icon: Icon(
                 Icons.edit_outlined,
@@ -57,6 +55,20 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
 
         Expanded(
           child: BlocBuilder<TeacherBloc, TeacherState>(
+            buildWhen: (previous, current) {
+              
+              if (current is TeacherLoading &&
+                  current.action != 'LoadTeacherProfile' &&
+                  current.action != 'UpdateTeacherProfile') {
+                return false;
+              }
+              if (current is ProfileLoaded ||
+                  current is ProfileUpdated ||
+                  current is TeacherError) {
+                return true;
+              }
+              return true;
+            },
             builder: (context, state) {
               if (state is TeacherLoading) {
                 return _buildLoadingSkeleton(isDesktop);
@@ -79,39 +91,22 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
                     padding: EdgeInsets.only(bottom: 100.h),
                     child: Column(
                       children: [
-                        
-                        _buildProfileHeader(
-                          profile,
-                          isDark,
-                          isDesktop,
-                        ),
+                        _buildProfileHeader(profile, isDark, isDesktop),
 
                         SizedBox(height: AppSizes.p24),
 
-                        
                         _buildStatsSection(isDark, isDesktop, profile),
 
                         SizedBox(height: AppSizes.p16),
 
-                        
-                        _buildContactSection(
-                          profile,
-                          isDark,
-                          isDesktop,
-                        ),
+                        _buildContactSection(profile, isDark, isDesktop),
 
                         SizedBox(height: AppSizes.p16),
 
-                        
-                        _buildPersonalSection(
-                          profile,
-                          isDark,
-                          isDesktop,
-                        ),
+                        _buildPersonalSection(profile, isDark, isDesktop),
 
                         SizedBox(height: AppSizes.p16),
 
-                        
                         if (profile.certificates.isNotEmpty)
                           _buildCertificatesSection(
                             profile.certificates,
@@ -124,7 +119,7 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
                 );
               }
 
-              // For initial state only, trigger reload
+              
               if (state is TeacherInitial) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (mounted) {
@@ -147,16 +142,27 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.hourglass_empty, size: isDesktop ? 64.w : 48.w, color: AppColors.primary),
+            Icon(
+              Icons.hourglass_empty,
+              size: isDesktop ? 64.w : 48.w,
+              color: AppColors.primary,
+            ),
             SizedBox(height: AppSizes.p16),
-            Text('Đang tải hồ sơ...', style: TextStyle(fontSize: isDesktop ? 18.sp : 14.sp)),
+            Text(
+              'Đang tải hồ sơ...',
+              style: TextStyle(fontSize: isDesktop ? 18.sp : 14.sp),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildErrorState(BuildContext context, String message, bool isDesktop) {
+  Widget _buildErrorState(
+    BuildContext context,
+    String message,
+    bool isDesktop,
+  ) {
     return Center(
       child: Padding(
         padding: EdgeInsets.all(isDesktop ? AppSizes.p32 : AppSizes.p24),
@@ -171,7 +177,9 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
             SizedBox(height: isDesktop ? AppSizes.p24 : AppSizes.p16),
             Text(
               message,
-              style: TextStyle(fontSize: isDesktop ? AppSizes.textXl : AppSizes.textLg),
+              style: TextStyle(
+                fontSize: isDesktop ? AppSizes.textXl : AppSizes.textLg,
+              ),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: isDesktop ? AppSizes.p24 : AppSizes.p16),
@@ -182,7 +190,9 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
               icon: const Icon(Icons.refresh),
               label: Text(
                 'Thử lại',
-                style: TextStyle(fontSize: isDesktop ? AppSizes.textLg : AppSizes.textBase),
+                style: TextStyle(
+                  fontSize: isDesktop ? AppSizes.textLg : AppSizes.textBase,
+                ),
               ),
             ),
           ],
@@ -191,21 +201,14 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
     );
   }
 
-  Widget _buildProfileHeader(
-    dynamic profile,
-    bool isDark,
-    bool isDesktop,
-  ) {
+  Widget _buildProfileHeader(dynamic profile, bool isDark, bool isDesktop) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            AppColors.primary,
-            AppColors.primary.withValues(alpha: 0.8),
-          ],
+          colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
         ),
       ),
       padding: EdgeInsets.fromLTRB(
@@ -216,16 +219,12 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
       ),
       child: Column(
         children: [
-          
           Container(
             width: isDesktop ? 140.w : 120.w,
             height: isDesktop ? 140.w : 120.w,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.white,
-                width: 3,
-              ),
+              border: Border.all(color: Colors.white, width: 3),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.2),
@@ -237,6 +236,8 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
             child: ClipOval(
               child: CustomImage(
                 imageUrl: profile.avatarUrl ?? '',
+                cacheKey:
+                    '${profile.avatarUrl ?? ''}_${DateTime.now().millisecondsSinceEpoch ~/ 60000}',
                 width: isDesktop ? 140.w : 120.w,
                 height: isDesktop ? 140.w : 120.w,
                 fit: BoxFit.cover,
@@ -246,7 +247,6 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
           ),
           SizedBox(height: AppSizes.p16),
 
-          
           Text(
             profile.fullName,
             style: TextStyle(
@@ -258,7 +258,6 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
           ),
           SizedBox(height: 6.h),
 
-          
           Container(
             padding: EdgeInsets.symmetric(
               horizontal: AppSizes.p12,
@@ -283,7 +282,6 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
             ),
           ),
 
-          
           if (profile.specialization != null) ...[
             SizedBox(height: AppSizes.p12),
             Row(
@@ -386,11 +384,7 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
               color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
             ),
-            child: Icon(
-              icon,
-              color: color,
-              size: isDesktop ? 24.sp : 20.sp,
-            ),
+            child: Icon(icon, color: color, size: isDesktop ? 24.sp : 20.sp),
           ),
           SizedBox(height: 8.h),
           Text(
@@ -415,11 +409,7 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
     );
   }
 
-  Widget _buildContactSection(
-    dynamic profile,
-    bool isDark,
-    bool isDesktop,
-  ) {
+  Widget _buildContactSection(dynamic profile, bool isDark, bool isDesktop) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
       child: Container(
@@ -487,8 +477,10 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
                 isDark,
                 isDesktop,
               ),
-                  
-            if (profile.email == null && profile.phoneNumber == null && profile.address == null)
+
+            if (profile.email == null &&
+                profile.phoneNumber == null &&
+                profile.address == null)
               Center(
                 child: Padding(
                   padding: EdgeInsets.symmetric(vertical: AppSizes.p16),
@@ -508,11 +500,7 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
     );
   }
 
-  Widget _buildPersonalSection(
-    dynamic profile,
-    bool isDark,
-    bool isDesktop,
-  ) {
+  Widget _buildPersonalSection(dynamic profile, bool isDark, bool isDesktop) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
       child: Container(
@@ -648,7 +636,9 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
                 margin: EdgeInsets.only(
                   bottom: index < certificates.length - 1 ? AppSizes.p12 : 0,
                 ),
-                padding: EdgeInsets.all(isDesktop ? AppSizes.p16 : AppSizes.p12),
+                padding: EdgeInsets.all(
+                  isDesktop ? AppSizes.p16 : AppSizes.p12,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
@@ -663,7 +653,9 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
                       padding: EdgeInsets.all(AppSizes.p8),
                       decoration: BoxDecoration(
                         color: AppColors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+                        borderRadius: BorderRadius.circular(
+                          AppSizes.radiusSmall,
+                        ),
                       ),
                       child: Icon(
                         Icons.verified,
@@ -676,7 +668,9 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
                       child: Text(
                         cert,
                         style: TextStyle(
-                          fontSize: isDesktop ? AppSizes.textBase : AppSizes.textSm,
+                          fontSize: isDesktop
+                              ? AppSizes.textBase
+                              : AppSizes.textSm,
                           fontWeight: FontWeight.w500,
                           color: isDark ? Colors.white : AppColors.textPrimary,
                         ),

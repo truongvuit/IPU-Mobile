@@ -113,6 +113,6 @@ abstract class AdminRepository {
 
   Future<String?> uploadFile(File file);
 
-  /// Xác nhận thanh toán tiền mặt - đánh dấu hóa đơn đã thanh toán và gửi email hóa đơn
+  
   Future<void> confirmCashPayment(int invoiceId);
 }

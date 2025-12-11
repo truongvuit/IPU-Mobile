@@ -6,7 +6,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../widgets/student_app_bar.dart';
@@ -70,7 +69,7 @@ class _RatingScreenState extends State<RatingScreen>
       default:
         return Colors.grey;
     }
-  } 
+  }
 
   final List<String> _availableTags = [
     'Nội dung phong phú',
@@ -231,7 +230,6 @@ class _RatingScreenState extends State<RatingScreen>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              
                               if (_isViewMode && _existingReview != null) ...[
                                 _buildExistingReviewInfo(isDark, isDesktop),
                                 SizedBox(height: 24.h),
@@ -336,7 +334,6 @@ class _RatingScreenState extends State<RatingScreen>
                                 SizedBox(height: 24.h),
                               ],
 
-                              
                               Text(
                                 _isViewMode ? 'Nhận xét của bạn' : 'Nhận xét',
                                 style: TextStyle(
@@ -496,7 +493,6 @@ class _RatingScreenState extends State<RatingScreen>
                                 SizedBox(height: 32.h),
                               ],
 
-                              
                               if (!_isViewMode)
                                 BlocBuilder<StudentBloc, StudentState>(
                                   builder: (context, btnState) {
@@ -548,7 +544,6 @@ class _RatingScreenState extends State<RatingScreen>
                                   },
                                 ),
 
-                              
                               if (_isViewMode) ...[
                                 SizedBox(
                                   width: double.infinity,
@@ -579,32 +574,6 @@ class _RatingScreenState extends State<RatingScreen>
                                     ),
                                   ),
                                 ),
-                                SizedBox(height: 12.h),
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: TextButton(
-                                    onPressed: () {
-                                      Navigator.pushNamed(
-                                        context,
-                                        AppRouter.studentReviewHistory,
-                                      );
-                                    },
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: AppColors.primary,
-                                      padding: EdgeInsets.symmetric(
-                                        vertical: isDesktop ? 16.h : 12.h,
-                                      ),
-                                    ),
-                                    child: Text(
-                                      'Xem lịch sử đánh giá',
-                                      style: TextStyle(
-                                        fontFamily: 'Lexend',
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: isDesktop ? 16.sp : 14.sp,
-                                      ),
-                                    ),
-                                  ),
-                                ),
                               ],
 
                               SizedBox(height: 32.h),
@@ -623,7 +592,6 @@ class _RatingScreenState extends State<RatingScreen>
     );
   }
 
-  
   Widget _buildExistingReviewInfo(bool isDark, bool isDesktop) {
     final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
     return Container(
@@ -712,7 +680,7 @@ class _RatingScreenState extends State<RatingScreen>
           ),
           SizedBox(height: 16.h),
 
-          // Emoji indicator
+          
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             transitionBuilder: (child, animation) {
@@ -726,7 +694,7 @@ class _RatingScreenState extends State<RatingScreen>
           ),
           SizedBox(height: 8.h),
 
-          // Rating description
+          
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
             child: Text(
@@ -742,7 +710,7 @@ class _RatingScreenState extends State<RatingScreen>
           ),
           SizedBox(height: 20.h),
 
-          // Stars row
+          
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(5, (index) {
@@ -810,7 +778,9 @@ class _RatingScreenState extends State<RatingScreen>
         ),
         boxShadow: [
           BoxShadow(
-            color: (isDark ? Colors.black : Colors.grey).withValues(alpha: 0.05),
+            color: (isDark ? Colors.black : Colors.grey).withValues(
+              alpha: 0.05,
+            ),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

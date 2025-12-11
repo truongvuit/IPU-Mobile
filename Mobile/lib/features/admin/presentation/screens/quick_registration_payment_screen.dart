@@ -829,7 +829,7 @@ class _QuickRegistrationPaymentScreenState
                 ),
               ],
               SizedBox(height: AppSizes.p16),
-              // Account credentials box
+              
               Container(
                 padding: EdgeInsets.all(AppSizes.p12),
                 decoration: BoxDecoration(

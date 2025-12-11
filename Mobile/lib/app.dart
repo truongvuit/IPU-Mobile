@@ -17,6 +17,7 @@ import 'features/settings/presentation/bloc/settings_event.dart';
 import 'features/settings/presentation/bloc/settings_state.dart';
 import 'features/student/presentation/bloc/student_bloc.dart';
 import 'features/teacher/presentation/bloc/teacher_bloc.dart';
+import 'features/student/presentation/bloc/cart_bloc.dart';
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -61,17 +62,17 @@ class _MyAppState extends State<MyApp> {
     final sessionExpiryNotifier = getIt<SessionExpiryNotifier>();
     _sessionExpirySubscription = sessionExpiryNotifier.sessionExpiredStream
         .listen((_) {
-          // Check if AuthBloc is still available and not closed
+          
           if (!getIt.isRegistered<AuthBloc>()) return;
 
           final authBloc = getIt<AuthBloc>();
 
-          // Check if Bloc is closed before adding event
+          
           if (!authBloc.isClosed) {
             authBloc.add(const LogoutRequested());
           }
 
-          // Navigate to welcome screen
+          
           _navigatorKey.currentState?.pushNamedAndRemoveUntil(
             AppRouter.welcome,
             (route) => false,
@@ -106,9 +107,10 @@ class _MyAppState extends State<MyApp> {
         BlocProvider<SettingsBloc>(
           create: (_) => getIt<SettingsBloc>()..add(const LoadSettings()),
         ),
-        // Use .value for singleton blocs to prevent auto-close on dispose
+        
         BlocProvider<StudentBloc>.value(value: getIt<StudentBloc>()),
         BlocProvider<TeacherBloc>.value(value: getIt<TeacherBloc>()),
+        BlocProvider<CartBloc>(create: (_) => CartBloc()),
       ],
       child: BlocBuilder<SettingsBloc, SettingsState>(
         buildWhen: (previous, current) {

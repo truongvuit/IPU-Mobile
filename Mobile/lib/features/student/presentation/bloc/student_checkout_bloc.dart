@@ -116,6 +116,15 @@ class StudentCheckoutBloc
         if (msgMatch != null && msgMatch.group(1) != null) {
           final serverMsg = msgMatch.group(1)!;
 
+          
+          if (serverMsg.contains('Khuyến mãi không áp dụng')) {
+            return 'Khuyến mãi không áp dụng cho khóa học này. Vui lòng liên hệ admin.';
+          }
+
+          if (serverMsg.contains('Học viên đã đăng ký lớp này trước đó')) {
+            return 'Bạn đã đăng ký lớp học này rồi. Vui lòng kiểm tra lại lịch học của bạn.';
+          }
+
           if (serverMsg.contains('lỗi') ||
               serverMsg.contains('không') ||
               serverMsg.contains('thất bại')) {

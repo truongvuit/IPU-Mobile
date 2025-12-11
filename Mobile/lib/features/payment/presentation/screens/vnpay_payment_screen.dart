@@ -5,10 +5,6 @@ import 'package:webview_flutter/webview_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/vnpay_models.dart';
 
-
-
-
-
 class VNPayPaymentScreen extends StatefulWidget {
   final String paymentUrl;
   final int invoiceId;
@@ -39,21 +35,34 @@ class _VNPayPaymentScreenState extends State<VNPayPaymentScreen> {
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(Colors.white)
+      ..setUserAgent(
+        'Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36',
+      ) 
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (String url) {
+            debugPrint('VNPay WebView Started: $url');
             setState(() {
               _isLoading = true;
               _hasError = false;
             });
           },
           onPageFinished: (String url) {
+            debugPrint('VNPay WebView Finished: $url');
             setState(() {
               _isLoading = false;
             });
           },
           onWebResourceError: (WebResourceError error) {
+            debugPrint(
+              'VNPay WebView Error: ${error.description}, Code: ${error.errorCode}',
+            );
             
+            if (error.errorCode == -10 ||
+                error.description.contains('net::ERR_UNKNOWN_URL_SCHEME')) {
+              return;
+            }
+
             if (error.isForMainFrame ?? false) {
               setState(() {
                 _hasError = true;
@@ -64,18 +73,22 @@ class _VNPayPaymentScreenState extends State<VNPayPaymentScreen> {
           },
           onNavigationRequest: (NavigationRequest request) {
             final url = request.url;
-            
+            debugPrint('VNPay WebView Navigation: $url');
+
             
             if (url.startsWith('ipumobile://payment/vnpay-return')) {
+              debugPrint('VNPay Callback Detected: $url');
               _handlePaymentCallback(url);
               return NavigationDecision.prevent;
             }
-            
+
             
             return NavigationDecision.navigate;
           },
         ),
       )
+      ..clearCache()
+      ..clearLocalStorage()
       ..loadRequest(Uri.parse(widget.paymentUrl));
   }
 
@@ -83,14 +96,11 @@ class _VNPayPaymentScreenState extends State<VNPayPaymentScreen> {
     try {
       final uri = Uri.parse(url);
       final result = VNPayPaymentResult.fromUri(uri);
-      
-      
-      Navigator.of(context).pushReplacementNamed(
-        '/payment/vnpay-result',
-        arguments: result,
-      );
+
+      Navigator.of(
+        context,
+      ).pushReplacementNamed('/payment/vnpay-result', arguments: result);
     } catch (e) {
-      
       Navigator.of(context).pushReplacementNamed(
         '/payment/vnpay-result',
         arguments: VNPayPaymentResult(
@@ -103,7 +113,6 @@ class _VNPayPaymentScreenState extends State<VNPayPaymentScreen> {
   }
 
   Future<bool> _onWillPop() async {
-    
     final shouldPop = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -142,7 +151,9 @@ class _VNPayPaymentScreenState extends State<VNPayPaymentScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+        backgroundColor: isDark
+            ? AppColors.backgroundDark
+            : AppColors.backgroundLight,
         appBar: AppBar(
           title: const Text('Thanh toán VNPay'),
           centerTitle: true,
@@ -174,8 +185,7 @@ class _VNPayPaymentScreenState extends State<VNPayPaymentScreen> {
               _buildErrorWidget()
             else
               WebViewWidget(controller: _controller),
-            
-            
+
             if (_isLoading)
               Container(
                 color: Colors.white.withValues(alpha: 0.8),
@@ -209,27 +219,17 @@ class _VNPayPaymentScreenState extends State<VNPayPaymentScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64.sp,
-              color: AppColors.error,
-            ),
+            Icon(Icons.error_outline, size: 64.sp, color: AppColors.error),
             SizedBox(height: 16.h),
             Text(
               'Không thể tải trang thanh toán',
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 8.h),
             Text(
               _errorMessage ?? 'Vui lòng kiểm tra kết nối mạng và thử lại',
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: AppColors.neutral600,
-              ),
+              style: TextStyle(fontSize: 14.sp, color: AppColors.neutral600),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 24.h),
@@ -246,10 +246,7 @@ class _VNPayPaymentScreenState extends State<VNPayPaymentScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(
-                  horizontal: 24.w,
-                  vertical: 12.h,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
               ),
             ),
             SizedBox(height: 12.h),

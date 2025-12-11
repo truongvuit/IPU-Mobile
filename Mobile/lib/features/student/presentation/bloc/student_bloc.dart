@@ -1,11 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import '../../domain/repositories/student_repository.dart';
-import '../../domain/entities/course.dart';
 import '../../domain/entities/student_class.dart';
 import '../../domain/entities/schedule.dart';
-import '../../domain/entities/grade.dart';
-import '../../domain/entities/student_profile.dart';
 import '../../data/services/cart_service.dart';
 import '../constants/student_messages.dart';
 import 'student_event.dart';
@@ -14,7 +11,7 @@ import 'student_state.dart';
 class StudentBloc extends Bloc<StudentEvent, StudentState> {
   final StudentRepository repository;
 
-  // Cart state - uses singleton CartService for persistence across bloc instances
+  
   final CartService _cartService = CartService.instance;
 
   StudentBloc({required this.repository}) : super(const StudentInitial()) {
@@ -38,16 +35,11 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     on<UpdateProfile>(_onUpdateProfile);
     on<SubmitRating>(_onSubmitRating);
 
-    // Cart events
-    on<AddCourseToCart>(_onAddCourseToCart);
-    on<RemoveFromCart>(_onRemoveFromCart);
-    on<ClearCart>(_onClearCart);
-
-    // Reset event (for logout)
+    
     on<ResetStudentState>(_onResetStudentState);
   }
 
-  /// Reset state (e.g., on logout)
+  
   void _onResetStudentState(
     ResetStudentState event,
     Emitter<StudentState> emit,
@@ -64,17 +56,21 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     if (currentState is DashboardLoaded) {
       emit(currentState.copyWith(isRefreshing: true));
     } else {
-      emit(const StudentLoading(action: 'Đang tải dashboard...'));
+      emit(const StudentLoading(action: 'LoadDashboard'));
     }
 
     try {
       final classesResultFuture = repository.getUpcomingClasses();
       final profileResultFuture = repository.getProfile();
       final todayScheduleFuture = repository.getScheduleByDate(DateTime.now());
+      final gradesFuture = repository.getMyGrades();
+      final myClassesFuture = repository.getMyClasses();
 
       final classesResult = await classesResultFuture;
       final profileResult = await profileResultFuture;
       final todayScheduleResult = await todayScheduleFuture;
+      final gradesResult = await gradesFuture;
+      final myClassesResult = await myClassesFuture;
 
       final profile = profileResult.fold((_) => null, (profile) => profile);
 
@@ -112,6 +108,28 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
             .toList(),
       );
 
+      
+      double gpa = 0.0;
+      if (gradesResult.isRight()) {
+        final grades = gradesResult.getOrElse(() => []);
+        if (grades.isNotEmpty) {
+          final totalScore = grades.fold(
+            0.0,
+            (sum, grade) => sum + (grade.totalScore ?? 0.0),
+          );
+          gpa = totalScore / grades.length;
+        }
+      }
+
+      
+      int activeCoursesCount = 0;
+      if (myClassesResult.isRight()) {
+        final classes = myClassesResult.getOrElse(() => []);
+        activeCoursesCount = classes
+            .where((c) => c.status == 'InProgress')
+            .length;
+      }
+
       emit(
         DashboardLoaded(
           upcomingClasses: classesResult.fold(
@@ -121,6 +139,8 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
           profile: profile,
           todaySchedules: todaySchedules,
           errorMessage: profileError,
+          gpa: gpa,
+          activeCoursesCount: activeCoursesCount,
         ),
       );
     } catch (e) {
@@ -143,7 +163,7 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     if (currentState is CoursesLoaded) {
       emit(currentState.copyWith(isRefreshing: true));
     } else {
-      emit(const StudentLoading(action: 'Đang tải khóa học...'));
+      emit(const StudentLoading(action: 'LoadAllCourses'));
     }
 
     try {
@@ -177,7 +197,7 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     SearchCourses event,
     Emitter<StudentState> emit,
   ) async {
-    emit(const StudentLoading(action: 'Đang tìm kiếm...'));
+    emit(const StudentLoading(action: 'SearchCourses'));
 
     try {
       final result = await repository.searchCourses(event.query);
@@ -195,7 +215,7 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     LoadCourseDetail event,
     Emitter<StudentState> emit,
   ) async {
-    emit(const StudentLoading());
+    emit(const StudentLoading(action: 'LoadCourseDetail'));
 
     try {
       final result = await repository.getCourseById(event.courseId);
@@ -215,11 +235,11 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
   ) async {
     final currentState = state;
 
-    // If already showing ClassesLoaded, just refresh
+    
     if (currentState is ClassesLoaded) {
       emit(currentState.copyWith(isRefreshing: true));
     } else {
-      emit(const StudentLoading());
+      emit(const StudentLoading(action: 'LoadMyClasses'));
     }
 
     try {
@@ -258,7 +278,7 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     LoadClassDetail event,
     Emitter<StudentState> emit,
   ) async {
-    emit(const StudentLoading());
+    emit(const StudentLoading(action: 'LoadClassDetail'));
 
     try {
       final result = await repository.getClassById(event.classId);
@@ -278,11 +298,11 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
   ) async {
     final currentState = state;
 
-    // If already showing ScheduleLoaded, just refresh
+    
     if (currentState is ScheduleLoaded) {
       emit(currentState.copyWith(isRefreshing: true));
     } else {
-      emit(const StudentLoading());
+      emit(const StudentLoading(action: 'LoadSchedule'));
     }
 
     try {
@@ -325,7 +345,7 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     if (currentState is WeekScheduleLoaded) {
       emit(currentState.copyWith(isRefreshing: true));
     } else {
-      emit(const StudentLoading());
+      emit(const StudentLoading(action: 'LoadWeekSchedule'));
     }
 
     try {
@@ -368,7 +388,7 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     if (currentState is GradesLoaded) {
       emit(currentState.copyWith(isRefreshing: true));
     } else {
-      emit(const StudentLoading());
+      emit(const StudentLoading(action: 'LoadMyGrades'));
     }
 
     try {
@@ -404,12 +424,12 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
   ) async {
     final currentState = state;
 
-    // If already showing CourseGradesLoaded for same course, just refresh
+    
     if (currentState is CourseGradesLoaded &&
         currentState.courseId == event.courseId) {
       emit(currentState.copyWith(isRefreshing: true));
     } else {
-      emit(const StudentLoading());
+      emit(const StudentLoading(action: 'LoadGradesByCourse'));
     }
 
     try {
@@ -455,7 +475,7 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
         currentState.classId == event.classId) {
       emit(currentState.copyWith(isRefreshing: true));
     } else {
-      emit(const StudentLoading());
+      emit(const StudentLoading(action: 'LoadGradesByClass'));
     }
 
     try {
@@ -499,7 +519,7 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     if (currentState is ProfileLoaded) {
       emit(currentState.copyWith(isRefreshing: true));
     } else {
-      emit(const StudentLoading());
+      emit(const StudentLoading(action: 'LoadProfile'));
     }
 
     try {
@@ -533,7 +553,7 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     UpdateProfile event,
     Emitter<StudentState> emit,
   ) async {
-    emit(const StudentLoading());
+    emit(const StudentLoading(action: 'UpdateProfile'));
 
     try {
       final currentProfileResult = await repository.getProfile();
@@ -583,7 +603,7 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     SubmitRating event,
     Emitter<StudentState> emit,
   ) async {
-    emit(const StudentLoading());
+    emit(const StudentLoading(action: 'SubmitRating'));
 
     try {
       final result = await repository.submitRating(
@@ -610,7 +630,7 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     if (currentState is ReviewHistoryLoaded) {
       emit(currentState.copyWith(isRefreshing: true));
     } else {
-      emit(const StudentLoading());
+      emit(const StudentLoading(action: 'LoadReviewHistory'));
     }
 
     try {
@@ -643,7 +663,7 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     LoadClassReview event,
     Emitter<StudentState> emit,
   ) async {
-    emit(const StudentLoading());
+    emit(const StudentLoading(action: 'LoadClassReview'));
 
     try {
       final result = await repository.getClassReview(event.classId);
@@ -658,40 +678,5 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     }
   }
 
-  // ==================== CART HANDLERS ====================
-
-  void _onAddCourseToCart(AddCourseToCart event, Emitter<StudentState> emit) {
-    // Check if already in cart
-    if (_cartService.isInCart(event.classId)) {
-      return; // Already in cart
-    }
-
-    _cartService.addItem(
-      CartItem(
-        courseId: event.courseId,
-        courseName: event.courseName,
-        classId: event.classId,
-        className: event.className,
-        price: event.price,
-        imageUrl: event.imageUrl,
-      ),
-    );
-
-    emit(StudentCartUpdated(cartItems: _cartService.items));
-  }
-
-  void _onRemoveFromCart(RemoveFromCart event, Emitter<StudentState> emit) {
-    _cartService.removeItem(event.classId);
-    emit(StudentCartUpdated(cartItems: _cartService.items));
-  }
-
-  void _onClearCart(ClearCart event, Emitter<StudentState> emit) {
-    _cartService.clear();
-    emit(StudentCartUpdated(cartItems: []));
-  }
-
-  // Getter for current cart items (useful for UI) - reads from CartService singleton
-  List<CartItem> get cartItems => _cartService.items;
-  int get cartItemCount => _cartService.itemCount;
-  bool isInCart(int classId) => _cartService.isInCart(classId);
+  
 }

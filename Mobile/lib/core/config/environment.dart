@@ -5,8 +5,8 @@ class Environment {
   static const bool useMockData = false;
 
   // For Android Emulator: use 10.0.2.2 (maps to host's localhost)
-  // For Physical Device: use your PC's IP (e.g., 192.168.1.9)
-  // static const String baseUrl = 'http://192.168.1.9:8080';
+  // For Physical Device: use your PC's IP (e.g., 192.x.x.x)
+  // static const String baseUrl = 'http://192.x.x.x:8080';
   // static const String baseUrl = 'http://10.0.2.2:8080';
   // Dùng dev tunnel URL trực tiếp (không cần 10.0.2.2)
 
@@ -17,8 +17,11 @@ class Environment {
     // Localhost cho emulator (fallback)
     const emulatorLocal = 'http://10.0.2.2:8080';
 
+    // Localhost cho thiết bị vật lý (fallback)
+    const physicalDeviceLocal = 'http://192.168.1.9:8080';
+
     // Dùng dev tunnel mặc định
-    return devTunnel;
+    return physicalDeviceLocal;
   }
 
   static final String fullApiUrl = '$baseUrl/';

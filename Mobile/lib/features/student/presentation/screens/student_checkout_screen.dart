@@ -33,7 +33,6 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
   void initState() {
     super.initState();
 
-    // Ensure profile is loaded for studentId retrieval
     context.read<StudentBloc>().add(const LoadProfile());
 
     context.read<StudentCheckoutBloc>().add(
@@ -268,6 +267,101 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
     }
 
     if (state is StudentCheckoutError) {
+      if (state.cartPreview != null) {
+        return _buildSectionCard(
+          title: 'Chi tiết thanh toán',
+          child: Column(
+            children: [
+              ...state.cartPreview!.items.map(
+                (item) => Padding(
+                  padding: EdgeInsets.only(bottom: AppSizes.paddingSmall),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.className,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Text(
+                              item.courseName,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          if (item.discountAmount > 0)
+                            Text(
+                              _formatCurrency(item.tuitionFee),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                decoration: TextDecoration.lineThrough,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          Text(
+                            _formatCurrency(item.finalAmount),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              Divider(height: AppSizes.paddingLarge),
+
+              _buildSummaryRow(
+                'Tổng học phí:',
+                _formatCurrency(state.cartPreview!.summary.totalTuitionFee),
+                theme,
+              ),
+
+              if (state.cartPreview!.summary.totalDiscount > 0) ...[
+                SizedBox(height: AppSizes.paddingExtraSmall),
+                _buildSummaryRow(
+                  'Giảm giá:',
+                  '-${_formatCurrency(state.cartPreview!.summary.totalDiscount)}',
+                  theme,
+                  valueColor: AppColors.success,
+                ),
+              ],
+
+              SizedBox(height: AppSizes.paddingSmall),
+              _buildSummaryRow(
+                'Thành tiền:',
+                _formatCurrency(state.cartPreview!.summary.totalAmount),
+                theme,
+                isBold: true,
+                valueColor: AppColors.primary,
+              ),
+
+              if (state.cartPreview!.summary.hasAnyDiscount) ...[
+                SizedBox(height: AppSizes.paddingMedium),
+                _buildDiscountBreakdown(
+                  StudentCheckoutPreviewLoaded(cartPreview: state.cartPreview!),
+                  theme,
+                  isDark,
+                ),
+              ],
+            ],
+          ),
+        );
+      }
+
       return _buildSectionCard(
         title: 'Chi tiết thanh toán',
         child: Center(
@@ -392,16 +486,18 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
     final isLoading =
         state is StudentCheckoutLoading ||
         state is StudentCheckoutCreatingOrder;
-    final canCheckout = state is StudentCheckoutPreviewLoaded;
+    final canCheckout =
+        state is StudentCheckoutPreviewLoaded ||
+        (state is StudentCheckoutError && state.cartPreview != null);
 
     return ElevatedButton(
       onPressed: canCheckout && !isLoading
           ? () async {
-              // Get studentId from multiple sources
               int? studentId;
-              
-              // Try StudentBloc state first
+
+              final checkoutBloc = context.read<StudentCheckoutBloc>();
               final studentBloc = context.read<StudentBloc>();
+
               final studentState = studentBloc.state;
 
               if (studentState is ProfileLoaded) {
@@ -415,8 +511,7 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
                   studentState.profile != null) {
                 studentId = int.tryParse(studentState.profile!.id);
               }
-              
-              // Fallback: Get from local storage (saved user data)
+
               if (studentId == null) {
                 try {
                   final authLocalDataSource = getIt<AuthLocalDataSource>();
@@ -429,8 +524,9 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
                 }
               }
 
+              if (!mounted) return;
+
               if (studentId == null) {
-                if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: const Text(
@@ -442,8 +538,7 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
                 return;
               }
 
-              if (!context.mounted) return;
-              context.read<StudentCheckoutBloc>().add(
+              checkoutBloc.add(
                 CreateOrder(classIds: widget.classIds, studentId: studentId),
               );
             }

@@ -39,13 +39,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final isDesktop = screenWidth >= 1024;
 
     return BlocBuilder<AdminBloc, AdminState>(
+      buildWhen: (previous, current) {
+        if (current is AdminLoading &&
+            current.action != 'LoadAdminDashboard' &&
+            current.action != 'RefreshAdminDashboard') {
+          return false;
+        }
+        return current is AdminDashboardLoaded ||
+            current is AdminLoading ||
+            current is AdminError;
+      },
       builder: (context, state) {
         if (state is AdminInitial || state is AdminLoading) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.hourglass_empty, size: 48.sp, color: AppColors.primary),
+                Icon(
+                  Icons.hourglass_empty,
+                  size: 48.sp,
+                  color: AppColors.primary,
+                ),
                 SizedBox(height: 16.h),
                 Text('Đang tải dữ liệu...', style: TextStyle(fontSize: 14.sp)),
               ],
@@ -400,7 +414,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           );
         }
 
-        // For initial state only, trigger a reload
+        
         if (state is AdminInitial) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
@@ -412,7 +426,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.hourglass_empty, size: 48.sp, color: AppColors.primary),
+              Icon(
+                Icons.hourglass_empty,
+                size: 48.sp,
+                color: AppColors.primary,
+              ),
               SizedBox(height: 16.h),
               Text('Đang tải dữ liệu...', style: TextStyle(fontSize: 14.sp)),
             ],

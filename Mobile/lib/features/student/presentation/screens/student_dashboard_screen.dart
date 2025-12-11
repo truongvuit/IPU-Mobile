@@ -3,6 +3,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../widgets/student_drawer.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/routing/app_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/student_bloc.dart';
+import '../bloc/student_event.dart';
 
 import 'student_home_tab.dart';
 import 'class_list_screen.dart';
@@ -27,13 +30,17 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   void initState() {
     super.initState();
     _currentIndex = widget.initialTab;
-    
   }
 
   void _onTabTapped(int index) {
     setState(() {
       _currentIndex = index;
     });
+
+    
+    if (index == 0) {
+      context.read<StudentBloc>().add(const LoadDashboard());
+    }
   }
 
   void _openDrawer() {
@@ -70,7 +77,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       case AppRouter.studentProfile:
         return 4;
       default:
-        return -1; 
+        return -1;
     }
   }
 
@@ -98,15 +105,14 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       drawer: StudentDrawer(
         currentRoute: _getCurrentRoute(),
         onNavigate: (route) {
-          Navigator.pop(context); 
-          
+          Navigator.pop(context);
+
           final tabIndex = _getTabIndexFromRoute(route);
           if (tabIndex != -1) {
             setState(() {
               _currentIndex = tabIndex;
             });
           } else if (route == AppRouter.studentCourses) {
-            
             Navigator.pushNamed(context, route);
           }
         },

@@ -24,7 +24,7 @@ import '../../features/student/presentation/screens/class_grades_screen.dart';
 import '../../features/student/presentation/screens/profile_screen.dart';
 import '../../features/student/presentation/screens/edit_profile_screen.dart';
 import '../../features/student/presentation/screens/rating_screen.dart';
-import '../../features/student/presentation/screens/review_history_screen.dart';
+
 import '../../features/student/presentation/bloc/student_bloc.dart';
 import '../../features/student/presentation/bloc/student_event.dart';
 
@@ -109,7 +109,7 @@ class AppRouter {
   static const String studentGradesByClass = '/student/grades-by-class';
   static const String studentProfile = '/student/profile';
   static const String studentEditProfile = '/student/edit-profile';
-  static const String studentReviewHistory = '/student/review-history';
+
   static const String studentLearningPath = '/student/learning-path';
 
   static const String studentRating = '/student/rating';
@@ -329,15 +329,6 @@ class AppRouter {
           builder: (_) => BlocProvider.value(
             value: getIt<StudentBloc>(),
             child: RatingScreen(classId: classId),
-          ),
-          settings: routeSettings,
-        );
-
-      case studentReviewHistory:
-        return MaterialPageRoute(
-          builder: (_) => BlocProvider.value(
-            value: getIt<StudentBloc>(),
-            child: const ReviewHistoryScreen(),
           ),
           settings: routeSettings,
         );

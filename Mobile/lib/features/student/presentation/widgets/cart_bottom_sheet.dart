@@ -6,21 +6,21 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/routing/app_router.dart';
-import '../../data/services/cart_service.dart';
-import '../bloc/student_bloc.dart';
-import '../bloc/student_event.dart';
+import '../bloc/cart_bloc.dart';
+import '../bloc/student_state.dart'; 
 
 class CartBottomSheet extends StatelessWidget {
   const CartBottomSheet({super.key});
 
   static void show(BuildContext context) {
-    final bloc = context.read<StudentBloc>();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) =>
-          BlocProvider.value(value: bloc, child: const CartBottomSheet()),
+      builder: (ctx) => BlocProvider.value(
+        value: context.read<CartBloc>(),
+        child: const CartBottomSheet(),
+      ),
     );
   }
 
@@ -33,63 +33,67 @@ class CartBottomSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    // Read cart items from CartService singleton (persists across bloc instances)
-    final cartItems = CartService.instance.items;
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.75,
-      ),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle bar
-          Container(
-            margin: EdgeInsets.only(top: 12.h),
-            width: 40.w,
-            height: 4.h,
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.neutral600 : AppColors.neutral300,
-              borderRadius: BorderRadius.circular(2.r),
-            ),
+    return BlocBuilder<CartBloc, CartState>(
+      builder: (context, state) {
+        final cartItems = state.items;
+
+        return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.75,
           ),
-
-          // Header
-          Padding(
-            padding: EdgeInsets.all(AppSizes.paddingMedium),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Giỏ hàng',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.surfaceDark : Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              
+              Container(
+                margin: EdgeInsets.only(top: 12.h),
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.neutral600 : AppColors.neutral300,
+                  borderRadius: BorderRadius.circular(2.r),
                 ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
+              ),
+
+              
+              Padding(
+                padding: EdgeInsets.all(AppSizes.paddingMedium),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Giỏ hàng',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
 
-          Divider(
-            height: 1,
-            color: isDark ? AppColors.neutral700 : AppColors.neutral200,
-          ),
+              Divider(
+                height: 1,
+                color: isDark ? AppColors.neutral700 : AppColors.neutral200,
+              ),
 
-          // Cart content
-          if (cartItems.isEmpty)
-            _buildEmptyCart(theme, isDark)
-          else
-            _buildCartContent(context, theme, isDark, cartItems),
-        ],
-      ),
+              
+              if (cartItems.isEmpty)
+                _buildEmptyCart(theme, isDark)
+              else
+                _buildCartContent(context, theme, isDark, cartItems),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -127,18 +131,18 @@ class CartBottomSheet extends StatelessWidget {
     BuildContext context,
     ThemeData theme,
     bool isDark,
-    List<dynamic> cartItems,
+    List<CartItem> cartItems,
   ) {
     final subtotal = cartItems.fold<double>(
       0.0,
-      (sum, item) => sum + (item.price as double),
+      (sum, item) => sum + item.price,
     );
 
     return Flexible(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Items list
+          
           Flexible(
             child: ListView.separated(
               shrinkWrap: true,
@@ -155,7 +159,7 @@ class CartBottomSheet extends StatelessWidget {
             ),
           ),
 
-          // Summary & Checkout
+          
           Container(
             padding: EdgeInsets.all(AppSizes.paddingMedium),
             decoration: BoxDecoration(
@@ -169,7 +173,7 @@ class CartBottomSheet extends StatelessWidget {
             child: SafeArea(
               child: Column(
                 children: [
-                  // Subtotal row
+                  
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -186,7 +190,7 @@ class CartBottomSheet extends StatelessWidget {
                     ],
                   ),
                   SizedBox(height: AppSizes.paddingSmall),
-                  // Discount hint
+                  
                   Container(
                     padding: EdgeInsets.all(AppSizes.paddingSmall),
                     decoration: BoxDecoration(
@@ -213,21 +217,21 @@ class CartBottomSheet extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: AppSizes.paddingMedium),
-                  // Checkout button
+                  
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       onPressed: () {
                         Navigator.pop(context);
                         final classIds = cartItems
-                            .map((e) => e.classId as int)
+                            .map((e) => e.classId)
                             .toList();
                         Navigator.of(context).pushNamed(
                           AppRouter.studentCheckout,
                           arguments: {
                             'classIds': classIds,
                             'courseName': cartItems.length == 1
-                                ? cartItems.first.courseName as String
+                                ? cartItems.first.courseName
                                 : '${cartItems.length} khóa học',
                           },
                         );
@@ -261,13 +265,13 @@ class CartBottomSheet extends StatelessWidget {
     BuildContext context,
     ThemeData theme,
     bool isDark,
-    dynamic item,
+    CartItem item,
   ) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: AppSizes.paddingSmall),
       child: Row(
         children: [
-          // Course icon
+          
           Container(
             width: 56.w,
             height: 56.w,
@@ -278,13 +282,13 @@ class CartBottomSheet extends StatelessWidget {
             child: Icon(Icons.school, color: AppColors.primary, size: 28.sp),
           ),
           SizedBox(width: AppSizes.paddingSmall),
-          // Course info
+          
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.courseName as String,
+                  item.courseName,
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -293,14 +297,14 @@ class CartBottomSheet extends StatelessWidget {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  item.className as String,
+                  item.className,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: isDark ? AppColors.neutral400 : AppColors.neutral600,
                   ),
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  _formatCurrency(item.price as double),
+                  _formatCurrency(item.price),
                   style: theme.textTheme.titleSmall?.copyWith(
                     color: AppColors.primary,
                     fontWeight: FontWeight.bold,
@@ -309,14 +313,10 @@ class CartBottomSheet extends StatelessWidget {
               ],
             ),
           ),
-          // Remove button
+          
           IconButton(
             onPressed: () {
-              context.read<StudentBloc>().add(
-                RemoveFromCart(item.classId as int),
-              );
-              Navigator.pop(context);
-              CartBottomSheet.show(context);
+              context.read<CartBloc>().add(RemoveFromCart(item.classId));
             },
             icon: Icon(
               Icons.delete_outline,

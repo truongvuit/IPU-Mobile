@@ -4,13 +4,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../domain/entities/course.dart';
-import '../bloc/student_bloc.dart';
-import '../bloc/student_event.dart';
 import '../../../../core/routing/app_router.dart';
+import '../../domain/entities/course.dart';
+import '../bloc/cart_bloc.dart';
+import '../bloc/student_state.dart';
 
-/// Bottom sheet to display available classes for a course
-/// Allows user to select a specific class for enrollment
+
+
 class ClassSelectionBottomSheet extends StatefulWidget {
   final Course course;
 
@@ -80,7 +80,7 @@ class _ClassSelectionBottomSheetState extends State<ClassSelectionBottomSheet> {
         ),
         child: Column(
           children: [
-            // Handle bar
+            
             Container(
               margin: EdgeInsets.symmetric(vertical: 12.h),
               width: 40.w,
@@ -91,7 +91,7 @@ class _ClassSelectionBottomSheetState extends State<ClassSelectionBottomSheet> {
               ),
             ),
 
-            // Header
+            
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.w),
               child: Column(
@@ -157,7 +157,7 @@ class _ClassSelectionBottomSheetState extends State<ClassSelectionBottomSheet> {
 
             SizedBox(height: 12.h),
 
-            // Search bar (only show if many classes)
+            
             if (totalClasses > 5)
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -224,7 +224,7 @@ class _ClassSelectionBottomSheetState extends State<ClassSelectionBottomSheet> {
 
             SizedBox(height: 8.h),
 
-            // Filter results count
+            
             if (_searchController.text.isNotEmpty)
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
@@ -246,7 +246,7 @@ class _ClassSelectionBottomSheetState extends State<ClassSelectionBottomSheet> {
               color: isDark ? Colors.grey[700] : Colors.grey[200],
             ),
 
-            // Classes list
+            
             Expanded(
               child: _filteredClasses.isEmpty
                   ? _buildEmptyState(isDark, _searchController.text.isNotEmpty)
@@ -341,7 +341,7 @@ class _ClassCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header row: Class name + Status
+          
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -365,7 +365,7 @@ class _ClassCard extends StatelessWidget {
 
           SizedBox(height: 10.h),
 
-          // Compact info display
+          
           Wrap(
             spacing: 16.w,
             runSpacing: 6.h,
@@ -388,7 +388,7 @@ class _ClassCard extends StatelessWidget {
 
           SizedBox(height: 12.h),
 
-          // Action buttons - more compact
+          
           Row(
             children: [
               Expanded(
@@ -474,7 +474,8 @@ class _ClassCard extends StatelessWidget {
           text,
           style: TextStyle(
             fontSize: 12.sp,
-            color: isDark ? Colors.grey[300] : AppColors.textSecondary,
+            fontWeight: FontWeight.w500,
+            color: AppColors.textSecondary,
             fontFamily: 'Lexend',
           ),
         ),
@@ -483,10 +484,10 @@ class _ClassCard extends StatelessWidget {
   }
 
   void _addToCart(BuildContext context) {
-    final bloc = context.read<StudentBloc>();
+    final cartBloc = context.read<CartBloc>();
 
-    // Check if already in cart
-    if (bloc.isInCart(classInfo.classId)) {
+    
+    if (cartBloc.state.containsClass(classInfo.classId)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Lớp học này đã có trong giỏ hàng'),
@@ -496,15 +497,17 @@ class _ClassCard extends StatelessWidget {
       return;
     }
 
-    // Add to cart
-    bloc.add(
-      AddCourseToCart(
-        courseId: course.id,
-        courseName: course.name,
-        classId: classInfo.classId,
-        className: classInfo.className,
-        price: course.price,
-        imageUrl: course.imageUrl,
+    
+    cartBloc.add(
+      AddToCart(
+        CartItem(
+          courseId: course.id,
+          courseName: course.name,
+          classId: classInfo.classId,
+          className: classInfo.className,
+          price: course.price,
+          imageUrl: course.imageUrl,
+        ),
       ),
     );
 

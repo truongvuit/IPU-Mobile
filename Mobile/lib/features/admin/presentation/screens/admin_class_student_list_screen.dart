@@ -360,11 +360,11 @@ class _AdminClassStudentListScreenState
             students = state.students;
             studentCount = students.length;
           } else if (state is AdminLoading) {
-            // Show loading state
+            
           } else if (state is AdminError) {
-            // Show error state - handled in tab
+            
           } else if (state is AdminInitial) {
-            // For initial state only, trigger reload
+            
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted) {
                 context.read<AdminBloc>().add(LoadClassStudentList(widget.classId));

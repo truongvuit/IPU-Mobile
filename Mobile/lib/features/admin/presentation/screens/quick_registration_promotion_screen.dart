@@ -23,7 +23,7 @@ class _QuickRegistrationPromotionScreenState
   @override
   void initState() {
     super.initState();
-    // Trigger cart preview calculation when screen opens
+    
     context.read<RegistrationBloc>().add(const CalculateCartPreview());
   }
 
@@ -58,7 +58,7 @@ class _QuickRegistrationPromotionScreenState
             return const Center(child: CircularProgressIndicator());
           }
 
-          // Show loading if calculating preview
+          
           if (registrationData.isCalculatingPreview) {
             return const Center(
               child: Column(
@@ -72,7 +72,7 @@ class _QuickRegistrationPromotionScreenState
             );
           }
 
-          // Show error if cart preview failed
+          
           if (registrationData.cartPreviewError != null) {
             return Center(
               child: Column(
@@ -110,7 +110,7 @@ class _QuickRegistrationPromotionScreenState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Info banner
+                      
                       Container(
                         padding: EdgeInsets.all(AppSizes.p16),
                         decoration: BoxDecoration(
@@ -160,7 +160,7 @@ class _QuickRegistrationPromotionScreenState
 
                       SizedBox(height: AppSizes.p20),
 
-                      // Applied discounts section
+                      
                       if (hasAnyDiscount) ...[
                         Text(
                           'Khuyến mãi được áp dụng',
@@ -170,7 +170,7 @@ class _QuickRegistrationPromotionScreenState
                         ),
                         SizedBox(height: AppSizes.p12),
 
-                        // Single course discounts
+                        
                         if (registrationData.hasSingleCourseDiscount)
                           _buildDiscountCard(
                             icon: Icons.local_offer,
@@ -182,7 +182,7 @@ class _QuickRegistrationPromotionScreenState
                             isDark: isDark,
                           ),
 
-                        // Combo discounts
+                        
                         if (registrationData.appliedCombos.isNotEmpty) ...[
                           for (final combo in registrationData.appliedCombos)
                             _buildDiscountCard(
@@ -196,7 +196,7 @@ class _QuickRegistrationPromotionScreenState
                             ),
                         ],
 
-                        // Returning student discount
+                        
                         if (registrationData.returningDiscountAmount > 0)
                           _buildDiscountCard(
                             icon: Icons.person_outline,
@@ -209,7 +209,7 @@ class _QuickRegistrationPromotionScreenState
 
                         SizedBox(height: AppSizes.p20),
 
-                        // Summary
+                        
                         Container(
                           padding: EdgeInsets.all(AppSizes.p16),
                           decoration: BoxDecoration(
@@ -250,7 +250,7 @@ class _QuickRegistrationPromotionScreenState
                           ),
                         ),
                       ] else ...[
-                        // No discounts available
+                        
                         Container(
                           width: double.infinity,
                           padding: EdgeInsets.all(AppSizes.p24),
@@ -294,7 +294,7 @@ class _QuickRegistrationPromotionScreenState
                 ),
               ),
 
-              // Bottom button
+              
               Container(
                 padding: EdgeInsets.all(AppSizes.paddingMedium),
                 decoration: BoxDecoration(

@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
-import '../bloc/student_bloc.dart';
-import '../bloc/student_event.dart';
-import '../bloc/student_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/custom_image.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../domain/entities/course.dart';
+import '../bloc/student_bloc.dart';
+import '../bloc/student_event.dart';
+import '../bloc/student_state.dart';
+import '../bloc/cart_bloc.dart';
 import '../widgets/class_selection_bottom_sheet.dart';
 
 class CourseDetailScreen extends StatefulWidget {
@@ -58,9 +59,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 constraints.maxWidth >= 600 && constraints.maxWidth < 1024;
 
             return BlocBuilder<StudentBloc, StudentState>(
-              // Ignore cart update states to prevent white screen
+              
               buildWhen: (previous, current) {
-                return current is! StudentCartUpdated;
+                return current is StudentLoading ||
+                    current is CourseDetailLoaded ||
+                    current is StudentError;
               },
               builder: (context, state) {
                 if (state is StudentLoading) {
@@ -328,7 +331,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
                                   SizedBox(height: 16.h),
 
-                                  // Available Classes Section
+                                  
                                   Padding(
                                     padding: EdgeInsets.symmetric(
                                       horizontal: isDesktop ? 24.w : 16.w,
@@ -415,7 +418,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                             ),
                                           )
                                         else ...[
-                                          // Show only first 3 classes to prevent layout overflow
+                                          
                                           ...course.availableClasses
                                               .take(3)
                                               .map(
@@ -426,7 +429,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                                   isDesktop,
                                                 ),
                                               ),
-                                          // Show "View All" button if more than 3 classes
+                                          
                                           if (course.availableClasses.length >
                                               3)
                                             Padding(
@@ -483,7 +486,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                         ],
                       ),
 
-                      // Bottom action bar with cart button
+                      
                       Positioned(
                         left: 0,
                         right: 0,
@@ -513,7 +516,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                           ),
                           child: Row(
                             children: [
-                              // Price display
+                              
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -542,7 +545,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                 ),
                               ),
                               SizedBox(width: 12.w),
-                              // Choose class button
+                              
                               ElevatedButton.icon(
                                 onPressed: course.availableClasses.isNotEmpty
                                     ? () => _showClassSelection(context, course)
@@ -628,7 +631,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header row
+          
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -666,7 +669,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
           SizedBox(height: 12.h),
 
-          // Info grid
+          
           Wrap(
             spacing: 16.w,
             runSpacing: 8.h,
@@ -695,7 +698,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
           SizedBox(height: 16.h),
 
-          // Action buttons
+          
           Row(
             children: [
               Expanded(
@@ -773,9 +776,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   }
 
   void _addClassToCart(CourseClassInfo classInfo, Course course) {
-    final bloc = context.read<StudentBloc>();
+    final cartBloc = context.read<CartBloc>();
 
-    if (bloc.isInCart(classInfo.classId)) {
+    if (cartBloc.state.containsClass(classInfo.classId)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Lớp học này đã có trong giỏ hàng'),
@@ -785,14 +788,16 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       return;
     }
 
-    bloc.add(
-      AddCourseToCart(
-        courseId: course.id,
-        courseName: course.name,
-        classId: classInfo.classId,
-        className: classInfo.className,
-        price: course.price,
-        imageUrl: course.imageUrl,
+    cartBloc.add(
+      AddToCart(
+        CartItem(
+          courseId: course.id,
+          courseName: course.name,
+          classId: classInfo.classId,
+          className: classInfo.className,
+          price: course.price,
+          imageUrl: course.imageUrl,
+        ),
       ),
     );
 

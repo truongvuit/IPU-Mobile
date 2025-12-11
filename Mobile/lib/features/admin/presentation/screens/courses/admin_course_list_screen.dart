@@ -349,7 +349,7 @@ class _AdminCourseListContentState extends State<_AdminCourseListContent> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Course Image
+                
                 Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
@@ -381,7 +381,7 @@ class _AdminCourseListContentState extends State<_AdminCourseListContent> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Title and Status Row
+                      
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -401,7 +401,7 @@ class _AdminCourseListContentState extends State<_AdminCourseListContent> {
                             ),
                           ),
                           SizedBox(width: 8.w),
-                          // Status Badge with Switch
+                          
                           Container(
                             padding: EdgeInsets.symmetric(
                               horizontal: 8.w,
@@ -454,7 +454,7 @@ class _AdminCourseListContentState extends State<_AdminCourseListContent> {
                       ),
                       SizedBox(height: 8.h),
 
-                      // Stats Row
+                      
                       Row(
                         children: [
                           _buildStatChip(
@@ -472,7 +472,7 @@ class _AdminCourseListContentState extends State<_AdminCourseListContent> {
                       ),
                       SizedBox(height: 8.h),
 
-                      // Price Row
+                      
                       Text(
                         currencyFormat.format(course.tuitionFee),
                         style: TextStyle(

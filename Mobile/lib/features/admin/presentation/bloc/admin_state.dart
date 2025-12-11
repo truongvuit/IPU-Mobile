@@ -21,7 +21,11 @@ class AdminInitial extends AdminState {
 }
 
 class AdminLoading extends AdminState {
-  const AdminLoading();
+  final String? action;
+  const AdminLoading({this.action});
+
+  @override
+  List<Object?> get props => [action];
 }
 
 class AdminError extends AdminState {

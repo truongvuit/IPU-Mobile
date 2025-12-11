@@ -68,6 +68,8 @@ class DashboardLoaded extends StudentState {
   final bool isRefreshing;
   final String? errorMessage;
   final bool? isFromCache;
+  final double? gpa;
+  final int? activeCoursesCount;
 
   const DashboardLoaded({
     required this.upcomingClasses,
@@ -76,6 +78,8 @@ class DashboardLoaded extends StudentState {
     this.isRefreshing = false,
     this.errorMessage,
     this.isFromCache,
+    this.gpa,
+    this.activeCoursesCount,
   });
 
   DashboardLoaded copyWith({
@@ -85,6 +89,8 @@ class DashboardLoaded extends StudentState {
     bool? isRefreshing,
     String? errorMessage,
     bool? isFromCache,
+    double? gpa,
+    int? activeCoursesCount,
   }) {
     return DashboardLoaded(
       upcomingClasses: upcomingClasses ?? this.upcomingClasses,
@@ -93,6 +99,8 @@ class DashboardLoaded extends StudentState {
       isRefreshing: isRefreshing ?? this.isRefreshing,
       errorMessage: errorMessage,
       isFromCache: isFromCache ?? this.isFromCache,
+      gpa: gpa ?? this.gpa,
+      activeCoursesCount: activeCoursesCount ?? this.activeCoursesCount,
     );
   }
 
@@ -104,6 +112,8 @@ class DashboardLoaded extends StudentState {
     isRefreshing,
     errorMessage,
     isFromCache,
+    gpa,
+    activeCoursesCount,
   ];
 }
 
@@ -324,7 +334,13 @@ class CourseGradesLoaded extends StudentState {
   }
 
   @override
-  List<Object?> get props => [grades, courseId, isRefreshing, errorMessage, isFromCache];
+  List<Object?> get props => [
+    grades,
+    courseId,
+    isRefreshing,
+    errorMessage,
+    isFromCache,
+  ];
 }
 
 class ClassGradesLoaded extends StudentState {
@@ -448,9 +464,9 @@ class StudentError extends StudentState {
   List<Object?> get props => [message];
 }
 
-// ==================== CART STATE ====================
 
-/// Represents an item in the shopping cart
+
+
 class CartItem extends Equatable {
   final String courseId;
   final String courseName;
@@ -470,23 +486,4 @@ class CartItem extends Equatable {
 
   @override
   List<Object?> get props => [courseId, classId, courseName, className, price];
-}
-
-/// Emitted when cart is updated (items added/removed)
-class StudentCartUpdated extends StudentState {
-  final List<CartItem> cartItems;
-
-  const StudentCartUpdated({required this.cartItems});
-
-  int get itemCount => cartItems.length;
-
-  double get subtotal => cartItems.fold(0.0, (sum, item) => sum + item.price);
-
-  List<int> get classIds => cartItems.map((e) => e.classId).toList();
-
-  bool containsClass(int classId) =>
-      cartItems.any((item) => item.classId == classId);
-
-  @override
-  List<Object?> get props => [cartItems];
 }
