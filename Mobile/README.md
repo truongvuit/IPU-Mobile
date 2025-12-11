@@ -37,10 +37,9 @@
 | Chức năng | Mô tả |
 |-----------|-------|
 | Dashboard | Thống kê tổng quan hệ thống |
-| Quản lý học viên | Thêm, sửa, xóa, xem chi tiết học viên |
+| Quản lý học viên | Quản lý thông tin học viên |
 | Quản lý giảng viên | Quản lý thông tin giảng viên |
-| Quản lý lớp học | Tạo lớp, phân công giảng viên, quản lý buổi học |
-| Quản lý khóa học | Tạo và cập nhật thông tin khóa học |
+| Quản lý lớp học | Xem thông tin chi tiết của một lớp học, buổi học, danh sách học viên |
 | Quản lý khuyến mãi | Tạo mã giảm giá, chương trình khuyến mãi |
 | Đăng ký nhanh | Hỗ trợ đăng ký học viên mới nhanh chóng |
 
@@ -51,7 +50,6 @@
 | Lịch dạy | Xem lịch giảng dạy theo tuần/tháng |
 | Quản lý lớp | Xem danh sách lớp đang dạy |
 | Điểm danh | Điểm danh học viên theo buổi học |
-| Chấm điểm | Nhập và cập nhật điểm học viên |
 | Hồ sơ cá nhân | Cập nhật thông tin cá nhân |
 
 ### Module Student (Học viên)
@@ -60,7 +58,6 @@
 | Lịch học | Xem lịch học cá nhân |
 | Xem điểm | Theo dõi kết quả học tập |
 | Danh sách lớp | Xem các lớp đang tham gia |
-| Khóa học | Duyệt và đăng ký khóa học mới |
 | Thanh toán | Thanh toán học phí qua VNPay |
 | Đánh giá | Đánh giá giảng viên và khóa học |
 | Hồ sơ cá nhân | Quản lý thông tin cá nhân |
